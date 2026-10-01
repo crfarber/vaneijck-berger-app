@@ -1,18 +1,84 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
+import { DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { useColorScheme } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
+import { useEffect } from 'react';
+import { StyleSheet } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { createNativeContainer } from '@/bootstrap/native';
+import { AppProviders } from '@/bootstrap/providers';
+import { useSession } from '@/domeinen/auth/ui';
+import { SplashScreenView } from '@/shared/ui/splash-screen';
+import { StatusOverlayHost } from '@/shared/ui/status-overlay-host';
+import { colors } from '@/shared/ui/theme';
+import { ToastHost } from '@/shared/ui/toast-host';
 
-import { AnimatedSplashOverlay } from '@/components/animated-icon';
-import AppTabs from '@/components/app-tabs';
+void SplashScreen.preventAutoHideAsync();
 
-SplashScreen.preventAutoHideAsync();
+// Built once, when the app loads. A wrong configuration fails here, with a readable message.
+const container = createNativeContainer();
 
-export default function TabLayout() {
-  const colorScheme = useColorScheme();
+// Screens must stay opaque: a transparent screen shows the previous one during the push animation.
+// Each group stack draws the map per screen (mapBackgroundScreenLayout); this matches its tone.
+const navigationTheme = {
+  ...DefaultTheme,
+  colors: { ...DefaultTheme.colors, background: colors.surface },
+};
+
+/** Shows the login or the app, depending on the session. Stack.Protected does the navigating. */
+function Navigator() {
+  const status = useSession((state) => state.status);
+
+  useEffect(() => {
+    if (status !== 'unknown') {
+      void SplashScreen.hideAsync();
+    }
+  }, [status]);
+
+  if (status === 'unknown') {
+    // Native splash is yellow only. Hide it once this view is laid out, so the trucks
+    // photo shows while the session is still being restored.
+    return (
+      <SplashScreenView
+        onLayout={() => {
+          void SplashScreen.hideAsync();
+        }}
+      />
+    );
+  }
+
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <AnimatedSplashOverlay />
-      <AppTabs />
-    </ThemeProvider>
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Protected guard={status === 'signed-in'}>
+        <Stack.Screen name="(app)" />
+      </Stack.Protected>
+      <Stack.Protected guard={status === 'signed-out'}>
+        <Stack.Screen name="(auth)" />
+      </Stack.Protected>
+    </Stack>
   );
 }
+
+export default function RootLayout() {
+  useEffect(() => {
+    void container.start();
+    return () => container.stop();
+  }, []);
+
+  return (
+    <GestureHandlerRootView style={styles.root}>
+      {/* No dark theme: keep dark icons over the yellow header, also in the phone's dark mode. */}
+      <StatusBar style="dark" />
+      <AppProviders container={container}>
+        <ThemeProvider value={navigationTheme}>
+          <Navigator />
+        </ThemeProvider>
+        <ToastHost />
+        <StatusOverlayHost />
+      </AppProviders>
+    </GestureHandlerRootView>
+  );
+}
+
+const styles = StyleSheet.create({
+  root: { flex: 1 },
+});

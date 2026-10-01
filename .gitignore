@@ -1,5 +1,3 @@
-# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
-
 # dependencies
 node_modules/
 
@@ -9,7 +7,7 @@ dist/
 web-build/
 expo-env.d.ts
 
-# Native
+# Native (wordt gegenereerd met `pnpm prebuild`, zie docs/decisions/0001)
 .kotlin/
 *.orig.*
 *.jks
@@ -17,6 +15,8 @@ expo-env.d.ts
 *.p12
 *.key
 *.mobileprovision
+/ios
+/android
 
 # Metro
 .metro-health-check*
@@ -30,14 +30,15 @@ yarn-error.*
 .DS_Store
 *.pem
 
-# local env files
-.env*.local
+# lokale omgevingsbestanden en secrets (alleen .env.example hoort in git)
+.env
+.env.*
+!.env.example
 
-# typescript
+# test en build
+coverage/
 *.tsbuildinfo
 
-example
-
-# generated native folders
-/ios
-/android
+# Firebase-configuratie hoort per omgeving bij EAS, niet in git
+google-services.json
+GoogleService-Info.plist

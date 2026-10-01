@@ -1,56 +1,66 @@
-# Welcome to your Expo app 👋
+# Van Eijck Berger App
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+De herbouw van de berger-app (Salvage) van Van Eijck: een app voor bergers die opdrachten (allocations) krijgen met incidenten en één of meer diensten die uitgevoerd moeten worden. Dezelfde werking als de oude app, met een architectuur die robuust, testbaar en onderhoudbaar is.
 
-## Get started
+> **Status:** slice 0 is klaar: de kern (HTTP-client, inloggen en sessiebeheer, statusregels, notificatieverwerking, locatiecheck, werktijden, kentekens) en een werkend skelet (inloggen met SMS, opdrachtenlijst). De rest volgt per slice, zie [docs/roadmap.md](docs/roadmap.md).
 
-1. Install dependencies
+## Snel starten
 
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+Vereisten: Node ≥ 22.13, pnpm 11 (`corepack enable`), Xcode en/of Android Studio.
 
 ```bash
-npm run reset-project
+pnpm install
+cp .env.example .env.local     # vul EXPO_PUBLIC_API_BASE_URL en EXPO_PUBLIC_EXTERNAL_CLIENT_ID in
+pnpm ios                       # of: pnpm android (bouwt de native app en start Metro)
+pnpm start                     # daarna alleen Metro starten (dev client)
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Zonder geldige configuratie stopt de app bij het opstarten met een duidelijke melding welke variabele ontbreekt.
 
-### Other setup steps
+## Scripts
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+| Script                          | Doet                                                          |
+| ------------------------------- | ------------------------------------------------------------- |
+| `pnpm run check`                | formatteren controleren, lint (oxlint) en typecheck           |
+| `pnpm test`                     | alle unit- en integratietests (Vitest, in Node, < 2 seconden) |
+| `pnpm test:coverage`            | tests met coverage-drempels (90% regels, 85% branches)        |
+| `pnpm run ci`                   | `check` + `test:coverage`: wat CI en `pre-push` draaien       |
+| `pnpm format` / `pnpm lint:fix` | automatisch herstellen                                        |
+| `pnpm prebuild`                 | native projecten opnieuw genereren (`ios/` en `android/`)     |
+| `pnpm run doctor`               | Expo-configuratie controleren                                 |
 
-## Learn more
+Een wijziging is **klaar** als `pnpm run ci` slaagt en de app bundelt (`pnpm exec expo export --platform android`, draait ook in CI).
 
-To learn more about developing your project with Expo, look at the following resources:
+## Opbouw
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+```text
+src/
+  app/            Expo Router: dunne routes, alleen koppelen (geen logica)
+  bootstrap/      composition root: bouwt alle onderdelen en koppelt ze (container.ts)
+  domeinen/       één map per domein, zie hieronder
+  shared/         herbruikbare basis: HTTP-client, logger, config, i18n, poorten, UI-primitieven
+  test/           fakes voor tests (klok, opslag, HTTP-antwoorden)
+docs/             conventies, architectuur, beslissingen, roadmap, functionele beschrijving
+```
 
-## Join the community
+Elk domein (`src/domeinen/<naam>/`) heeft dezelfde lagen:
 
-Join our community of developers creating universal apps.
+| Laag                              | Bevat                                                    | Mag React Native gebruiken |
+| --------------------------------- | -------------------------------------------------------- | -------------------------- |
+| `domain/`                         | pure regels en types                                     | nee                        |
+| `api/`                            | endpoints en zod-schema's                                | nee                        |
+| `service/`                        | use-cases met geïnjecteerde poorten (opslag, klok, HTTP) | nee                        |
+| `store/`                          | Zustand, alleen client-state                             | nee (vanilla)              |
+| `hooks/` `components/` `screens/` | React Native                                             | ja                         |
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+`index.ts` is de publieke, pure ingang van een domein; `ui.ts` de React Native-ingang. Andere domeinen en routes importeren alleen via die twee bestanden. Deze regels worden afgedwongen door [src/architecture.test.ts](src/architecture.test.ts).
+
+## Documentatie
+
+- [docs/conventions.md](docs/conventions.md): hoe we hier code schrijven
+- [docs/architecture.md](docs/architecture.md): lagen, datastromen, sessiebeheer
+- [docs/decisions/](docs/decisions/): waarom we voor deze aanpak kozen
+- [docs/roadmap.md](docs/roadmap.md): volgende slices met acceptatiecriteria
+- [docs/functioneel/](docs/functioneel/): statussen, API-contract, bekende fouten van de oude app, open vragen
+- [docs/legacy.md](docs/legacy.md): hoe je de oude app raadpleegt
+- [CLAUDE.md](CLAUDE.md): werkafspraken voor AI-assistenten
