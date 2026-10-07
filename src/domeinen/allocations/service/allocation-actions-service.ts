@@ -1,4 +1,8 @@
-import type { AllocationUnitService, ReregisterReason } from '@/domeinen/allocation-unit';
+import type {
+  AllocationUnitService,
+  ReregisterOutcome,
+  ReregisterReason,
+} from '@/domeinen/allocation-unit';
 import { OUTBOX_KIND, shouldQueueMutation, type MutationOutbox } from '@/domeinen/outbox';
 import type { ReferenceDataService } from '@/domeinen/reference-data';
 import type { Logger } from '@/shared/logging/logger';
@@ -84,7 +88,13 @@ export function createAllocationActionsService(
 
   return {
     async accept(allocationId, hasActiveAllocations, isCurrent) {
-      const reregister = await allocationUnitService.checkReregister(hasActiveAllocations);
+      let reregister: ReregisterOutcome;
+      try {
+        reregister = await allocationUnitService.checkReregister(hasActiveAllocations);
+      } catch (error) {
+        logger?.warn('app', 'Allocation unit check failed', { error });
+        return { kind: 'failed' };
+      }
       if (isCurrent?.() === false) {
         return { kind: 'failed' };
       }

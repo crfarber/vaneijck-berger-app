@@ -18,7 +18,7 @@ export function GlassCard({
     <View style={[styles.card, style]}>
       <BlurView
         pointerEvents="none"
-        intensity={10}
+        intensity={35}
         tint="light"
         blurTarget={blurTarget}
         blurMethod={blurTarget ? 'dimezisBlurView' : 'none'}

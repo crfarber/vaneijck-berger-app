@@ -69,6 +69,9 @@ export function createAllocationAcceptFlow(deps: {
         );
         return generation === token ? result : null;
       } catch {
+        if (generation !== token) {
+          return null;
+        }
         return { kind: 'failed' };
       } finally {
         if (generation === token) {
