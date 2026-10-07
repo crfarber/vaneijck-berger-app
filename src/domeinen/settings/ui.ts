@@ -5,9 +5,11 @@ export {
   useDevicePermissions,
   useLanguageSettings,
   useReferenceDataService,
+  useAllocationUnitManagement,
   useSignOutGuard,
 } from './hooks/settings-context';
 export { LanguageScreen } from './screens/language-screen';
 export { PermissionsScreen } from './screens/permissions-screen';
 export { ReferenceDataSyncScreen } from './screens/reference-data-sync-screen';
+export { AllocationUnitManagementScreen } from './screens/allocation-unit-management-screen';
 export { SettingsHeaderButton, SettingsScreen } from './screens/settings-screen';

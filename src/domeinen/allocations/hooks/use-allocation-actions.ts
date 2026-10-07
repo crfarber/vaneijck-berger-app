@@ -1,8 +1,9 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { router } from 'expo-router';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert } from 'react-native';
-import { noUnitDispatchAlertTexts, showNoUnitDispatchAlert } from '@/domeinen/allocation-unit/ui';
+import type { ReregisterReason } from '@/domeinen/allocation-unit';
 import type { StatusOutcome } from '@/shared/feedback/status-overlay';
 import { useStatusOverlay } from '@/shared/ui/status-overlay-host';
 import {
@@ -11,7 +12,15 @@ import {
 } from '../domain/action-feedback';
 import { isAllocationFinished } from '../domain/finished';
 import type { Allocation } from '../domain/types';
-import { useAllocationActionsService } from './allocations-context';
+import {
+  useAllocationAcceptFlow,
+  useAllocationActionsService,
+  useAllocationsApi,
+} from './allocations-context';
+import {
+  createAllocationSections,
+  hasActiveAllocations as hasActiveWork,
+} from '../domain/sections';
 import { allocationKeys } from './use-allocations';
 
 export type AllocationActionBusy = 'accept' | 'finish' | null;
@@ -29,6 +38,9 @@ export function useAllocationActions(allocation: Allocation, hasActiveAllocation
   const queryClient = useQueryClient();
   const statusOverlay = useStatusOverlay();
   const service = useAllocationActionsService();
+  const api = useAllocationsApi();
+  const acceptFlow = useAllocationAcceptFlow();
+  const accepting = useRef(false);
   const [busy, setBusy] = useState<AllocationActionBusy>(null);
   const isFinished = isAllocationFinished(allocation);
 
@@ -40,17 +52,28 @@ export function useAllocationActions(allocation: Allocation, hasActiveAllocation
   };
 
   const accept = async (): Promise<void> => {
+    if (accepting.current || acceptFlow.getState().pending !== null) {
+      return;
+    }
+    accepting.current = true;
     setBusy('accept');
     try {
-      let dialog: 'reregister-required' | 'blocked' | null = null;
+      let dialog: ReregisterReason | 'blocked' | null = null;
       await statusOverlay.run(t('feedback.processing.acceptAllocation'), async () => {
-        const result = await service.accept(allocation.dn_allocationid, hasActiveAllocations);
+        const allocations = await queryClient.fetchQuery({
+          queryKey: allocationKeys.list(),
+          queryFn: ({ signal }) => api.list({ signal }),
+          staleTime: 0,
+        });
+        const activeWork =
+          hasActiveAllocations || hasActiveWork(createAllocationSections(allocations, []));
+        const result = await service.accept(allocation.dn_allocationid, activeWork);
         switch (result.kind) {
           case 'accepted':
             await queryClient.invalidateQueries({ queryKey: allocationKeys.list() });
             return toOutcome(feedbackForAcceptAllocation(result));
           case 'reregister-required':
-            dialog = 'reregister-required';
+            dialog = result.reason;
             return { tone: 'none' };
           case 'blocked':
             dialog = 'blocked';
@@ -60,12 +83,30 @@ export function useAllocationActions(allocation: Allocation, hasActiveAllocation
             return toOutcome(feedbackForAcceptAllocation(result));
         }
       });
-      if (dialog === 'reregister-required') {
-        Alert.alert(t('allocations.actions.reregisterRequired'));
+      const startRecovery = (mode: 'accept' | 'extend'): void => {
+        if (acceptFlow.getState().start(allocation.dn_allocationid) !== null) {
+          router.push({ pathname: '/unit', params: { mode } });
+        }
+      };
+      if (dialog === 'no-unit' || dialog === 'no-vehicle') {
+        Alert.alert(
+          t('allocations.actions.registerToAcceptTitle'),
+          t('allocations.actions.registerToAcceptMessage'),
+          [
+            { text: t('common.no'), style: 'cancel' },
+            { text: t('common.yes'), onPress: () => startRecovery('accept') },
+          ],
+        );
+      } else if (dialog === 'expired') {
+        startRecovery('extend');
       } else if (dialog === 'blocked') {
-        showNoUnitDispatchAlert(noUnitDispatchAlertTexts(t));
+        Alert.alert(
+          t('allocations.actions.acceptBlockedTitle'),
+          t('allocations.actions.acceptBlockedMessage'),
+        );
       }
     } finally {
+      accepting.current = false;
       setBusy(null);
     }
   };

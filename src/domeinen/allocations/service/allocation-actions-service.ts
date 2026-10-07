@@ -1,4 +1,4 @@
-import type { AllocationUnitService } from '@/domeinen/allocation-unit';
+import type { AllocationUnitService, ReregisterReason } from '@/domeinen/allocation-unit';
 import { OUTBOX_KIND, shouldQueueMutation, type MutationOutbox } from '@/domeinen/outbox';
 import type { ReferenceDataService } from '@/domeinen/reference-data';
 import type { Logger } from '@/shared/logging/logger';
@@ -13,9 +13,7 @@ const DECLINE_REASON_ENTITY_NAME = 'dn_allocation_statuscode';
 
 export type AcceptResult =
   | { kind: 'accepted' }
-  /** The unit needs (re-)registering first; the onboarding gate will take over once its query is
-   * invalidated (see `use-allocation-actions`) — there is no separate "register from here" flow. */
-  | { kind: 'reregister-required' }
+  | { kind: 'reregister-required'; reason: ReregisterReason }
   /** Active work exists without a usable unit: dispatch has to sort this out, not the berger. */
   | { kind: 'blocked' }
   | { kind: 'failed' }
@@ -25,7 +23,11 @@ export type AcceptResult =
 export type AllocationActionsService = {
   /** Re-checks the unit (a defensive, point-in-time check — the onboarding gate only re-checks
    * on its own schedule) before accepting. Ported from `useAllocationActions.handleAcceptAllocation`. */
-  accept(allocationId: string, hasActiveAllocations: boolean): Promise<AcceptResult>;
+  accept(
+    allocationId: string,
+    hasActiveAllocations: boolean,
+    isCurrent?: () => boolean,
+  ): Promise<AcceptResult>;
   decline(
     allocationId: string,
     statuscode: number,
@@ -81,12 +83,18 @@ export function createAllocationActionsService(
   }
 
   return {
-    async accept(allocationId, hasActiveAllocations) {
+    async accept(allocationId, hasActiveAllocations, isCurrent) {
       const reregister = await allocationUnitService.checkReregister(hasActiveAllocations);
+      if (isCurrent?.() === false) {
+        return { kind: 'failed' };
+      }
       if (reregister.kind === 'required') {
-        return { kind: 'reregister-required' };
+        return { kind: 'reregister-required', reason: reregister.reason };
       }
       if (reregister.kind === 'blocked') {
+        return { kind: 'blocked' };
+      }
+      if (reregister.expiredWithActiveWork === true) {
         return { kind: 'blocked' };
       }
       try {

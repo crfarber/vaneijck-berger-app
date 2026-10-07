@@ -11,6 +11,7 @@ function photo(overrides: Partial<Photo> & Pick<Photo, 'id' | 'takenAt'>): Photo
     incidentId: 'inc-1',
     allocationId: 'alloc-1',
     phase: PHOTO_PHASE.load,
+    role: 'mandatory',
     position: dashboard,
     filePath: `/tmp/${overrides.id}.jpg`,
     coordinate: { latitude: 52, longitude: 5 },

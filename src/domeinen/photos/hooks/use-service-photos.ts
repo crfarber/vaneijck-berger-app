@@ -70,6 +70,24 @@ export function useServicePhotos(serviceId: string) {
         setBusy(false);
       }
     },
+    async submitBatch(phase: Parameters<typeof service.submitBatch>[1]): Promise<void> {
+      setBusy(true);
+      try {
+        await service.submitBatch(serviceId, phase);
+        await refresh();
+      } finally {
+        setBusy(false);
+      }
+    },
+    async submitOverride(photoId: string): Promise<void> {
+      setBusy(true);
+      try {
+        await service.submitOverride(photoId);
+        await refresh();
+      } finally {
+        setBusy(false);
+      }
+    },
     async retry(photoId: string): Promise<void> {
       setBusy(true);
       try {

@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
+  deliveryPhotoRequirements,
   EXTRA_PHOTO_CATEGORIES,
   missingPhotoPositions,
   photoPositionForRequirement,
+  reconcileHistoryPositions,
   requiresPhotoPositionDetail,
   unmatchedLoadPhotos,
 } from './photo-position-options';
@@ -48,5 +50,35 @@ describe('service definition photo requirements', () => {
     const roof = { category: 'ROOF' } as const;
     expect(unmatchedLoadPhotos([front, front, front, roof], [front])).toEqual([front, front, roof]);
     expect(missingPhotoPositions([front, front, roof], [front, roof])).toEqual([front]);
+  });
+
+  it('combines current requirements with every unmatched load photo occurrence', () => {
+    const front = { category: 'EXTERIOR', angle: 'links-voor' } as const;
+    const roof = { category: 'ROOF' } as const;
+    const dashboard = { category: 'DASHBOARD' } as const;
+
+    expect(deliveryPhotoRequirements([front, dashboard], [front, roof, roof])).toEqual([
+      front,
+      dashboard,
+      roof,
+      roof,
+    ]);
+  });
+
+  it('uses complete server history without duplicating sent local photos', () => {
+    const roof = { category: 'ROOF' } as const;
+    const dashboard = { category: 'DASHBOARD' } as const;
+    const interior = { category: 'INTERIOR' } as const;
+
+    expect(
+      reconcileHistoryPositions(
+        [
+          { position: roof, status: 'sent' },
+          { position: interior, status: 'draft' },
+        ],
+        [roof, dashboard],
+        true,
+      ),
+    ).toEqual([roof, dashboard, interior]);
   });
 });

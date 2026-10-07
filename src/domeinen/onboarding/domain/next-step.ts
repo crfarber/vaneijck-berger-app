@@ -14,7 +14,7 @@ export type OnboardingStep =
   | 'extend-shift';
 
 /** Shown once when the berger may finish open work without a valid unit first. */
-export type OnboardingNotice = 'none' | 'no-valid-unit-continue';
+export type OnboardingNotice = 'none' | 'no-valid-unit-continue' | 'register-unit';
 
 export type OnboardingDecision = {
   step: OnboardingStep;
@@ -51,6 +51,10 @@ export function decideOnboarding(input: {
 
   if (reregister.reason === 'expired') {
     return { step: 'extend-shift', notice: 'none' };
+  }
+
+  if (reregister.reason === 'no-unit') {
+    return { step: 'allocations', notice: 'register-unit' };
   }
 
   return {

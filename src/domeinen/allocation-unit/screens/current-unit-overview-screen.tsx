@@ -2,11 +2,12 @@ import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { Button } from '@/shared/ui/button';
+import { GlassCard } from '@/shared/ui/glass-card';
 import { Screen } from '@/shared/ui/screen';
 import { colors, radius, spacing, type } from '@/shared/ui/theme';
 import { useCurrentUnitOverview } from '../hooks/use-current-unit-overview';
-import { NumberPlate } from '../components/number-plate';
 import { formatEndDate, formatRemainingTime } from '@/shared/utils/time';
+import { CurrentAllocationUnitCard } from '../components/current-allocation-unit-card';
 
 export function CurrentUnitOverviewScreen({
   onChangeUnit,
@@ -55,6 +56,7 @@ export function CurrentUnitOverviewScreen({
     { timeStyle: 'short', dateStyle: 'medium' },
   );
   const remainingTime = formatRemainingTime(overview.remainingMinutes, t);
+  const isActive = overview.remainingMinutes !== null && overview.remainingMinutes > 0;
   const elapsedProgress =
     overview.remainingMinutes === null
       ? 0
@@ -66,7 +68,6 @@ export function CurrentUnitOverviewScreen({
 
   return (
     <Screen
-      backgroundColor={colors.background}
       footer={
         <View style={styles.actions}>
           <Button label={t('unit.overview.changeUnit')} onPress={onChangeUnit} />
@@ -74,48 +75,32 @@ export function CurrentUnitOverviewScreen({
         </View>
       }
     >
-      <View style={styles.header}>
-        <Text accessibilityRole="header" style={styles.title}>
-          {t('unit.overview.navigationTitle')}
-        </Text>
-      </View>
-
-      {}
-      <View style={styles.statusCard}>
-        <View style={styles.statusHeader}>
-          <Text style={styles.statusLabel}>
-            {t('unit.overview.vehicle')} {overview.vehicleNumber ?? t('unit.overview.notSet')}
-          </Text>
-          <View style={styles.activeBadge}>
-            <Text style={styles.activeText}>{t('unit.overview.active')}</Text>
-          </View>
-        </View>
-        <NumberPlate plateNumber={overview.vehicleName ?? ''} />
-        <View style={styles.remainingRow}>
-          <Text style={styles.statusLabel}>
-            {t('unit.endDateLabel')} {endTime}
-          </Text>
-          <Text style={styles.remainingText}>{remainingTime}</Text>
-        </View>
-        <View style={styles.progressTrack}>
-          <View style={[styles.progressFill, { width: `${elapsedProgress * 100}%` }]} />
-        </View>
-      </View>
-
-      <View style={styles.details}>
-        {overview.trailerName ? (
-          <DetailRow
-            label={t('unit.overview.trailer')}
-            value={overview.trailerName}
-            secondaryValue={overview.trailerNumber}
-          />
-        ) : null}
+      <CurrentAllocationUnitCard
+        vehicle={{
+          vehicleNumber: overview.vehicleNumber,
+          vehicleName: overview.vehicleName,
+        }}
+        trailer={
+          overview.trailerName
+            ? {
+                vehicleNumber: overview.trailerNumber,
+                vehicleName: overview.trailerName,
+              }
+            : undefined
+        }
+        isActive={isActive}
+        endTime={endTime}
+        remainingTime={remainingTime}
+        elapsedProgress={elapsedProgress}
+        onUseLastVehicle={onChangeEndDate}
+      />
+      <GlassCard>
         <DetailRow
           label={t('unit.endDateLabel')}
           value={endDateAndTime ?? t('unit.overview.notSet')}
         />
         <DetailRow label={t('unit.availabilityTitle')} value={availability} last />
-      </View>
+      </GlassCard>
     </Screen>
   );
 }
@@ -147,7 +132,6 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.background,
   },
   header: {
     gap: spacing.xs,
@@ -156,13 +140,13 @@ const styles = StyleSheet.create({
   title: {
     ...type.large,
     color: colors.text,
-    textAlign: 'center',
+    textAlign: 'left',
   },
   statusCard: {
     backgroundColor: colors.brandDarker,
     borderRadius: radius.xl,
     gap: spacing.md,
-    padding: spacing.xl,
+    padding: spacing.md,
   },
   statusHeader: {
     alignItems: 'center',
@@ -173,17 +157,6 @@ const styles = StyleSheet.create({
     ...type.body,
     color: colors.brandLight,
     fontWeight: '600',
-  },
-  activeBadge: {
-    backgroundColor: colors.brand,
-    borderRadius: radius.lg,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-  },
-  activeText: {
-    ...type.body,
-    color: colors.text,
-    fontWeight: '700',
   },
   vehicleNumber: {
     alignSelf: 'flex-start',
@@ -218,18 +191,12 @@ const styles = StyleSheet.create({
     backgroundColor: colors.brand,
     height: '100%',
   },
-  details: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    overflow: 'hidden',
-  },
   detailRow: {
-    flexDirection: 'column',
+    flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     gap: spacing.sm,
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: spacing.md,
     paddingVertical: spacing.lg,
     minHeight: 68,
   },
@@ -244,19 +211,19 @@ const styles = StyleSheet.create({
   },
   detailValueGroup: {
     flex: 2,
-    alignItems: 'flex-end',
+    alignItems: 'flex-start',
     gap: spacing.xs,
-    flexDirection: 'row',
+    flexDirection: 'column',
   },
   detailValue: {
     ...type.header,
     color: colors.text,
-    textAlign: 'right',
+    textAlign: 'left',
   },
   detailSecondary: {
     ...type.label,
     color: colors.textMuted,
-    textAlign: 'right',
+    textAlign: 'left',
   },
   actions: {
     gap: spacing.sm,

@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { SettingsHeaderButton } from '@/domeinen/settings/ui';
 import { WorkerStatusPill } from '@/domeinen/worker/ui';
 import { mapBackgroundScreenLayout } from '@/shared/ui/map-background';
-import { colors } from '@/shared/ui/theme';
+import { defaultStackHeaderOptions } from '@/shared/ui/navigation';
 
 export default function AppLayout() {
   const { t } = useTranslation();
@@ -12,9 +12,7 @@ export default function AppLayout() {
     <Stack
       screenLayout={mapBackgroundScreenLayout}
       screenOptions={{
-        headerStyle: { backgroundColor: colors.brand },
-        headerBackButtonDisplayMode: 'minimal',
-        headerTitleAlign: 'center',
+        ...defaultStackHeaderOptions,
         headerTitle: () => <WorkerStatusPill />,
         headerRight: () => <SettingsHeaderButton />,
       }}
@@ -24,6 +22,14 @@ export default function AppLayout() {
       <Stack.Screen
         name="settings"
         options={{
+          headerRight: () => null,
+        }}
+      />
+      <Stack.Screen
+        name="allocation-unit-management"
+        options={{
+          title: t('settings.allocationUnitManagement.title'),
+          headerTitle: undefined,
           headerRight: () => null,
         }}
       />

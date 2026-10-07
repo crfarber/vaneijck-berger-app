@@ -331,6 +331,20 @@ describe('architecture', () => {
     expect(violations).toEqual([]);
   });
 
+  it('gives every route stack the map background, except the root that only hosts the groups', () => {
+    const violations = files
+      .filter((file) => /^app\/.+\/_layout\.tsx$/.test(file.rel))
+      .filter((file) => {
+        const source = readFileSync(file.path, 'utf8');
+        return (
+          /<Stack\b/.test(source) && !source.includes('screenLayout={mapBackgroundScreenLayout}')
+        );
+      })
+      .map((file) => file.rel);
+
+    expect(violations).toEqual([]);
+  });
+
   it('keeps console output out of the source, except in the device adapters', () => {
     const violations = files
       .filter((file) => !file.isTest && !file.rel.startsWith('shared/platform/rn/'))

@@ -116,6 +116,7 @@ export function useRegisterInternalUnit(
     setBusy(true);
     setMessage(null);
     let dialog: 'active-incident' | null = null;
+    let saved = false;
     try {
       await statusOverlay.run(t('feedback.processing.registerUnit'), async () => {
         const result = await service.registerInternal({
@@ -137,9 +138,12 @@ export function useRegisterInternalUnit(
           recentTruckPreference.remember(truck.id),
           homebase.remember(),
         ]);
-        setDone(true);
+        saved = true;
         return { tone: 'none' as const };
       });
+      if (saved) {
+        setDone(true);
+      }
     } finally {
       setBusy(false);
     }

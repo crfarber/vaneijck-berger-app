@@ -44,6 +44,11 @@ describe('translations', () => {
 });
 
 describe('createI18n', () => {
+  it.each([2, 4, 6])('shows the actual number of mandatory photo positions: %s', (total) => {
+    expect(createI18n('nl').t('photos.mandatoryCount', { count: 1, total })).toBe(`1 van ${total}`);
+    expect(createI18n('en').t('photos.mandatoryCount', { count: 1, total })).toBe(`1 of ${total}`);
+  });
+
   it('translates into the chosen language', () => {
     expect(createI18n('nl').t('common.retry')).toBe('Opnieuw proberen');
     expect(createI18n('en').t('common.retry')).toBe('Try again');

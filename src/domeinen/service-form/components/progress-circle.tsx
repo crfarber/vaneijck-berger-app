@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, G } from 'react-native-svg';
-import { colors } from '@/shared/ui/theme';
+import { colors, type } from '@/shared/ui/theme';
 
 /** Filled fields out of the required ones as a growing ring; a check once everything is done. */
 export function ProgressCircle({
@@ -58,7 +58,7 @@ export function ProgressCircle({
               </G>
             ) : null}
           </Svg>
-          <Text style={[styles.label, { fontSize: size * 0.3 }]}>
+          <Text style={styles.label}>
             {completed}/{total}
           </Text>
         </>
@@ -74,5 +74,5 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   done: { backgroundColor: colors.success },
-  label: { color: colors.text, fontWeight: '700' },
+  label: { ...type.small },
 });

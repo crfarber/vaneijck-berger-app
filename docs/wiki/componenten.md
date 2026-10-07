@@ -1,6 +1,6 @@
 # Componenten en routes
 
-> Gecontroleerd op: ba1383c (2026-09-23)
+> Gecontroleerd op: `c0687077` (2026-10-07)
 > Bronnen: `src/app/`, `src/bootstrap/`, `src/domeinen/`, `src/shared/ui/`
 > Zie ook: [overzicht](overzicht.md), [architectuur](../architecture.md), [testen](testen.md)
 
@@ -89,52 +89,53 @@ De belangrijkste composities zijn:
 
 ### Domeincomponenten
 
-| ID       | Component                 | Doel                                                          | Eigenaar        | Code                                                                 | Test |
-| -------- | ------------------------- | ------------------------------------------------------------- | --------------- | -------------------------------------------------------------------- | ---- |
-| COMP-037 | `AllocationActions`       | Toont de beschikbare hoofdacties van een opdrachtkaart.       | allocations     | `src/domeinen/allocations/components/allocation-actions.tsx`         | —    |
-| COMP-038 | `AllocationCardFrame`     | Levert de gedeelde visuele omlijsting voor opdrachtkaarten.   | allocations     | `src/domeinen/allocations/components/allocation-card-frame.tsx`      | —    |
-| COMP-039 | `AllocationRow`           | Rendert één opdracht in de opdrachtenlijst.                   | allocations     | `src/domeinen/allocations/components/allocation-row.tsx`             | —    |
-| COMP-136 | `AllocationDeclineSheet`  | Laat een reden kiezen en een opdracht afwijzen of afronden.   | allocations     | `src/domeinen/allocations/components/allocation-decline-sheet.tsx`   | —    |
-| COMP-137 | `AllocationReassignSheet` | Zoekt een collega en draagt een wachtende opdracht over.      | allocations     | `src/domeinen/allocations/components/allocation-reassign-sheet.tsx`  | —    |
-| COMP-040 | `LocationBlock`           | Toont één of meer adresregels op een kaart.                   | allocations     | `src/domeinen/allocations/components/card-blocks.tsx`                | —    |
-| COMP-041 | `VehicleBlock`            | Toont de bekende voertuiggegevens van een dienst.             | allocations     | `src/domeinen/allocations/components/card-blocks.tsx`                | —    |
-| COMP-042 | `PartyBlock`              | Toont de betrokken partij als die bekend is.                  | allocations     | `src/domeinen/allocations/components/card-blocks.tsx`                | —    |
-| COMP-043 | `ContactBlock`            | Toont contactgegevens en de belactie.                         | allocations     | `src/domeinen/allocations/components/card-blocks.tsx`                | —    |
-| COMP-044 | `ReferenceBlock`          | Toont de referentie van een opdracht of dienst.               | allocations     | `src/domeinen/allocations/components/card-blocks.tsx`                | —    |
-| COMP-045 | `TimeBlock`               | Toont de aanmaaktijd van een incident.                        | allocations     | `src/domeinen/allocations/components/card-blocks.tsx`                | —    |
-| COMP-046 | `PhasePill`               | Markeert de fase en voltooiing op een kaart.                  | allocations     | `src/domeinen/allocations/components/card-blocks.tsx`                | —    |
-| COMP-047 | `CardActionButton`        | Levert een compacte kaartactie.                               | allocations     | `src/domeinen/allocations/components/card-blocks.tsx`                | —    |
-| COMP-048 | `IncidentCard`            | Toont incidentinformatie met swipe- en opdrachtacties.        | allocations     | `src/domeinen/allocations/components/incident-card.tsx`              | —    |
-| COMP-049 | `PltrPhaseCard`           | Toont één laad- of afleverkaart van PLTR.                     | allocations     | `src/domeinen/allocations/components/pltr-phase-card.tsx`            | —    |
-| COMP-050 | `PreviewBanner`           | Maakt zichtbaar dat een opdracht alleen-lezen is geopend.     | allocations     | `src/domeinen/allocations/components/preview-banner.tsx`             | —    |
-| COMP-051 | `ServiceCard`             | Toont de samenvatting en acties van één dienst.               | allocations     | `src/domeinen/allocations/components/service-card.tsx`               | —    |
-| COMP-052 | `ServiceDeclineSheet`     | Begeleidt kiezen en bevestigen van dienst weigeren.           | allocations     | `src/domeinen/allocations/components/service-decline-sheet.tsx`      | —    |
-| COMP-053 | `ServiceRow`              | Rendert één dienst in een dienstensectie.                     | allocations     | `src/domeinen/allocations/components/service-row.tsx`                | —    |
-| COMP-054 | `SwipePanel`              | Toont acties achter een horizontale swipe.                    | allocations     | `src/domeinen/allocations/components/swipe-panel.tsx`                | —    |
-| COMP-055 | `VehicleReleaseRow`       | Toont één voertuigafgiftelocatie.                             | allocations     | `src/domeinen/allocations/components/vehicle-release-row.tsx`        | —    |
-| COMP-056 | `BooleanToggle`           | Toont een twee- of driestandenkeuze in het formulier.         | service-form    | `src/domeinen/service-form/components/boolean-toggle.tsx`            | —    |
-| COMP-057 | `FieldFrame`              | Omkadert een formulierveld en toont label en fouttekst.       | service-form    | `src/domeinen/service-form/components/field-frame.tsx`               | —    |
-| COMP-058 | `ProgressCircle`          | Toont voortgang van een formuliersectie.                      | service-form    | `src/domeinen/service-form/components/progress-circle.tsx`           | —    |
-| COMP-059 | `ReadonlyFieldSummary`    | Toont een niet-wijzigbare formulierwaarde.                    | service-form    | `src/domeinen/service-form/components/readonly-field-summary.tsx`    | —    |
-| COMP-060 | `SelectSheet`             | Toont en filtert keuzes in een bottom sheet.                  | service-form    | `src/domeinen/service-form/components/select-sheet.tsx`              | —    |
-| COMP-061 | `ServiceFieldRenderer`    | Kiest de invoerweergave voor een ondersteund veldtype.        | service-form    | `src/domeinen/service-form/components/service-field-renderer.tsx`    | —    |
-| COMP-062 | `ServiceFormHeader`       | Toont dienst, fase en voortgang.                              | service-form    | `src/domeinen/service-form/components/service-form-header.tsx`       | —    |
-| COMP-063 | `ServiceFormSection`      | Groepeert formuliervelden met voortgang en fouten.            | service-form    | `src/domeinen/service-form/components/service-form-section.tsx`      | —    |
-| COMP-100 | `ServiceFormToolbar`      | Losse knoppenbalk met formulieracties, elders te plaatsen.    | service-form    | `src/domeinen/service-form/components/service-form-toolbar.tsx`      | —    |
-| COMP-064 | `CountryCodePicker`       | Laat de landcode voor externe login kiezen.                   | auth            | `src/domeinen/auth/components/country-code-picker.tsx`               | —    |
-| COMP-065 | `AllocationsToolbar`      | Bundelt GPS, meldkamer, wagen wisselen en meldingen.          | onboarding      | `src/domeinen/onboarding/components/allocations-toolbar.tsx`         | —    |
-| COMP-066 | `AvailabilityFields`      | Toont de beschikbaarheidsschakelaars bij eenheidsregistratie. | allocation-unit | `src/domeinen/allocation-unit/components/availability-fields.tsx`    | —    |
-| COMP-067 | `ChangeVehicleButton`     | Beslist of wagen wisselen direct kan of uitleg vraagt.        | allocation-unit | `src/domeinen/allocation-unit/components/change-vehicle-button.tsx`  | —    |
-| COMP-068 | `DispatchButton`          | Biedt bellen met dispatch en interne support aan.             | allocation-unit | `src/domeinen/allocation-unit/components/dispatch-button.tsx`        | —    |
-| COMP-069 | `EndDateField`            | Laat de eindtijd van de eenheid kiezen en valideren.          | allocation-unit | `src/domeinen/allocation-unit/components/end-date-field.tsx`         | —    |
-| COMP-031 | `FleetPickerSheet`        | Laat een intern voertuig of aanhanger uit de vloot kiezen.    | allocation-unit | `src/domeinen/allocation-unit/components/fleet-picker-sheet.tsx`     | —    |
-| COMP-142 | `NumberPlate`             | Toont of bewerkt een kenteken in NL-plaatvorm.                | allocation-unit | `src/domeinen/allocation-unit/components/number-plate.tsx`           | —    |
-| COMP-143 | `RegisterUnitLayout`      | Gedeelde hero, fouttekst en sticky submit bij registratie.    | allocation-unit | `src/domeinen/allocation-unit/components/register-unit-layout.tsx`   | —    |
-| COMP-070 | `LanguageToggle`          | Wisselt direct tussen Nederlands en Engels.                   | settings        | `src/domeinen/settings/components/language-toggle.tsx`               | —    |
-| COMP-071 | `SettingsHeaderButton`    | Opent instellingen vanuit de app-header.                      | settings        | `src/domeinen/settings/screens/settings-screen.tsx`                  | —    |
-| COMP-072 | `LocationStatusButton`    | Toont GPS-status, coördinaten en kaartactie.                  | location        | `src/domeinen/location/components/location-status-button.tsx`        | —    |
-| COMP-073 | `NotificationBellButton`  | Opent de historie en toont de ongelezen teller.               | notifications   | `src/domeinen/notifications/components/notification-bell-button.tsx` | —    |
-| COMP-074 | `WorkerStatusPill`        | Toont medewerkerbeschikbaarheid en opent de keuzeroute.       | worker          | `src/domeinen/worker/components/worker-status-pill.tsx`              | —    |
+| ID       | Component                 | Doel                                                                                       | Eigenaar        | Code                                                                  | Test |
+| -------- | ------------------------- | ------------------------------------------------------------------------------------------ | --------------- | --------------------------------------------------------------------- | ---- |
+| COMP-037 | `AllocationActions`       | Toont de beschikbare hoofdacties van een opdrachtkaart.                                    | allocations     | `src/domeinen/allocations/components/allocation-actions.tsx`          | —    |
+| COMP-038 | `AllocationCardFrame`     | Levert de gedeelde visuele omlijsting voor opdrachtkaarten.                                | allocations     | `src/domeinen/allocations/components/allocation-card-frame.tsx`       | —    |
+| COMP-039 | `AllocationRow`           | Rendert één opdracht in de opdrachtenlijst.                                                | allocations     | `src/domeinen/allocations/components/allocation-row.tsx`              | —    |
+| COMP-136 | `AllocationDeclineSheet`  | Laat een reden kiezen en een opdracht afwijzen of afronden.                                | allocations     | `src/domeinen/allocations/components/allocation-decline-sheet.tsx`    | —    |
+| COMP-137 | `AllocationReassignSheet` | Zoekt een collega en draagt een wachtende opdracht over.                                   | allocations     | `src/domeinen/allocations/components/allocation-reassign-sheet.tsx`   | —    |
+| COMP-040 | `LocationBlock`           | Toont één of meer adresregels op een kaart.                                                | allocations     | `src/domeinen/allocations/components/card-blocks.tsx`                 | —    |
+| COMP-041 | `VehicleBlock`            | Toont de bekende voertuiggegevens van een dienst.                                          | allocations     | `src/domeinen/allocations/components/card-blocks.tsx`                 | —    |
+| COMP-042 | `PartyBlock`              | Toont de betrokken partij als die bekend is.                                               | allocations     | `src/domeinen/allocations/components/card-blocks.tsx`                 | —    |
+| COMP-043 | `ContactBlock`            | Toont contactgegevens en de belactie.                                                      | allocations     | `src/domeinen/allocations/components/card-blocks.tsx`                 | —    |
+| COMP-044 | `ReferenceBlock`          | Toont de referentie van een opdracht of dienst.                                            | allocations     | `src/domeinen/allocations/components/card-blocks.tsx`                 | —    |
+| COMP-045 | `TimeBlock`               | Toont de aanmaaktijd van een incident.                                                     | allocations     | `src/domeinen/allocations/components/card-blocks.tsx`                 | —    |
+| COMP-046 | `PhasePill`               | Markeert de fase en voltooiing op een kaart.                                               | allocations     | `src/domeinen/allocations/components/card-blocks.tsx`                 | —    |
+| COMP-047 | `CardActionButton`        | Levert een compacte kaartactie.                                                            | allocations     | `src/domeinen/allocations/components/card-blocks.tsx`                 | —    |
+| COMP-048 | `IncidentCard`            | Toont incidentinformatie met swipe- en opdrachtacties.                                     | allocations     | `src/domeinen/allocations/components/incident-card.tsx`               | —    |
+| COMP-049 | `PltrPhaseCard`           | Toont één laad- of afleverkaart van PLTR.                                                  | allocations     | `src/domeinen/allocations/components/pltr-phase-card.tsx`             | —    |
+| COMP-050 | `PreviewBanner`           | Maakt zichtbaar dat een opdracht alleen-lezen is geopend.                                  | allocations     | `src/domeinen/allocations/components/preview-banner.tsx`              | —    |
+| COMP-051 | `ServiceCard`             | Toont de samenvatting en acties van één dienst.                                            | allocations     | `src/domeinen/allocations/components/service-card.tsx`                | —    |
+| COMP-052 | `ServiceDeclineSheet`     | Begeleidt kiezen en bevestigen van dienst weigeren.                                        | allocations     | `src/domeinen/allocations/components/service-decline-sheet.tsx`       | —    |
+| COMP-053 | `ServiceRow`              | Rendert één dienst in een dienstensectie.                                                  | allocations     | `src/domeinen/allocations/components/service-row.tsx`                 | —    |
+| COMP-054 | `SwipePanel`              | Toont acties achter een horizontale swipe.                                                 | allocations     | `src/domeinen/allocations/components/swipe-panel.tsx`                 | —    |
+| COMP-055 | `VehicleReleaseRow`       | Toont één voertuigafgiftelocatie.                                                          | allocations     | `src/domeinen/allocations/components/vehicle-release-row.tsx`         | —    |
+| COMP-056 | `BooleanToggle`           | Toont een twee- of driestandenkeuze in het formulier.                                      | service-form    | `src/domeinen/service-form/components/boolean-toggle.tsx`             | —    |
+| COMP-057 | `FieldFrame`              | Omkadert een formulierveld en toont label en fouttekst.                                    | service-form    | `src/domeinen/service-form/components/field-frame.tsx`                | —    |
+| COMP-058 | `ProgressCircle`          | Toont voortgang van een formuliersectie.                                                   | service-form    | `src/domeinen/service-form/components/progress-circle.tsx`            | —    |
+| COMP-059 | `ReadonlyFieldSummary`    | Toont een niet-wijzigbare formulierwaarde.                                                 | service-form    | `src/domeinen/service-form/components/readonly-field-summary.tsx`     | —    |
+| COMP-060 | `SelectSheet`             | Toont en filtert keuzes in een bottom sheet.                                               | service-form    | `src/domeinen/service-form/components/select-sheet.tsx`               | —    |
+| COMP-061 | `ServiceFieldRenderer`    | Kiest de invoerweergave voor een ondersteund veldtype.                                     | service-form    | `src/domeinen/service-form/components/service-field-renderer.tsx`     | —    |
+| COMP-062 | `ServiceFormHeader`       | Toont dienst, fase en voortgang.                                                           | service-form    | `src/domeinen/service-form/components/service-form-header.tsx`        | —    |
+| COMP-063 | `ServiceFormSection`      | Groepeert formuliervelden met voortgang en fouten.                                         | service-form    | `src/domeinen/service-form/components/service-form-section.tsx`       | —    |
+| COMP-100 | `ServiceFormToolbar`      | Losse knoppenbalk met formulieracties, elders te plaatsen.                                 | service-form    | `src/domeinen/service-form/components/service-form-toolbar.tsx`       | —    |
+| COMP-101 | `ServiceFormAddressGroup` | Bundelt postcode-lookup, Places-zoeken en handmatige adresinvoer bovenop losse CRM-velden. | service-form    | `src/domeinen/service-form/components/service-form-address-group.tsx` | —    |
+| COMP-064 | `CountryCodePicker`       | Laat de landcode voor externe login kiezen.                                                | auth            | `src/domeinen/auth/components/country-code-picker.tsx`                | —    |
+| COMP-065 | `AllocationsToolbar`      | Bundelt GPS, meldkamer, wagen wisselen en meldingen.                                       | onboarding      | `src/domeinen/onboarding/components/allocations-toolbar.tsx`          | —    |
+| COMP-066 | `AvailabilityFields`      | Toont de beschikbaarheidsschakelaars bij eenheidsregistratie.                              | allocation-unit | `src/domeinen/allocation-unit/components/availability-fields.tsx`     | —    |
+| COMP-067 | `ChangeVehicleButton`     | Beslist of wagen wisselen direct kan of uitleg vraagt.                                     | allocation-unit | `src/domeinen/allocation-unit/components/change-vehicle-button.tsx`   | —    |
+| COMP-068 | `DispatchButton`          | Biedt bellen met dispatch en interne support aan.                                          | allocation-unit | `src/domeinen/allocation-unit/components/dispatch-button.tsx`         | —    |
+| COMP-069 | `EndDateField`            | Laat de eindtijd van de eenheid kiezen en valideren.                                       | allocation-unit | `src/domeinen/allocation-unit/components/end-date-field.tsx`          | —    |
+| COMP-031 | `FleetPickerSheet`        | Laat een intern voertuig of aanhanger uit de vloot kiezen.                                 | allocation-unit | `src/domeinen/allocation-unit/components/fleet-picker-sheet.tsx`      | —    |
+| COMP-142 | `NumberPlate`             | Toont of bewerkt een kenteken in NL-plaatvorm.                                             | allocation-unit | `src/domeinen/allocation-unit/components/number-plate.tsx`            | —    |
+| COMP-143 | `RegisterUnitLayout`      | Gedeelde hero, fouttekst en sticky submit bij registratie.                                 | allocation-unit | `src/domeinen/allocation-unit/components/register-unit-layout.tsx`    | —    |
+| COMP-070 | `LanguageToggle`          | Wisselt direct tussen Nederlands en Engels.                                                | settings        | `src/domeinen/settings/components/language-toggle.tsx`                | —    |
+| COMP-071 | `SettingsHeaderButton`    | Opent instellingen vanuit de app-header.                                                   | settings        | `src/domeinen/settings/screens/settings-screen.tsx`                   | —    |
+| COMP-072 | `LocationStatusButton`    | Toont GPS-status, coördinaten en kaartactie.                                               | location        | `src/domeinen/location/components/location-status-button.tsx`         | —    |
+| COMP-073 | `NotificationBellButton`  | Opent de historie en toont de ongelezen teller.                                            | notifications   | `src/domeinen/notifications/components/notification-bell-button.tsx`  | —    |
+| COMP-074 | `WorkerStatusPill`        | Toont medewerkerbeschikbaarheid en opent de keuzeroute.                                    | worker          | `src/domeinen/worker/components/worker-status-pill.tsx`               | —    |
 
 ### Gedeelde UI
 

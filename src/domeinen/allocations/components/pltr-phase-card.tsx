@@ -64,7 +64,7 @@ export function PltrPhaseCard({
 const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.brandDark,
-    borderRadius: radius.md,
+    borderRadius: radius.xl,
     padding: spacing.md,
     gap: spacing.md,
   },

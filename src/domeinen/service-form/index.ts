@@ -19,7 +19,12 @@ export {
   resolveCountryAnswer,
 } from './domain/address-place-selection';
 export type { AddressComponentMapping, CountryLookupRow } from './domain/address-place-selection';
+export {
+  normalizeDutchPostalCode,
+  parsePostalAddressLookupResponse,
+} from './domain/postal-address-lookup';
 export { evaluateServiceFormVisibility, isServiceFormConditionMet } from './domain/conditions';
+export { createServiceFormScenario } from './domain/scenario-export';
 export {
   FIELD_KIND,
   groupSectionFields,
@@ -28,6 +33,8 @@ export {
 } from './domain/field-kind';
 export type { FieldGroup, FieldKind } from './domain/field-kind';
 export {
+  isLastServiceFormPhase,
+  phaseNumbersFromDefinition,
   SERVICE_FORM_PHASE,
   serviceFormLanguageCode,
   serviceFormPhaseForStatus,
@@ -79,6 +86,7 @@ export {
   coerceFieldValue,
   isAnswerEmpty,
   resolveSignatureAbsentFlags,
+  resolveStatusFields,
 } from './domain/submission';
 export type { ServiceFormSubmissionOptions } from './domain/submission';
 export type {
@@ -87,6 +95,7 @@ export type {
   NormalizedServiceFormResult,
   NormalizeServiceFormOptions,
   RawServiceFormDefinition,
+  PostalAddressLookupInput,
   ServiceFormAnswer,
   ServiceFormAnswers,
   ServiceFormCapabilities,

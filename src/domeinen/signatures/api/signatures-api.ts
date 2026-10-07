@@ -1,5 +1,6 @@
 import { HttpError } from '@/shared/api/errors';
 import type { HttpClient } from '@/shared/api/http-client';
+import type { MultipartUploadFiles } from '@/shared/platform/ports';
 
 export type UploadSignatureInput = {
   incidentId: string;
@@ -24,7 +25,7 @@ export type SignaturesApi = {
  * Reusable signature upload client — same multipart style as photos. Image encoding (PNG→JPEG)
  * stays behind a platform adapter; this only sends JPEG bytes.
  */
-export function createSignaturesApi(http: HttpClient): SignaturesApi {
+export function createSignaturesApi(http: HttpClient, files: MultipartUploadFiles): SignaturesApi {
   return {
     async upload(input) {
       const body = new FormData();
@@ -35,13 +36,13 @@ export function createSignaturesApi(http: HttpClient): SignaturesApi {
       body.append('email', input.email);
       body.append('phase', input.phase);
       body.append('signatureType', input.signatureType);
-      body.append(
-        'file',
-        new Blob([input.fileBytes as BlobPart], { type: 'image/jpeg' }),
-        input.fileName ?? 'signature.jpg',
-      );
+      const file = await files.prepare(input.fileBytes, {
+        name: input.fileName ?? 'signature.jpg',
+        type: 'image/jpeg',
+      });
 
       try {
+        file.appendTo(body, 'file');
         await http.request('/api/signatures', {
           method: 'POST',
           body,
@@ -53,6 +54,8 @@ export function createSignaturesApi(http: HttpClient): SignaturesApi {
           return;
         }
         throw error;
+      } finally {
+        await file.remove();
       }
     },
   };

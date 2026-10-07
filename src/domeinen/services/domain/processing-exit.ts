@@ -1,12 +1,12 @@
 import { getEarlyCompleteFlags, hasEarlyCompleteTerminal } from './early-complete';
-import { LCMH_IM_ACTION_STATUS_CODES, SERVICE_TYPE } from './service-types';
+import { LCMH_IM_ACTION_STATUS_CODES } from './service-types';
 import { isSubmitAllowed, SERVICE_STATUS } from './status';
 
 /**
  * Where the flow goes after the berger sent (or declined, or finished) a service:
  * - `terminal`: this service is done; go back to the allocation (or the next open service).
  * - `continueIncident`: stay in the incident and pick the next step.
- * - `processingFinish`: show the closing screen (phase 2 of the flow).
+ * - `processingFinish`: show the closing screen after the last phase of a multi-phase service.
  * - `blocked`: nothing was sent; return to the allocation.
  */
 export type ProcessingExitKind = 'terminal' | 'continueIncident' | 'processingFinish' | 'blocked';
@@ -44,14 +44,6 @@ function isLcmh(body: Readonly<Record<string, unknown>>): boolean {
   return typeof code === 'number' && LCMH_IM_ACTION_STATUS_CODES.includes(code);
 }
 
-/** A submit that ends the service without a phase 2. */
-function isTerminalSubmit(
-  serviceTypeCode: number | undefined,
-  body: Readonly<Record<string, unknown>>,
-): boolean {
-  return serviceTypeCode === SERVICE_TYPE.AFGIFTE || body.statuscode === SERVICE_STATUS.NACONTROLE;
-}
-
 export function resolveProcessingExit(input: ProcessingExitInput): ProcessingExitResult {
   switch (input.trigger) {
     case 'blocked':
@@ -75,18 +67,24 @@ export function resolveProcessingExit(input: ProcessingExitInput): ProcessingExi
       }
 
       const lcmh = isLcmh(postedBody);
+      const postedStatus =
+        typeof postedBody.statuscode === 'number' ? postedBody.statuscode : undefined;
 
       if (hasEarlyCompleteTerminal(getEarlyCompleteFlags(serviceTypeCode, postedBody))) {
         return result('terminal', { isEarlyComplete: true, isLcmh: lcmh });
       }
-      if (isTerminalSubmit(serviceTypeCode, postedBody)) {
+      if (postedStatus === SERVICE_STATUS.NACONTROLE) {
         return result('terminal', { isLcmh: lcmh });
       }
       if (isReleaseItem && locationId) {
         return result('terminal', { isLcmh: lcmh });
       }
-      if (currentStatuscode === SERVICE_STATUS.HULPVERLENING_AKKOORD) {
-        return result('processingFinish', { isLcmh: lcmh });
+      if (postedStatus === SERVICE_STATUS.HULPVERLENING_AFGEROND) {
+        // Last phase of a multi-phase service was already at akkoord; show the closing screen.
+        // A one-phase definition posts afgerond from an earlier status and ends immediately.
+        return currentStatuscode === SERVICE_STATUS.HULPVERLENING_AKKOORD
+          ? result('processingFinish', { isLcmh: lcmh })
+          : result('terminal', { isLcmh: lcmh });
       }
       return result('continueIncident', { isLcmh: lcmh });
     }

@@ -5,6 +5,7 @@ import {
   EXTERIOR_ANGLES,
   PHOTO_CATEGORY,
   PHOTO_PHASE,
+  PHOTO_ROLE,
   PHOTO_STATUS,
   TYRE_POSITIONS,
   type Photo,
@@ -42,11 +43,14 @@ const photoSchema = z.object({
   incidentId: z.string(),
   allocationId: z.string(),
   phase: z.enum([PHOTO_PHASE.load, PHOTO_PHASE.delivery]),
+  role: z.enum([PHOTO_ROLE.mandatory, PHOTO_ROLE.additional]).default(PHOTO_ROLE.mandatory),
   position: positionSchema,
   filePath: z.string(),
   coordinate: z.object({ latitude: z.number(), longitude: z.number() }).nullable(),
   takenAt: z.number(),
-  status: z.enum([PHOTO_STATUS.queued, PHOTO_STATUS.sent, PHOTO_STATUS.failed]),
+  status: z.enum([PHOTO_STATUS.draft, PHOTO_STATUS.queued, PHOTO_STATUS.sent, PHOTO_STATUS.failed]),
+  overrideExisting: z.boolean().default(false),
+  isExtraOverride: z.boolean().optional(),
 });
 
 const listSchema = z.array(photoSchema);

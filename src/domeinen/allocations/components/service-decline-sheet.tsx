@@ -12,12 +12,14 @@ import {
 /** Choose → confirm → submit. Selecting an option never declines; confirm does. */
 export function ServiceDeclineSheet({
   state,
+  canReturnToDispatch,
   onClose,
   onSelect,
   onBack,
   onConfirm,
 }: {
   state: ServiceDeclineStep;
+  canReturnToDispatch: boolean;
   onClose: () => void;
   onSelect: (action: ServiceDeclineAction) => void;
   onBack: () => void;
@@ -46,11 +48,13 @@ export function ServiceDeclineSheet({
               label={t('services.decline.futileRide')}
               onPress={() => onSelect(SERVICE_DECLINE_ACTION.futileRide)}
             />
-            <Button
-              label={t('services.decline.returnToDispatch')}
-              variant="secondary"
-              onPress={() => onSelect(SERVICE_DECLINE_ACTION.returnToDispatch)}
-            />
+            {canReturnToDispatch ? (
+              <Button
+                label={t('services.decline.returnToDispatch')}
+                variant="secondary"
+                onPress={() => onSelect(SERVICE_DECLINE_ACTION.returnToDispatch)}
+              />
+            ) : null}
           </View>
         ) : state.step === 'confirm' || state.step === 'submitting' ? (
           <View style={styles.actions}>

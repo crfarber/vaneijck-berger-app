@@ -137,9 +137,9 @@ const styles = StyleSheet.create({
   wrap: { gap: spacing.sm },
   card: {
     backgroundColor: colors.brandDark,
-    borderRadius: radius.md,
+    borderRadius: radius.xl,
     padding: spacing.md,
-    minHeight: 160,
+    minHeight: 180,
     justifyContent: 'space-between',
     gap: spacing.md,
   },

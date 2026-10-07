@@ -1,6 +1,6 @@
 # 0020. Nieuwe fotostroom
 
-**Status:** gebouwd (scherm + wachtrij). Handtekening volgt later.
+**Status:** gebouwd; herzien op 2026-10-07 voor expliciete batchverzending en overrides.
 
 ## Context
 
@@ -12,21 +12,26 @@ oude stores of schermen over te nemen.
 ## Besluit
 
 - Nieuw domein `photos`: één lijst van foto's per apparaat (metadata in `KeyValueStore`, JPEG via
-  de poort `PhotoFiles`). Status `queued` | `sent` | `failed`.
-- `isExtra` wordt niet opgeslagen. Bij uploaden telt `isExtraForUpload` alleen foto's van dezelfde
-  dienst, fase en type, op volgorde van `takenAt`. Een laadfoto maakt een afleverfoto nooit
-  "extra".
+  de poort `PhotoFiles`). Status `draft` | `queued` | `sent` | `failed`; de rol is `mandatory` of
+  `additional`.
+- Capture bewaart alleen een lokaal `draft`. `submitBatch` zet gewone concepten van één dienst en
+  fase samen op `queued`. Een vervangingsconcept blijft buiten die batch en gaat afzonderlijk via
+  `submitOverride`.
+- `isExtraForUpload` telt foto's van dezelfde dienst, fase en type, inclusief gecachete serverfoto's
+  voor nieuwe extra's. Een override behoudt de `isExtra`-waarde van zijn doel.
 - Upload: `POST /api/binary/upload?content=photo` als multipart, velden zoals
   `UploadPhotoAndPosition` (inclusief `ImagePosition` als `{ name, position? }` met Nederlandse
-  labels). Netwerk/5xx: blijft `queued` en wordt hervat. Andere 4xx: `failed`, bestand blijft.
+  labels en exact veld `Comment`). `overrideExisting` is een queryparameter. Netwerk/5xx: blijft
+  `queued` en wordt hervat. Andere 4xx: `failed`, bestand blijft.
 - Geen bruikbare locatie: foto blijft in de wachtrij; bij drain wordt `LocationReader` opnieuw
   gevraagd.
-- Scherm tijdelijk vanaf dienst- en PLTR-scherm (`…/photos`). Type kiest de berger zelf tot het
-  formulier verplichte types meegeeft. Fase afleveren toont laadfoto's read-only.
+- Het overzicht haalt serverfoto's ook naast lokale concepten op. Verplichte verzonden foto's zijn
+  vervangbaar; verzonden extra's zijn locked. Fase 2 toont alle fase-1-foto's als aanklikbare
+  history en maakt iedere occurrence verplicht. Een eenfasige afgifte toont geen history.
 - Afronden/afwijzen wist foto's van die dienst; uitloggen wist alles. Handtekening
   (`POST /api/signatures`) hoort niet bij deze stap.
 
 ## Gevolgen
 
 - Camera vraagt een nieuwe development build (`expo-camera` + `expo-file-system`).
-- Het verwerkingsformulier opent later hetzelfde scherm; het formulier uploadt niets zelf.
+- Het verwerkingsformulier gebruikt dezelfde server/local-reconciliatie en uploadt niets zelf.

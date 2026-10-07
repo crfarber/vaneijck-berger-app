@@ -3,15 +3,14 @@ import { colors } from '@/shared/ui/theme';
 import { SettingsHeaderButton } from '@/domeinen/settings/ui';
 import { WorkerStatusPill } from '@/domeinen/worker/ui';
 import { mapBackgroundScreenLayout } from '@/shared/ui/map-background';
+import { defaultStackHeaderOptions } from '@/shared/ui/navigation';
 
 export default function PhotosLayout() {
   return (
     <Stack
       screenLayout={mapBackgroundScreenLayout}
       screenOptions={{
-        headerStyle: { backgroundColor: colors.brand },
-        headerBackButtonDisplayMode: 'minimal',
-        headerTitleAlign: 'center',
+        ...defaultStackHeaderOptions,
         headerTitle: () => <WorkerStatusPill />,
         headerRight: () => <SettingsHeaderButton />,
       }}
@@ -26,8 +25,7 @@ export default function PhotosLayout() {
           headerTransparent: true,
           headerStyle: { backgroundColor: 'transparent' },
           headerShadowVisible: false,
-          headerTintColor: colors.background,
-          headerBackButtonDisplayMode: 'minimal',
+          headerTintColor: colors.brandText,
           headerRight: () => null,
         }}
       />

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { Alert, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { Button } from '@/shared/ui/button';
 import { Screen } from '@/shared/ui/screen';
@@ -25,10 +25,11 @@ function SnapshotBlock({ title, value }: { title: string; value: unknown }) {
  */
 export function DebugScreen() {
   const { t } = useTranslation();
-  const { loadDebugSnapshot } = useDevTools();
+  const { loadDebugSnapshot, copyAccessToken } = useDevTools();
   const [snapshot, setSnapshot] = useState<DebugSnapshot | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [copyingToken, setCopyingToken] = useState(false);
 
   useEffect(() => {
     if (!__DEV__) {
@@ -48,6 +49,28 @@ export function DebugScreen() {
     }
   }, [loadDebugSnapshot, t]);
 
+  const copyToken = useCallback(async (): Promise<void> => {
+    setCopyingToken(true);
+    try {
+      const copied = await copyAccessToken();
+      Alert.alert(
+        t('debug.copyAccessToken'),
+        t(copied ? 'debug.copyAccessTokenCopied' : 'debug.copyAccessTokenUnavailable'),
+      );
+    } catch {
+      Alert.alert(t('debug.copyAccessToken'), t('debug.copyAccessTokenFailed'));
+    } finally {
+      setCopyingToken(false);
+    }
+  }, [copyAccessToken, t]);
+
+  const confirmCopyToken = (): void => {
+    Alert.alert(t('debug.copyAccessTokenTitle'), t('debug.copyAccessTokenWarning'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('debug.copyAccessTokenConfirm'), onPress: () => void copyToken() },
+    ]);
+  };
+
   if (!__DEV__) {
     return null;
   }
@@ -57,6 +80,11 @@ export function DebugScreen() {
       <Text style={styles.heading}>{t('debug.title')}</Text>
       <Text style={styles.hint}>{t('debug.hint')}</Text>
       <Button label={t('debug.refresh')} onPress={() => void refresh()} loading={loading} />
+      <Button
+        label={t('debug.copyAccessToken')}
+        onPress={confirmCopyToken}
+        loading={copyingToken}
+      />
       {error !== null ? <Text style={styles.error}>{error}</Text> : null}
       {snapshot !== null ? (
         <>

@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import type { Coordinate } from '@/domeinen/location';
 import type { HttpClient } from '@/shared/api/http-client';
+import type { MultipartUploadFiles } from '@/shared/platform/ports';
 import { commentForPhase } from '../domain/phase';
 import { isExteriorAngle, isTyrePosition } from '../domain/photo-type';
 import { PHOTO_PHASE, type PhotoPhase, type PhotoPosition } from '../domain/types';
@@ -145,7 +146,7 @@ function mapServerPhotoSummary(
  * `POST /api/binary/upload?content=photo` as multipart. Field names match the old
  * `UploadPhotoAndPosition` form (`IncidentId`, `ServiceId`, `ImagePosition`, `isExtra`, …).
  */
-export function createPhotosApi(http: HttpClient): PhotosApi {
+export function createPhotosApi(http: HttpClient, files: MultipartUploadFiles): PhotosApi {
   return {
     async upload(input) {
       const body = new FormData();
@@ -153,25 +154,29 @@ export function createPhotosApi(http: HttpClient): PhotosApi {
       body.append('ServiceId', input.serviceId);
       body.append('Latitude', String(input.coordinate.latitude));
       body.append('Longitude', String(input.coordinate.longitude));
-      body.append('Comment  ', input.comment);
+      body.append('Comment', input.comment);
       body.append('CreatedDateTime', input.createdDateTime);
       body.append('ImagePosition', JSON.stringify(input.imagePosition));
       body.append('isExtra', input.isExtra ? 'true' : 'false');
-      body.append('overrideExisting', input.overrideExisting === true ? 'true' : 'false');
-      body.append(
-        'file',
-        new Blob([input.fileBytes as BlobPart], { type: 'image/jpeg' }),
-        input.fileName,
-      );
-
-      await http.request('/api/binary/upload', {
-        method: 'POST',
-        query: { content: 'photo' },
-        body,
-        responseType: 'none',
-        // Large JPEGs on a weak connection need more than the default 30 s.
-        timeoutMs: 120_000,
+      const file = await files.prepare(input.fileBytes, {
+        name: input.fileName,
+        type: 'image/jpeg',
       });
+      try {
+        file.appendTo(body, 'file');
+        await http.request('/api/binary/upload', {
+          method: 'POST',
+          query: {
+            content: 'photo',
+            ...(input.overrideExisting === true ? { overrideExisting: true } : {}),
+          },
+          body,
+          responseType: 'none',
+          timeoutMs: 120_000,
+        });
+      } finally {
+        await file.remove();
+      }
     },
 
     async list(input) {

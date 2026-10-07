@@ -1,15 +1,27 @@
-import type { ReactNode } from 'react';
-import { ImageBackground, StyleSheet } from 'react-native';
+import { BlurTargetView } from 'expo-blur';
+import { createContext, useRef, type ReactNode, type RefObject } from 'react';
+import { ImageBackground, StyleSheet, View } from 'react-native';
 
 import mapBackground from '@/assets/images/background.jpg';
 import { colors } from './theme';
 
+export const MapBackgroundBlurContext = createContext<RefObject<View | null> | undefined>(
+  undefined,
+);
+
 /** Default faded street-map behind app screens (legacy background.jpg). */
 export function MapBackground({ children }: { children: ReactNode }) {
+  const blurTarget = useRef<View>(null);
+
   return (
-    <ImageBackground source={mapBackground} style={styles.root} resizeMode="cover">
-      {children}
-    </ImageBackground>
+    <MapBackgroundBlurContext.Provider value={blurTarget}>
+      <View style={styles.root}>
+        <BlurTargetView ref={blurTarget} style={StyleSheet.absoluteFill} pointerEvents="none">
+          <ImageBackground source={mapBackground} style={styles.root} resizeMode="cover" />
+        </BlurTargetView>
+        {children}
+      </View>
+    </MapBackgroundBlurContext.Provider>
   );
 }
 

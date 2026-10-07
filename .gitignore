@@ -42,3 +42,5 @@ coverage/
 # Firebase-configuratie hoort per omgeving bij EAS, niet in git
 google-services.json
 GoogleService-Info.plist
+
+/legacy/

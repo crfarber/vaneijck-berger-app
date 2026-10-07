@@ -4,7 +4,7 @@ import { ActivityIndicator, SectionList, StyleSheet, Text, View } from 'react-na
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '@/shared/ui/button';
 import { CollapsibleSectionHeader } from '@/shared/ui/collapsible-section-header';
-import { colors, spacing, type } from '@/shared/ui/theme';
+import { colors, radius, spacing, type } from '@/shared/ui/theme';
 import { AllocationRow } from '../components/allocation-row';
 import { VehicleReleaseRow } from '../components/vehicle-release-row';
 import { hasActiveAllocations } from '../domain/sections';
@@ -18,6 +18,7 @@ type ListSection = {
   key: SectionKey;
   title: string;
   collapsed: boolean;
+  count: number;
   data: readonly Row[];
 };
 
@@ -48,15 +49,18 @@ export function AllocationsScreen({ toolbar }: { toolbar?: ReactNode } = {}) {
     const isCollapsed = collapsed.has(section.type);
     return {
       key: section.type,
-      title: `${t(`allocations.sections.${section.type}`)} (${section.count})`,
+      title: `${t(`allocations.sections.${section.type}`)}`,
+      count: section.data.length,
       collapsed: isCollapsed,
       data: isCollapsed ? [] : section.data,
     };
   });
 
+  const toolbarHeader =
+    toolbar !== undefined ? <View style={styles.toolbar}>{toolbar}</View> : null;
+
   return (
     <SafeAreaView style={styles.safeArea} edges={['bottom']}>
-      {toolbar !== undefined ? <View style={styles.toolbar}>{toolbar}</View> : null}
       {isPending ? (
         <ActivityIndicator style={styles.center} color={colors.text} />
       ) : isError ? (
@@ -71,6 +75,7 @@ export function AllocationsScreen({ toolbar }: { toolbar?: ReactNode } = {}) {
           keyExtractor={(item) =>
             isVehicleRelease(item) ? item.dn_locationId : item.dn_allocationid
           }
+          ListHeaderComponent={toolbarHeader}
           renderItem={({ item, section }) =>
             isVehicleRelease(item) ? (
               <VehicleReleaseRow location={item} />
@@ -85,6 +90,7 @@ export function AllocationsScreen({ toolbar }: { toolbar?: ReactNode } = {}) {
           renderSectionHeader={({ section }) => (
             <CollapsibleSectionHeader
               title={section.title}
+              count={section.count}
               collapsed={section.collapsed}
               onPress={() => toggleSection(section.key)}
             />
@@ -108,7 +114,7 @@ export function AllocationsScreen({ toolbar }: { toolbar?: ReactNode } = {}) {
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: 'transparent' },
   toolbar: {
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: spacing.xs,
     paddingTop: spacing.sm,
     paddingBottom: spacing.xs,
   },
@@ -117,8 +123,11 @@ const styles = StyleSheet.create({
   sectionEmpty: {
     ...type.label,
     color: colors.textMuted,
-    paddingVertical: spacing.sm,
+    backgroundColor: 'rgba(255, 255, 255, 0.75)',
+    borderRadius: radius.xxl,
+    paddingVertical: spacing.md,
     paddingHorizontal: spacing.md,
+    textAlign: 'center',
   },
   separator: { height: spacing.sm },
   center: {

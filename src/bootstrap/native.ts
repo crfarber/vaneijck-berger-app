@@ -1,4 +1,5 @@
 import { authorize, refresh } from 'react-native-app-auth';
+import { fetch as expoFetch } from 'expo/fetch';
 import { router } from 'expo-router';
 import type { InternalAuth } from '@/domeinen/auth';
 import { createInternalAuth } from '@/domeinen/auth/ui';
@@ -9,6 +10,7 @@ import { createExpoDevicePermissions } from '@/domeinen/settings/ui';
 import { createRnLogShare } from '@/domeinen/support/ui';
 import { createDeviceKeyValueStore } from '@/shared/platform/rn/key-value-store';
 import { createExpoHaptics } from '@/shared/platform/rn/expo-haptics';
+import { createExpoMultipartUploadFiles } from '@/shared/platform/rn/expo-multipart-upload-files';
 import { createDeviceSecretStore } from '@/shared/platform/rn/secure-store';
 import { consoleSink } from '@/shared/platform/rn/console-sink';
 import type { RuntimeConfig } from '@/shared/config/runtime-config';
@@ -44,6 +46,7 @@ export function createNativeContainer(): Container {
     devicePermissions: createExpoDevicePermissions(),
     logShare: createRnLogShare(),
     photoFiles: createExpoPhotoFiles(secretStore),
+    multipartUploadFiles: createExpoMultipartUploadFiles(),
     pushGateway: createFirebasePushGateway(),
     notificationNavigation: {
       openAllocations() {
@@ -52,5 +55,6 @@ export function createNativeContainer(): Container {
     },
     haptics: createExpoHaptics(),
     logSink: consoleSink,
+    fetch: expoFetch,
   });
 }

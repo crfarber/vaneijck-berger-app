@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  canReturnToDispatch,
   reduceServiceDecline,
   SERVICE_DECLINE_ACTION,
   statuscodeForDeclineAction,
@@ -48,5 +49,10 @@ describe('reduceServiceDecline', () => {
   it('maps each action to the CRM status code', () => {
     expect(statuscodeForDeclineAction(SERVICE_DECLINE_ACTION.futileRide)).toBe(875920006);
     expect(statuscodeForDeclineAction(SERVICE_DECLINE_ACTION.returnToDispatch)).toBe(1);
+  });
+
+  it('allows returning a service to dispatch only during phase 1', () => {
+    expect(canReturnToDispatch(875920000)).toBe(true);
+    expect(canReturnToDispatch(875920004)).toBe(false);
   });
 });

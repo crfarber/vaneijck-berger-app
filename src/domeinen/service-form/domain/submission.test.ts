@@ -167,15 +167,30 @@ describe('resolveSignatureAbsentFlags', () => {
 });
 
 describe('buildServicePostBody', () => {
-  const options = { pleaseSelectLabel: PLEASE_SELECT, hideSignature: {}, noEmailConfirmation: {} };
+  const options = {
+    pleaseSelectLabel: PLEASE_SELECT,
+    hideSignature: {},
+    noEmailConfirmation: {},
+    phaseNumbers: [1, 2],
+  };
 
-  it('maps phase 1 to HULPVERLENING_AKKOORD and phase 2 to HULPVERLENING_AFGEROND', () => {
+  it('maps an intermediate phase to HULPVERLENING_AKKOORD and the last phase to AFGEROND', () => {
     const fields: ServiceFormField[] = [];
     expect(buildServicePostBody(fields, new Set(), {}, 1, options)).toMatchObject({
       statuscode: 875920004,
       statecode: 0,
     });
     expect(buildServicePostBody(fields, new Set(), {}, 2, options)).toMatchObject({
+      statuscode: 875920005,
+      statecode: 0,
+    });
+  });
+
+  it('maps the only phase of a one-phase definition to HULPVERLENING_AFGEROND', () => {
+    const fields: ServiceFormField[] = [];
+    expect(
+      buildServicePostBody(fields, new Set(), {}, 1, { ...options, phaseNumbers: [1] }),
+    ).toMatchObject({
       statuscode: 875920005,
       statecode: 0,
     });

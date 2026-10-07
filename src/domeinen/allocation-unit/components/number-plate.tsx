@@ -18,6 +18,7 @@ import { displayVehicleRegistration } from '../domain/license-plate';
  */
 export function NumberPlate({
   plateNumber,
+  vehicleNumber,
   placeholder,
   onPress,
   editable = false,
@@ -27,6 +28,7 @@ export function NumberPlate({
   style,
 }: {
   plateNumber: string;
+  vehicleNumber?: string;
   placeholder?: string;
   onPress?: () => void;
   /** When true, a TextInput is shown instead of static text (external typing). */
@@ -55,13 +57,11 @@ export function NumberPlate({
       accessibilityLabel={accessibilityLabel}
     />
   ) : (
-    <Text
-      style={[styles.plateText, isEmpty && styles.placeholderText]}
-      numberOfLines={1}
-      accessibilityLabel={accessibilityLabel}
-    >
-      {shown}
-    </Text>
+    <View style={styles.platecontainer} accessibilityLabel={accessibilityLabel}>
+      <Text style={[styles.plateText, isEmpty && styles.placeholderText]} numberOfLines={1}>
+        {shown}
+      </Text>
+    </View>
   );
 
   const content = showDutchChrome ? (
@@ -69,7 +69,14 @@ export function NumberPlate({
       <View style={styles.flagContainer}>
         <Image source={qrflag} resizeMode="cover" style={styles.flagImage} />
       </View>
-      <View style={styles.plateBody}>{body}</View>
+      <View style={styles.plateBody}>
+        {body}
+        {vehicleNumber ? (
+          <Text style={styles.vehicleNumber} numberOfLines={1}>
+            {vehicleNumber}
+          </Text>
+        ) : null}
+      </View>
     </View>
   ) : (
     <View style={[styles.foreignContainer, style]}>{body}</View>
@@ -103,10 +110,27 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 5,
   },
+  platecontainer: {
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.md,
+    position: 'relative',
+  },
+  vehicleNumber: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#000',
+    position: 'absolute',
+    bottom: spacing.sm,
+    right: spacing.sm,
+  },
   flagContainer: {
     paddingVertical: 2,
     width: 36,
     backgroundColor: '#0B38A3',
+    borderTopLeftRadius: radius.lg,
+    borderBottomLeftRadius: radius.lg,
   },
   flagImage: {
     width: 36,
@@ -120,6 +144,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
     flex: 1,
     minHeight: 56,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.1)',
+    borderTopRightRadius: radius.lg,
+    borderBottomRightRadius: radius.lg,
   },
   plateText: {
     fontSize: 28,
@@ -142,8 +170,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     alignSelf: 'stretch',
     backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
     minHeight: 56,
     justifyContent: 'center',
     alignItems: 'center',

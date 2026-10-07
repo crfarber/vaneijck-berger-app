@@ -1,4 +1,3 @@
-import { useRouter } from 'expo-router';
 import { type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -45,7 +44,6 @@ export function PltrScreen({
   toolbar?: ReactNode;
 }) {
   const { t } = useTranslation();
-  const router = useRouter();
   const { sections, isPending: allocationsPending } = useAllocations();
   const [active, pending] = sections;
   const allocation = [...active.data, ...pending.data].find(
@@ -162,23 +160,6 @@ export function PltrScreen({
           </ScrollView>
           {showFooter ? (
             <ScreenFooter>
-              {service?.dn_serviceid ? (
-                <Button
-                  label={t('photos.open')}
-                  variant="secondary"
-                  onPress={() =>
-                    router.push({
-                      pathname: '/allocations/[id]/services/[serviceId]/photos',
-                      params: {
-                        id: allocationId,
-                        serviceId: service.dn_serviceid ?? '',
-                        incidentId,
-                        statuscode: String(service.statuscode),
-                      },
-                    })
-                  }
-                />
-              ) : null}
               {action ? (
                 <Button
                   label={actionLabel(t, action)}

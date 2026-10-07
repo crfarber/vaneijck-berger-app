@@ -1,4 +1,4 @@
-import { Redirect, useLocalSearchParams, useNavigation } from 'expo-router';
+import { Redirect, router, useLocalSearchParams, useNavigation } from 'expo-router';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
@@ -9,10 +9,12 @@ import { useSession } from '@/domeinen/auth/ui';
 import { colors } from '@/shared/ui/theme';
 import { AllocationsToolbar } from '../components/allocations-toolbar';
 import { clearNoValidUnitContinueNotice } from '../domain/no-valid-unit-continue-notice';
+import { clearRegisterUnitNotice } from '../domain/register-unit-notice';
 import {
   noValidUnitContinueAlertTexts,
   showNoValidUnitContinueAlert,
 } from '../hooks/show-no-valid-unit-continue-alert';
+import { registerUnitAlertTexts, showRegisterUnitAlert } from '../hooks/show-register-unit-alert';
 import { useOnboardingGate } from '../hooks/use-onboarding-gate';
 
 /** The layout sets a static title for this route; keep it matching whichever screen the gate shows. */
@@ -45,18 +47,25 @@ export function OnboardingGateScreen() {
   useEffect(() => {
     if (userType === null) {
       clearNoValidUnitContinueNotice();
+      clearRegisterUnitNotice();
       return;
     }
     // Only clear when the gate is ready without a notice. While `checking`, notice is forced to
     // `'none'` and must not re-arm the alert, or a query-key flicker would show it again.
     if (gate.status === 'ready' && notice === 'none') {
       clearNoValidUnitContinueNotice();
+      clearRegisterUnitNotice();
       return;
     }
-    if (notice !== 'no-valid-unit-continue') {
+    if (notice === 'register-unit') {
+      showRegisterUnitAlert(registerUnitAlertTexts(t), () => {
+        router.push('/unit?mode=onboarding');
+      });
       return;
     }
-    showNoValidUnitContinueAlert(noValidUnitContinueAlertTexts(t));
+    if (notice === 'no-valid-unit-continue') {
+      showNoValidUnitContinueAlert(noValidUnitContinueAlertTexts(t));
+    }
   }, [gate.status, notice, t, userType]);
 
   if (gate.status === 'checking') {
@@ -80,7 +89,6 @@ export function OnboardingGateScreen() {
         />
       );
     case 'register-external-unit':
-      return <Redirect href="/unit?mode=onboarding" />;
     case 'register-internal-unit':
       return <Redirect href="/unit?mode=onboarding" />;
     case 'extend-shift':

@@ -8,6 +8,7 @@
  */
 
 import type { RdwInfo } from '@/domeinen/rdw';
+import type { StructuredAddress } from '@/domeinen/places';
 
 export type ServiceFormLanguageCode = 1043 | 1044;
 
@@ -206,6 +207,12 @@ export type ServiceFormErrors = Record<string, ServiceFormError>;
 
 export type ServiceFormCapabilityResult = ServiceFormAnswer | null | undefined;
 
+export type PostalAddressLookupInput = {
+  postalCode: string;
+  houseNumber: string;
+  houseNumberAddition: string;
+};
+
 /**
  * External integrations the renderer needs but never calls directly (RDW lookup, address search,
  * phone, photo and signature capture) — injected so the pure engine and the components stay free
@@ -214,6 +221,7 @@ export type ServiceFormCapabilityResult = ServiceFormAnswer | null | undefined;
  */
 export type ServiceFormCapabilities = {
   fetchRdwInfo?: (registrationNumber: string) => Promise<RdwInfo | null>;
+  lookupPostalAddress?: (input: PostalAddressLookupInput) => Promise<StructuredAddress | null>;
   selectOption?: (
     field: ServiceFormField,
     answer: ServiceFormAnswer,

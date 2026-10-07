@@ -66,7 +66,7 @@ export function Button({
 const styles = StyleSheet.create({
   base: {
     minHeight: 48,
-    borderRadius: radius.md,
+    borderRadius: radius.xxl,
     paddingHorizontal: spacing.md,
     alignItems: 'center',
     justifyContent: 'center',
@@ -76,7 +76,7 @@ const styles = StyleSheet.create({
   danger: { backgroundColor: colors.danger },
   light: {
     backgroundColor: colors.buttonLight,
-    borderRadius: radius.lg,
+    borderRadius: radius.xxl,
     paddingVertical: spacing.lg,
   },
   dimmed: { opacity: 0.6 },

@@ -1,12 +1,14 @@
 import { useLocalSearchParams } from 'expo-router';
+import { parsePhaseNumbersParam } from '@/domeinen/photos';
 import { ExtraPhotoPositionScreen } from '@/domeinen/photos/ui';
 
 export default function ExtraPhotoPositionRoute() {
-  const { id, serviceId, incidentId, statuscode } = useLocalSearchParams<{
+  const { id, serviceId, incidentId, statuscode, phaseNumbers } = useLocalSearchParams<{
     id: string;
     serviceId: string;
     incidentId: string;
     statuscode: string;
+    phaseNumbers?: string;
   }>();
 
   return (
@@ -15,6 +17,7 @@ export default function ExtraPhotoPositionRoute() {
       serviceId={serviceId}
       incidentId={incidentId}
       serviceStatuscode={Number(statuscode) || 0}
+      phaseNumbers={parsePhaseNumbersParam(phaseNumbers)}
     />
   );
 }

@@ -65,6 +65,7 @@ export function useExtendShift(
     setBusy(true);
     setMessage(null);
     let dialog: 'active-incident' | null = null;
+    let saved = false;
     try {
       await statusOverlay.run(t('feedback.processing.extendShift'), async () => {
         const result = await service.extendShift(endDate, { homebaseLocationId });
@@ -83,9 +84,12 @@ export function useExtendShift(
           };
         }
         await Promise.all([endDatePreference.remember(endDate), homebase.remember()]);
-        setDone(true);
+        saved = true;
         return { tone: 'none' as const };
       });
+      if (saved) {
+        setDone(true);
+      }
     } finally {
       setBusy(false);
     }

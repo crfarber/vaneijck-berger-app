@@ -11,6 +11,7 @@ import { createInMemoryPhotoFiles, type PhotoFiles } from '@/domeinen/photos';
 import type { DevicePermissions } from '@/domeinen/settings';
 import { AuthExpiredError, TokenRefreshError } from '@/shared/api/errors';
 import type { RuntimeConfig } from '@/shared/config/runtime-config';
+import type { MultipartUploadFiles } from '@/shared/platform/ports';
 import {
   createFakeClock,
   createFakeScheduler,
@@ -138,6 +139,7 @@ function setup(
     pushGateway?: PushGateway;
     keyValueStore?: ReturnType<typeof createInMemoryStore>;
     photoFiles?: PhotoFiles;
+    multipartUploadFiles?: MultipartUploadFiles;
   } = {},
 ) {
   const clock = createFakeClock(NOW);
@@ -165,6 +167,14 @@ function setup(
     locationReader: { getCurrent: async () => ({ isValid: true, latitude: 52, longitude: 5 }) },
     devicePermissions: deniedPermissions(),
     logShare: { share: async () => undefined },
+    multipartUploadFiles: options.multipartUploadFiles ?? {
+      prepare: async () => ({
+        appendTo(body, fieldName) {
+          body.append(fieldName, 'prepared-jpeg');
+        },
+        remove: async () => undefined,
+      }),
+    },
     photoFiles:
       options.photoFiles ??
       createInMemoryPhotoFiles({
@@ -784,7 +794,7 @@ describe('photo upload queue', () => {
       position: { category: 'DASHBOARD' },
       sourceUri: 'file:///camera/shot.jpg',
     });
-    await container.photoService.processNow();
+    await container.photoService.submitBatch('svc-1', 'load');
 
     expect((await container.photoService.listByService('svc-1'))[0]?.status).toBe('queued');
     expect(backend.callsTo('POST', '/api/binary/upload')).toHaveLength(1);
@@ -911,6 +921,60 @@ describe('mutation outbox', () => {
 });
 
 describe('service form', () => {
+  it('uploads the signature with the device file port and keeps it through token refresh', async () => {
+    let removed = false;
+    let multipart: FormData | undefined;
+    const bytes = new Uint8Array([0xff, 0xd8, 0xff]);
+    const { container, backend } = setup({
+      stored: storedSession(),
+      multipartUploadFiles: {
+        async prepare(fileBytes, metadata) {
+          expect(fileBytes).toEqual(bytes);
+          expect(metadata).toEqual({ name: 'signature.jpg', type: 'image/jpeg' });
+          return {
+            appendTo(body, fieldName) {
+              multipart = body;
+              body.append(fieldName, 'prepared-jpeg');
+            },
+            async remove() {
+              removed = true;
+            },
+          };
+        },
+      },
+    });
+    backend.once('POST', '/api/signatures', () => {
+      expect(removed).toBe(false);
+      return problemResponse(401, { title: 'Unauthorized' });
+    });
+    backend.on('POST', '/api/signatures', (request) => {
+      expect(removed).toBe(false);
+      expect(request.headers.Authorization).toBe('Bearer access-2');
+      expect(request.headers['Content-Type']).toBeUndefined();
+      expect(multipart?.get('file')).toBe('prepared-jpeg');
+      expect(multipart?.get('incidentId')).toBe('inc-1');
+      expect(multipart?.get('serviceId')).toBe('svc-1');
+      expect(multipart?.get('fileExtension')).toBe('.jpg');
+      expect(multipart?.get('name')).toBe('Test sender');
+      expect(multipart?.get('email')).toBe('sender@example.invalid');
+      expect(multipart?.get('phase')).toBe('Aanvang');
+      expect(multipart?.get('signatureType')).toBe('Afzender');
+      return new Response(null, { status: 204 });
+    });
+    await container.start();
+    await container.signaturesApi.upload({
+      incidentId: 'inc-1',
+      serviceId: 'svc-1',
+      name: 'Test sender',
+      email: 'sender@example.invalid',
+      phase: 'Aanvang',
+      signatureType: 'Afzender',
+      fileBytes: bytes,
+    });
+    expect(backend.callsTo('POST', '/api/signatures')).toHaveLength(2);
+    expect(removed).toBe(true);
+  });
+
   it('finds the synced form, offers depots nearest first and sends the filled-in form', async () => {
     const { container, backend } = setup({ stored: storedSession() });
     const formDefinition = {
@@ -1181,6 +1245,164 @@ describe('signing out', () => {
 
     expect(result).toEqual({ ok: false, error: 'cancel-failed' });
     expect(container.sessionStore.getState().status).toBe('signed-in');
+  });
+});
+
+describe('accepting after unit recovery', () => {
+  it.each([
+    { userType: 'external', expired: false },
+    { userType: 'internal', expired: false },
+    { userType: 'external', expired: true },
+    { userType: 'internal', expired: true },
+  ])(
+    'accepts the original assignment after saving the $userType unit (expired: $expired)',
+    async ({ userType, expired }) => {
+      const { container, backend } = setup({ stored: storedSession({ userType }) });
+      backend.on('GET', '/api/allocations', () =>
+        jsonResponse([{ ...allocationRow, statuscode: 1 }]),
+      );
+      const vehicle =
+        userType === 'external'
+          ? { alternateVehicleRegistrationNumber: 'AB-12-CD' }
+          : { vehicleId: 'truck-1', trailerId: 'trailer-1' };
+      let currentUnit: (typeof vehicle & { validUntil: string }) | null = expired
+        ? { ...vehicle, validUntil: new Date(NOW - MINUTE).toISOString() }
+        : null;
+      const endDate = new Date(NOW + 8 * 60 * MINUTE);
+      backend.on('GET', '/api/allocation-units', () => jsonResponse(currentUnit));
+      const method = expired ? 'PATCH' : 'POST';
+      const path = expired ? '/api/allocation-units' : `/api/allocation-units/${userType}worker`;
+      backend.on(method, path, () => {
+        currentUnit = { ...vehicle, validUntil: endDate.toISOString() };
+        return new Response(null, { status: 204 });
+      });
+      backend.on(
+        'PUT',
+        '/api/allocations/alloc-1/accept',
+        () => new Response(null, { status: 204 }),
+      );
+      await container.start();
+
+      expect(await container.allocationActionsService.accept('alloc-1', false)).toEqual({
+        kind: 'reregister-required',
+        reason: expired ? 'expired' : 'no-unit',
+      });
+      const token = container.allocationAcceptFlow.getState().start('alloc-1');
+      expect(backend.callsTo('PUT', '/api/allocations/alloc-1/accept')).toHaveLength(0);
+
+      await container.statusOverlay.run('Eenheid opslaan', async () => {
+        const result = expired
+          ? await container.allocationUnitService.extendShift(endDate, {
+              homebaseLocationId: 'loc-1',
+            })
+          : userType === 'external'
+            ? await container.allocationUnitService.registerExternal({
+                plateNumber: 'AB-12-CD',
+                endDate,
+                availability: DEFAULT_AVAILABILITY,
+              })
+            : await container.allocationUnitService.registerInternal({
+                vehicleId: 'truck-1',
+                trailerId: 'trailer-1',
+                endDate,
+                availability: DEFAULT_AVAILABILITY,
+                homebaseLocationId: 'loc-1',
+              });
+        expect(result.ok).toBe(true);
+        return { tone: 'none' };
+      });
+      expect(container.statusOverlay.store.getState().current).toBeNull();
+      await container.statusOverlay.run('Opdracht accepteren', async () => {
+        expect(await container.allocationAcceptFlow.getState().complete(token)).toEqual({
+          kind: 'accepted',
+        });
+        return { tone: 'success', message: 'Opdracht geaccepteerd' };
+      });
+      expect(backend.callsTo(method, path)).toHaveLength(1);
+      expect(backend.callsTo('PUT', '/api/allocations/alloc-1/accept')).toHaveLength(1);
+      expect(await container.allocationAcceptFlow.getState().complete(token)).toBeNull();
+      if (expired) {
+        const [saved] = backend.callsTo('PATCH', '/api/allocation-units');
+        expect(JSON.parse(saved?.body ?? '{}')).toMatchObject(vehicle);
+        expect(backend.callsTo('POST', `/api/allocation-units/${userType}worker`)).toHaveLength(0);
+      }
+      container.stop();
+    },
+  );
+
+  it.each([
+    null,
+    { validUntil: new Date(NOW + 8 * 60 * MINUTE).toISOString() },
+    {
+      alternateVehicleRegistrationNumber: 'AB-12-CD',
+      validUntil: new Date(NOW - MINUTE).toISOString(),
+    },
+  ])('blocks accepting with an invalid unit and active assignments', async (unit) => {
+    const { container, backend } = setup({ stored: storedSession() });
+    backend.on('GET', '/api/allocation-units', () => jsonResponse(unit));
+    await container.start();
+    expect(await container.allocationActionsService.accept('new-allocation', true)).toEqual({
+      kind: 'blocked',
+    });
+    expect(backend.callsTo('PUT', '/api/allocations/new-allocation/accept')).toHaveLength(0);
+    expect(backend.callsTo('PATCH', '/api/allocation-units')).toHaveLength(0);
+    expect(backend.callsTo('POST', '/api/allocation-units/externalworker')).toHaveLength(0);
+    container.stop();
+  });
+
+  it('does not accept after failed registration and allows saving again', async () => {
+    const { container, backend } = setup({ stored: storedSession() });
+    backend.on('GET', '/api/allocations', () =>
+      jsonResponse([{ ...allocationRow, statuscode: 1 }]),
+    );
+    let saved = false;
+    backend.on('GET', '/api/allocation-units', () =>
+      jsonResponse(
+        saved
+          ? {
+              alternateVehicleRegistrationNumber: 'AB-12-CD',
+              validUntil: new Date(NOW + 8 * 60 * MINUTE).toISOString(),
+            }
+          : null,
+      ),
+    );
+    backend.once(
+      'POST',
+      '/api/allocation-units/externalworker',
+      () => new Response(null, { status: 500 }),
+    );
+    backend.on('POST', '/api/allocation-units/externalworker', () => {
+      saved = true;
+      return new Response(null, { status: 204 });
+    });
+    backend.on('PUT', '/api/allocations/alloc-1/accept', () => new Response(null, { status: 204 }));
+    await container.start();
+    const token = container.allocationAcceptFlow.getState().start('alloc-1');
+    const input = {
+      plateNumber: 'AB-12-CD',
+      endDate: new Date(NOW + 8 * 60 * MINUTE),
+      availability: DEFAULT_AVAILABILITY,
+    };
+    expect((await container.allocationUnitService.registerExternal(input)).ok).toBe(false);
+    expect(backend.callsTo('PUT', '/api/allocations/alloc-1/accept')).toHaveLength(0);
+    expect(container.allocationAcceptFlow.getState().pending?.token).toBe(token);
+    expect((await container.allocationUnitService.registerExternal(input)).ok).toBe(true);
+    expect(await container.allocationAcceptFlow.getState().complete(token)).toEqual({
+      kind: 'accepted',
+    });
+    container.stop();
+  });
+
+  it('discards pending acceptance when the session ends', async () => {
+    const { container, backend } = setup({ stored: storedSession() });
+    await container.start();
+    const token = container.allocationAcceptFlow.getState().start('alloc-1');
+    await container.authService.signOut();
+    expect(container.allocationAcceptFlow.getState().pending).toBeNull();
+    expect(await container.allocationAcceptFlow.getState().complete(token)).toBeNull();
+    expect(container.allocationAcceptFlow.getState().start('alloc-1')).toBeNull();
+    expect(backend.callsTo('PUT', '/api/allocations/alloc-1/accept')).toHaveLength(0);
+    container.stop();
   });
 });
 

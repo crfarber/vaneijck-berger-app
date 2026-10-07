@@ -1,5 +1,11 @@
 import { isExteriorAngle, isTyrePosition, photoTypeKey, PHOTO_CATEGORY_LABEL } from './photo-type';
-import { PHOTO_CATEGORY, type PhotoCategory, type PhotoPosition } from './types';
+import {
+  PHOTO_CATEGORY,
+  PHOTO_STATUS,
+  type PhotoCategory,
+  type PhotoPosition,
+  type PhotoStatus,
+} from './types';
 
 export const EXTRA_PHOTO_CATEGORIES = [
   PHOTO_CATEGORY.OVERVIEW,
@@ -58,3 +64,27 @@ export function missingPhotoPositions(
 }
 
 export const unmatchedLoadPhotos = missingPhotoPositions;
+
+export function deliveryPhotoRequirements(
+  required: readonly PhotoPosition[],
+  loadPhotos: readonly PhotoPosition[],
+): PhotoPosition[] {
+  return [...required, ...unmatchedLoadPhotos(loadPhotos, required)];
+}
+
+export function reconcileHistoryPositions(
+  localPhotos: readonly { position: PhotoPosition; status: PhotoStatus }[],
+  serverPositions: readonly PhotoPosition[],
+  serverLookupComplete: boolean,
+): PhotoPosition[] {
+  const usableLocal = localPhotos.filter((photo) => photo.status !== PHOTO_STATUS.failed);
+  if (serverLookupComplete && serverPositions.length > 0) {
+    return [
+      ...serverPositions,
+      ...usableLocal
+        .filter((photo) => photo.status !== PHOTO_STATUS.sent)
+        .map((photo) => photo.position),
+    ];
+  }
+  return usableLocal.map((photo) => photo.position);
+}

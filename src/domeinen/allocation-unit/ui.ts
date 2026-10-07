@@ -29,4 +29,4 @@ export { ExternalUnitVehicleScreen } from './screens/external-unit-vehicle-scree
 export { ExternalUnitAvailabilityScreen } from './screens/external-unit-availability-screen';
 export { ExternalUnitEndDateScreen } from './screens/external-unit-end-date-screen';
 export { CurrentUnitOverviewScreen } from './screens/current-unit-overview-screen';
-export { allocationUnitKeys } from './hooks/use-current-unit-overview';
+export { allocationUnitKeys, useCurrentUnitOverview } from './hooks/use-current-unit-overview';

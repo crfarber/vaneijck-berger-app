@@ -6,7 +6,14 @@ import type { ListServerPhotosInput, PhotosApi, ServerPhotoSummary } from '../ap
 import { isExtraForUpload } from '../domain/extra';
 import { commentForPhase } from '../domain/phase';
 import { toImagePosition } from '../domain/photo-type';
-import { PHOTO_STATUS, type Photo, type PhotoPhase, type PhotoPosition } from '../domain/types';
+import {
+  PHOTO_ROLE,
+  PHOTO_STATUS,
+  type Photo,
+  type PhotoPhase,
+  type PhotoPosition,
+  type PhotoRole,
+} from '../domain/types';
 import { utcStringFromEpoch } from '../domain/utc';
 import type { PhotoFiles } from './photo-files';
 import type { PhotoRepository } from './photo-repository';
@@ -23,16 +30,24 @@ export type CapturePhotoInput = {
   incidentId: string;
   allocationId: string;
   phase: PhotoPhase;
+  role?: PhotoRole;
   position: PhotoPosition;
   sourceUri: string;
+  overrideExisting?: boolean;
+  isExtraOverride?: boolean;
+  replacePhotoId?: string;
 };
 
 export type PhotoService = {
   listByService(serviceId: string): Promise<Photo[]>;
   displayUri(filePath: string): Promise<string>;
   listServerPhotos(input: ListServerPhotosInput): Promise<ServerPhotoSummary[]>;
-  /** Persists the file and enqueues an upload. Kicks the queue. */
+  /** Persists the file as a local draft. */
   capture(input: CapturePhotoInput): Promise<Photo>;
+  /** Offers every local draft in one service phase to the upload queue. */
+  submitBatch(serviceId: string, phase: PhotoPhase): Promise<void>;
+  /** Offers exactly one replacement draft to the upload queue. */
+  submitOverride(photoId: string): Promise<void>;
   /** Puts a failed photo back on the queue. */
   retry(photoId: string): Promise<void>;
   clearForService(serviceId: string): Promise<void>;
@@ -80,8 +95,9 @@ export async function migrateLegacyPhotos(
 }
 
 /**
- * One list per device: capture stores the file and metadata, the queue uploads in order. A
- * temporary failure keeps the photo queued; a hard 4xx marks it failed without deleting the file.
+ * One list per device: capture stores a local draft. Explicit submission moves a phase batch onto
+ * the upload queue. A temporary failure keeps the photo queued; a hard 4xx marks it failed without
+ * deleting the file.
  */
 export function createPhotoService(deps: PhotoServiceDeps): PhotoService {
   const { api, files, repository, locationReader, clock, scheduler, logger } = deps;
@@ -92,16 +108,24 @@ export function createPhotoService(deps: PhotoServiceDeps): PhotoService {
   let cancelRetry: (() => void) | null = null;
   let retryAttempt = 0;
   let idSequence = 0;
+  let pendingMutation: Promise<void> = Promise.resolve();
 
   async function replace(next: readonly Photo[]): Promise<void> {
     await repository.save(next);
   }
 
-  async function withUpdate(mutator: (photos: Photo[]) => Photo[]): Promise<Photo[]> {
-    const current = await repository.load();
-    const next = mutator(current);
-    await replace(next);
-    return next;
+  function withUpdate(mutator: (photos: Photo[]) => Photo[]): Promise<Photo[]> {
+    const mutation = pendingMutation.then(async () => {
+      const current = await repository.load();
+      const next = mutator(current);
+      await replace(next);
+      return next;
+    });
+    pendingMutation = mutation.then(
+      () => undefined,
+      () => undefined,
+    );
+    return mutation;
   }
 
   function nextId(): string {
@@ -150,6 +174,15 @@ export function createPhotoService(deps: PhotoServiceDeps): PhotoService {
     try {
       const bytes = await files.readBytes(withLocation.filePath);
       const fileName = `${withLocation.id}.jpg`;
+      const cachedServerPhotos =
+        withLocation.role === PHOTO_ROLE.additional
+          ? await repository.loadServer({
+              allocationId: withLocation.allocationId,
+              incidentId: withLocation.incidentId,
+              serviceId: withLocation.serviceId,
+              phase: withLocation.phase,
+            })
+          : null;
       await api.upload({
         incidentId: withLocation.incidentId,
         serviceId: withLocation.serviceId,
@@ -159,7 +192,14 @@ export function createPhotoService(deps: PhotoServiceDeps): PhotoService {
         fileBytes: bytes,
         comment: commentForPhase(withLocation.phase),
         createdDateTime: utcStringFromEpoch(withLocation.takenAt),
-        isExtra: isExtraForUpload(withLocation, all),
+        isExtra:
+          withLocation.isExtraOverride ??
+          isExtraForUpload(
+            withLocation,
+            all,
+            cachedServerPhotos?.map((serverPhoto) => serverPhoto.position),
+          ),
+        overrideExisting: withLocation.overrideExisting === true,
       });
       await withUpdate((photos) =>
         photos.map((item) =>
@@ -188,11 +228,16 @@ export function createPhotoService(deps: PhotoServiceDeps): PhotoService {
         );
         return 'failed';
       }
-      logger?.warn('photos', 'Photo upload failed temporarily, will retry', {
+      logger?.warn('photos', 'Photo upload failed locally, marked failed', {
         photoId: photo.id,
-        error,
+        errorType: error instanceof Error ? error.name : 'UnknownError',
       });
-      return 'retry';
+      await withUpdate((photos) =>
+        photos.map((item) =>
+          item.id === photo.id ? { ...item, status: PHOTO_STATUS.failed } : item,
+        ),
+      );
+      return 'failed';
     }
   }
 
@@ -266,15 +311,71 @@ export function createPhotoService(deps: PhotoServiceDeps): PhotoService {
         incidentId: input.incidentId,
         allocationId: input.allocationId,
         phase: input.phase,
+        role: input.role ?? PHOTO_ROLE.mandatory,
         position: input.position,
         filePath,
         coordinate: resolveCurrentPosition(await locationReader.getCurrent()),
         takenAt: clock.now(),
-        status: PHOTO_STATUS.queued,
+        status: PHOTO_STATUS.draft,
+        overrideExisting: input.overrideExisting === true,
+        isExtraOverride: input.isExtraOverride,
       };
-      await withUpdate((photos) => [...photos, photo]);
-      kick();
+      let replacedFilePath: string | null = null;
+      await withUpdate((photos) => {
+        const replaceable = photos.find(
+          (item) =>
+            item.id === input.replacePhotoId &&
+            item.serviceId === input.serviceId &&
+            (item.status === PHOTO_STATUS.draft || item.status === PHOTO_STATUS.failed),
+        );
+        if (!replaceable) {
+          return [...photos, photo];
+        }
+        replacedFilePath = replaceable.filePath;
+        return [...photos.filter((item) => item.id !== replaceable.id), photo];
+      });
+      if (replacedFilePath !== null) {
+        await files.remove(replacedFilePath).catch((error: unknown) => {
+          logger?.warn('photos', 'Could not remove replaced photo file', {
+            photoId: input.replacePhotoId,
+            error,
+          });
+        });
+      }
       return photo;
+    },
+
+    async submitBatch(serviceId, phase) {
+      await withUpdate((photos) =>
+        photos.map((photo) =>
+          photo.serviceId === serviceId &&
+          photo.phase === phase &&
+          photo.status === PHOTO_STATUS.draft &&
+          photo.overrideExisting !== true
+            ? { ...photo, status: PHOTO_STATUS.queued }
+            : photo,
+        ),
+      );
+      kick();
+      if (drainPromise) {
+        await drainPromise;
+      }
+    },
+
+    async submitOverride(photoId) {
+      await withUpdate((photos) =>
+        photos.map((photo) =>
+          photo.id === photoId &&
+          photo.status === PHOTO_STATUS.draft &&
+          photo.overrideExisting === true
+            ? { ...photo, status: PHOTO_STATUS.queued }
+            : photo,
+        ),
+      );
+      kick();
+      if (drainPromise) {
+        await drainPromise;
+      }
     },
 
     async retry(photoId) {

@@ -19,14 +19,14 @@ describe('decideOnboarding', () => {
     ).toEqual({ step: 'allocations', notice: 'none' });
   });
 
-  it('sends an external worker to register their unit', () => {
+  it('keeps an external worker on the assignments list when no unit exists', () => {
     expect(
       decideOnboarding({
         reregister: { kind: 'required', reason: 'no-unit' },
         userType: 'external',
         backendReportedOpenWork: false,
       }),
-    ).toEqual({ step: 'register-external-unit', notice: 'none' });
+    ).toEqual({ step: 'allocations', notice: 'register-unit' });
   });
 
   it('sends an internal worker to register their unit when the vehicle is missing', () => {

@@ -6,6 +6,8 @@
 export const nl = {
   common: {
     appName: 'Van Eijck Berger',
+    yes: 'Ja',
+    no: 'Nee',
     loading: 'Laden…',
     retry: 'Opnieuw proberen',
     cancel: 'Annuleren',
@@ -40,6 +42,7 @@ export const nl = {
       registerUnit: 'Eenheid registreren…',
       extendShift: 'Eindtijd bijwerken…',
       signOut: 'Uitloggen…',
+      cancelUnit: 'Aanstuur-eenheid annuleren…',
     },
   },
   login: {
@@ -133,6 +136,13 @@ export const nl = {
       preview: 'Voorbeeld',
       reregisterRequired:
         'Je eenheid moet opnieuw geregistreerd worden. Ga terug naar het overzicht.',
+      registerToAcceptTitle: 'Geen geldige eenheid',
+      registerToAcceptMessage:
+        'Je hebt geen geldige eenheid. Wil je er nu een registreren? Na het opslaan accepteren we deze opdracht automatisch.',
+      acceptBlockedTitle: 'Rond eerst je actieve opdrachten af',
+      acceptBlockedMessage:
+        'Je eenheid is niet geldig of je werktijd is verlopen. Rond eerst je actieve opdrachten af voordat je de eenheid aanpast en een nieuwe opdracht accepteert.',
+      unitStillInvalid: 'Je eenheid is nog niet geldig. De opdracht is niet geaccepteerd.',
     },
     decline: {
       title: 'Reden van afwijzing',
@@ -177,6 +187,14 @@ export const nl = {
     title: 'Opslag en stores',
     hint: 'Alleen tijdens ontwikkeling. Tokens komen van SecureStore, niet via getAccessToken.',
     refresh: 'Verversen',
+    copyAccessToken: 'Kopieer access token',
+    copyAccessTokenTitle: 'JWT naar klembord kopiëren?',
+    copyAccessTokenWarning:
+      'Dit is een geldig aanmeldtoken. Iedereen met toegang tot je klembord kan het gebruiken. Deel het niet.',
+    copyAccessTokenConfirm: 'Kopieer token',
+    copyAccessTokenCopied: 'Access token gekopieerd. Deel deze waarde niet.',
+    copyAccessTokenUnavailable: 'Er is geen access token beschikbaar.',
+    copyAccessTokenFailed: 'Access token kopiëren is mislukt.',
     storage: 'Storage',
     sessionStore: 'Session store',
     tokenProvider: 'TokenProvider',
@@ -185,15 +203,19 @@ export const nl = {
   unit: {
     registerTitle: 'Eenheid registreren',
     overview: {
-      navigationTitle: 'Mijn eenheid',
-      title: 'Je huidige eenheid',
+      navigationTitle: 'Mijn aanstuur-eenheid',
+      vehicleCardTitle: 'Mijn aanstuur-eenheid',
+      lastVehicleTitle: 'Gebruik laatste voertuig',
+      useLastVehicle: 'Gebruik laatste voertuig',
+      title: 'Je huidige aanstuur-eenheid',
       subtitle: 'Dit voertuig staat op dit moment voor jou geregistreerd.',
       active: 'Actief',
+      inactive: 'Verlopen',
       remainingMinutes: 'Nog {{minutes}} min',
       remainingHoursMinutes: 'Nog {{hours}} u {{minutes}} min',
       vehicle: 'Voertuig',
       trailer: 'Aanhanger',
-      changeUnit: 'Eenheid wijzigen',
+      changeUnit: 'Aanstuur-eenheid wijzigen',
       notSet: 'Niet ingesteld',
       loadError: 'Je eenheid kon niet worden geladen. Probeer het opnieuw.',
     },
@@ -245,7 +267,7 @@ export const nl = {
     onlyAvailableForTransport: 'Alleen beschikbaar voor transport',
     onlyAvailableForBreakdown: 'Alleen beschikbaar voor pechhulp',
     notAvailableForAllocation: 'Niet beschikbaar voor nieuwe opdrachten',
-    endDateLabel: 'Beschikbaar tot',
+    endDateLabel: 'Actief tot',
     endDateSectionTitle: 'Einde dienst',
     dateLabel: 'Datum',
     timeLabel: 'Tijd',
@@ -312,6 +334,12 @@ export const nl = {
       continue: 'Doorgaan',
       callDispatch: 'Dispatch bellen ({{phone}})',
     },
+    registerUnit: {
+      title: 'Geen aanstuur-eenheid',
+      message: 'Wil je nu een aanstuur-eenheid registreren?',
+      cancel: 'Nee',
+      confirm: 'Ja',
+    },
   },
   services: {
     title: 'Diensten',
@@ -367,6 +395,11 @@ export const nl = {
     rdw: {
       notCorrect: 'Niet correct?',
     },
+    address: {
+      lookupLoading: 'Adres ophalen…',
+      lookupFailed: 'Adres niet gevonden. Vul het adres handmatig in.',
+      manualEntry: 'Adres handmatig invullen',
+    },
     signature: {
       captureTitle: 'Handtekening',
       capture: 'Handtekening zetten',
@@ -390,6 +423,7 @@ export const nl = {
     actions: {
       quickView: 'Snel invullen',
       quickViewComplete: 'Alle velden zijn ingevuld.',
+      exportScenario: 'Testscenario exporteren',
       photos: 'Foto’s',
       overview: 'Overzicht',
       terms: 'Voorwaarden',
@@ -404,6 +438,9 @@ export const nl = {
     photos: {
       missingTitle: 'Foto’s ontbreken',
       missingMessage: 'Voor deze fase zijn foto’s verplicht. Wil je ze nu toevoegen?',
+      uploadsPendingTitle: 'Foto’s nog niet verzonden',
+      uploadsPendingMessage:
+        'Wacht totdat alle foto’s zijn geüpload. Probeer mislukte uploads opnieuw in het foto-overzicht.',
       add: 'Foto’s toevoegen',
       sendAnyway: 'Toch versturen',
     },
@@ -455,7 +492,7 @@ export const nl = {
     title: 'Foto’s',
     vehicleType: 'VOERTUIGTYPE',
     mandatory: 'VERPLICHT',
-    mandatoryCount: '{{count}} van 4',
+    mandatoryCount: '{{count}} van {{total}}',
     extra: 'EXTRA',
     extraCount: '{{count}} foto’s',
     extraPhoto: 'Extra foto',
@@ -494,9 +531,11 @@ export const nl = {
       rearRight: 'Rechtsachter',
     },
     sentConfirmation: {
+      draftTitle: 'Foto lokaal opgeslagen',
       sentTitle: 'Foto verzonden',
       queuedTitle: 'Foto opgeslagen',
       failedTitle: 'Foto niet verzonden',
+      draftDescription: 'Verstuur de foto vanuit het foto-overzicht.',
       sentDescription: 'De foto is verzonden.',
       queuedDescription: 'De foto wordt verstuurd zodra er verbinding is.',
       failedDescription: 'De foto kon niet worden verstuurd.',
@@ -504,6 +543,9 @@ export const nl = {
     },
     remainingMandatory: 'Nog {{count}} verplichte foto’s',
     send: 'Verzenden',
+    sendReplacement: 'Vervanging versturen',
+    viewPhoto: 'Foto vergroten',
+    locked: 'Verzonden extra foto is vergrendeld',
     retake: 'Opnieuw',
     uploaded: 'Reeds geüpload',
     mandatoryPhotoProgress: 'Verplichte foto · {{current}} van 4',
@@ -549,6 +591,21 @@ export const nl = {
     version: '{{version}} ({{userType}})',
     section: {
       general: 'Algemeen',
+    },
+    allocationUnitManagement: {
+      open: 'Aanstuur-eenheid beheren',
+      title: 'Aanstuur-eenheid beheren',
+      hint: 'Wijzig je voertuig of eindtijd, of annuleer je aanstuur-eenheid.',
+      noUnitHint: 'Je hebt geen actieve aanstuur-eenheid.',
+      changeVehicle: 'Voertuig wijzigen',
+      registerVehicle: 'Eenheid registreren',
+      changeEndDate: 'Eindtijd wijzigen',
+      cancel: 'Aanstuur-eenheid annuleren',
+      cancelConfirmTitle: 'Aanstuur-eenheid annuleren?',
+      cancelConfirmMessage: 'Je kunt dit niet ongedaan maken.',
+      activeWorkTitle: 'Actieve opdracht',
+      activeWorkMessage: 'Rond eerst je actieve opdracht af voordat je annuleert.',
+      cancelFailed: 'De aanstuur-eenheid kon niet worden geannuleerd. Probeer het opnieuw.',
     },
     worker: {
       unknown: 'Onbekende berger',
@@ -599,6 +656,10 @@ export const nl = {
       noChanges: 'Geen wijzigingen opgehaald.',
       retry: 'Opnieuw synchroniseren',
       refreshTopic: '{{name}} opnieuw ophalen',
+      viewJson: 'JSON van {{name}} bekijken',
+      jsonLoading: 'Gegevens laden...',
+      jsonMissing: 'Nog geen gegevens opgeslagen voor dit onderwerp.',
+      jsonError: 'De opgeslagen gegevens konden niet worden gelezen.',
       status: {
         idle: 'Nog niet gestart',
         syncing: 'Synchroniseren',
@@ -678,6 +739,8 @@ export type Translations = Widen<typeof nl>;
 
 export const en: Translations = {
   common: {
+    yes: 'Yes',
+    no: 'No',
     appName: 'Van Eijck Berger',
     loading: 'Loading…',
     retry: 'Try again',
@@ -713,6 +776,7 @@ export const en: Translations = {
       registerUnit: 'Registering unit…',
       extendShift: 'Updating end time…',
       signOut: 'Signing out…',
+      cancelUnit: 'Cancelling allocation unit…',
     },
   },
   login: {
@@ -781,7 +845,7 @@ export const en: Translations = {
   allocations: {
     title: 'My assignments',
     empty: 'There are no assignments.',
-    sectionEmpty: 'No assignments have been assigned in this section.',
+    sectionEmpty: 'No assignments available.',
     sections: {
       active: 'Active',
       pending: 'Waiting for acceptance',
@@ -805,6 +869,13 @@ export const en: Translations = {
       forward: 'Forward to colleague',
       preview: 'Preview',
       reregisterRequired: 'Your unit needs to be re-registered. Go back to the overview.',
+      registerToAcceptTitle: 'No valid unit',
+      registerToAcceptMessage:
+        'You do not have a valid unit. Would you like to register one now? After saving, we will automatically accept this assignment.',
+      acceptBlockedTitle: 'Finish your active assignments first',
+      acceptBlockedMessage:
+        'Your unit is invalid or your working hours have expired. Finish your active assignments before updating the unit and accepting a new assignment.',
+      unitStillInvalid: 'Your unit is still invalid. The assignment has not been accepted.',
     },
     decline: {
       title: 'Reason for declining',
@@ -849,6 +920,14 @@ export const en: Translations = {
     title: 'Storage and stores',
     hint: 'Development only. Tokens come from SecureStore, not via getAccessToken.',
     refresh: 'Refresh',
+    copyAccessToken: 'Copy access token',
+    copyAccessTokenTitle: 'Copy JWT to clipboard?',
+    copyAccessTokenWarning:
+      'This is a valid sign-in token. Anyone with clipboard access may use it. Do not share it.',
+    copyAccessTokenConfirm: 'Copy token',
+    copyAccessTokenCopied: 'Access token copied. Do not share it.',
+    copyAccessTokenUnavailable: 'No access token is available.',
+    copyAccessTokenFailed: 'Could not copy the access token.',
     storage: 'Storage',
     sessionStore: 'Session store',
     tokenProvider: 'TokenProvider',
@@ -857,19 +936,22 @@ export const en: Translations = {
   unit: {
     registerTitle: 'Register unit',
     overview: {
-      navigationTitle: 'My unit',
-      title: 'Your current unit',
+      navigationTitle: 'Selecteer Hulpvoertuig',
+      vehicleCardTitle: 'My allocation unit',
+      lastVehicleTitle: 'Use last vehicle',
+      useLastVehicle: 'Use last vehicle',
+      title: 'Your current allocation unit',
       subtitle: 'This vehicle is currently registered to you.',
       active: 'Active',
+      inactive: 'Expired',
       remainingMinutes: '{{minutes}} min left',
       remainingHoursMinutes: '{{hours}} hr {{minutes}} min left',
       vehicle: 'Vehicle',
       trailer: 'Trailer',
-      changeUnit: 'Change unit',
+      changeUnit: 'Change allocation unit',
       notSet: 'Not set',
       loadError: 'Your unit could not be loaded. Please try again.',
     },
-
     registrationStep: 'Step {{current}} of {{total}}',
     vehicleQuestion: 'Which vehicle are you driving today?',
     scanTruckTitle: 'Scan truck',
@@ -917,7 +999,7 @@ export const en: Translations = {
     onlyAvailableForTransport: 'Only available for transport',
     onlyAvailableForBreakdown: 'Only available for breakdown assistance',
     notAvailableForAllocation: 'Not available for new assignments',
-    endDateLabel: 'Available until',
+    endDateLabel: 'Active until',
     endDateSectionTitle: 'End of shift',
     dateLabel: 'Date',
     timeLabel: 'Time',
@@ -983,6 +1065,12 @@ export const en: Translations = {
       continue: 'Continue',
       callDispatch: 'Call dispatch ({{phone}})',
     },
+    registerUnit: {
+      title: 'No allocation unit',
+      message: 'Do you want to register an allocation unit now?',
+      cancel: 'No',
+      confirm: 'Yes',
+    },
   },
   services: {
     title: 'Services',
@@ -1038,6 +1126,11 @@ export const en: Translations = {
     rdw: {
       notCorrect: 'Not correct?',
     },
+    address: {
+      lookupLoading: 'Looking up address…',
+      lookupFailed: 'Address not found. Enter the address manually.',
+      manualEntry: 'Enter address manually',
+    },
     signature: {
       captureTitle: 'Signature',
       capture: 'Add signature',
@@ -1061,6 +1154,7 @@ export const en: Translations = {
     actions: {
       quickView: 'Quick form',
       quickViewComplete: 'All fields are complete.',
+      exportScenario: 'Export test scenario',
       photos: 'Photos',
       overview: 'Overview',
       terms: 'Terms',
@@ -1075,6 +1169,9 @@ export const en: Translations = {
     photos: {
       missingTitle: 'Photos missing',
       missingMessage: 'Photos are required for this phase. Do you want to add them now?',
+      uploadsPendingTitle: 'Photos not uploaded yet',
+      uploadsPendingMessage:
+        'Wait until all photos have been uploaded. Retry failed uploads in the photo overview.',
       add: 'Add photos',
       sendAnyway: 'Send anyway',
     },
@@ -1106,8 +1203,8 @@ export const en: Translations = {
     load: 'Load location',
     delivery: 'Delivery location',
     navigate: 'Navigate',
-    callLoad: 'Call loading location',
-    callDelivery: 'Call delivery location',
+    callLoad: 'Loading location',
+    callDelivery: 'Delivery location',
     maps: {
       apple: 'Apple Maps',
       google: 'Google Maps',
@@ -1126,7 +1223,7 @@ export const en: Translations = {
     title: 'Photos',
     vehicleType: 'VEHICLE TYPE',
     mandatory: 'Required',
-    mandatoryCount: '{{count}} of 4',
+    mandatoryCount: '{{count}} of {{total}}',
     extra: 'Extra',
     extraCount: '{{count}} photos',
     extraPhoto: 'Extra photo',
@@ -1165,9 +1262,11 @@ export const en: Translations = {
       rearRight: 'Rear right',
     },
     sentConfirmation: {
+      draftTitle: 'Photo saved locally',
       sentTitle: 'Photo sent',
       queuedTitle: 'Photo saved',
       failedTitle: 'Photo not sent',
+      draftDescription: 'Send the photo from the photo overview.',
       sentDescription: 'The photo has been sent.',
       queuedDescription: 'The photo will be sent when a connection is available.',
       failedDescription: 'The photo could not be sent.',
@@ -1175,6 +1274,9 @@ export const en: Translations = {
     },
     remainingMandatory: '{{count}} required photos remaining',
     send: 'Send',
+    sendReplacement: 'Send replacement',
+    viewPhoto: 'Enlarge photo',
+    locked: 'Sent extra photo is locked',
     retake: 'Retake',
     uploaded: 'Already uploaded',
     mandatoryPhotoProgress: 'Required photo · {{current}} of 4',
@@ -1220,6 +1322,21 @@ export const en: Translations = {
     version: '{{version}} ({{userType}})',
     section: {
       general: 'General',
+    },
+    allocationUnitManagement: {
+      open: 'Manage allocation unit',
+      title: 'Manage allocation unit',
+      hint: 'Change your vehicle or end time, or cancel your allocation unit.',
+      noUnitHint: 'You do not have an active allocation unit.',
+      changeVehicle: 'Change vehicle',
+      registerVehicle: 'Register unit',
+      changeEndDate: 'Change end time',
+      cancel: 'Cancel allocation unit',
+      cancelConfirmTitle: 'Cancel allocation unit?',
+      cancelConfirmMessage: 'You cannot undo this.',
+      activeWorkTitle: 'Active assignment',
+      activeWorkMessage: 'Finish your active assignment before cancelling.',
+      cancelFailed: 'The allocation unit could not be cancelled. Please try again.',
     },
     worker: {
       unknown: 'Unknown worker',
@@ -1270,6 +1387,10 @@ export const en: Translations = {
       noChanges: 'No changes fetched.',
       retry: 'Sync again',
       refreshTopic: 'Refresh {{name}}',
+      viewJson: 'View JSON for {{name}}',
+      jsonLoading: 'Loading data...',
+      jsonMissing: 'No data stored for this topic yet.',
+      jsonError: 'The stored data could not be read.',
       status: {
         idle: 'Not started',
         syncing: 'Syncing',

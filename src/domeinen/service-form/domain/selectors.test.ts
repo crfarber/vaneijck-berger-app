@@ -3,6 +3,7 @@ import {
   isServiceFormDirty,
   selectActiveServiceFormAnswers,
   selectNextIncompleteServiceFormField,
+  selectNextVisibleServiceFormField,
   selectQuickViewFields,
   selectQuickViewSections,
   selectServiceFormProgress,
@@ -61,6 +62,85 @@ describe('service form selectors', () => {
     const visible = new Set(['controller', 'dependent']);
 
     expect(selectNextIncompleteServiceFormField(fields, visible, answers)?.id).toBe('controller');
+  });
+
+  it('selects the direct next editable field in screen order instead of JSON order', () => {
+    const optionalField: ServiceFormField = {
+      ...fields[1],
+      id: 'optional',
+      key: 'dn_optional',
+      optional: true,
+    };
+    const jsonOrderedFields = [fields[0], fields[1], optionalField];
+    const screenLayouts = [
+      { fieldId: 'dependent', x: 0, y: 0 },
+      { fieldId: 'optional', x: 0, y: 100 },
+      { fieldId: 'controller', x: 0, y: 200 },
+    ];
+
+    expect(
+      selectNextVisibleServiceFormField(jsonOrderedFields, screenLayouts, 'dependent')?.id,
+    ).toBe('optional');
+  });
+
+  it('starts at the first visible editable field and skips readonly or unrendered fields', () => {
+    const readOnlyField: ServiceFormField = {
+      ...fields[0],
+      id: 'readonly',
+      key: 'dn_readonly',
+      readOnly: true,
+    };
+
+    expect(
+      selectNextVisibleServiceFormField(
+        [fields[0], readOnlyField, fields[1]],
+        [
+          { fieldId: 'readonly', x: 0, y: 0 },
+          { fieldId: 'dependent', x: 0, y: 100 },
+        ],
+        null,
+      )?.id,
+    ).toBe('dependent');
+  });
+
+  it('skips display-only and unsupported fields in screen order', () => {
+    const dateField: ServiceFormField = {
+      ...fields[0],
+      id: 'date',
+      key: 'dn_date',
+      type: 'date',
+    };
+    const unsupportedField: ServiceFormField = {
+      ...fields[0],
+      id: 'unsupported',
+      key: 'dn_unsupported',
+      type: 'unknown',
+    };
+
+    expect(
+      selectNextVisibleServiceFormField(
+        [dateField, unsupportedField, fields[1]],
+        [
+          { fieldId: 'date', x: 0, y: 0 },
+          { fieldId: 'unsupported', x: 0, y: 100 },
+          { fieldId: 'dependent', x: 0, y: 200 },
+        ],
+        null,
+      )?.id,
+    ).toBe('dependent');
+  });
+
+  it('returns no next field after the last visible editable field', () => {
+    expect(
+      selectNextVisibleServiceFormField(
+        fields,
+        [
+          { fieldId: 'controller', x: 0, y: 0 },
+          { fieldId: 'dependent', x: 0, y: 100 },
+        ],
+        'dependent',
+      ),
+    ).toBeNull();
   });
 
   it('includes optional fields promoted to required at runtime in progress', () => {
@@ -206,6 +286,22 @@ describe('quick view field selection', () => {
     expect(
       selectQuickViewFields(quickFields, allVisible, answers).map((field) => field.id),
     ).toEqual(['dependent', 'notes']);
+  });
+
+  it('keeps required answers entered by the user visible but hides CRM-prefilled answers', () => {
+    const answers = {
+      dn_controller: { value: 1, displayValue: 'Ja' },
+      dn_dependent: { value: 'entered', displayValue: 'entered' },
+    };
+    const initialAnswers = {
+      dn_controller: { value: 1, displayValue: 'Ja' },
+    };
+
+    expect(
+      selectQuickViewFields(fields, new Set(['controller', 'dependent']), answers, {
+        initialAnswers,
+      }).map((field) => field.id),
+    ).toEqual(['dependent']);
   });
 
   it('removes sections that have no fields left to fill', () => {

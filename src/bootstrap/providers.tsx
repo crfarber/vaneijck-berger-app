@@ -1,6 +1,7 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { useEffect, useMemo, type ReactNode } from 'react';
 import { I18nextProvider } from 'react-i18next';
+import * as Clipboard from 'expo-clipboard';
 import { AppState } from 'react-native';
 import { AllocationUnitProvider } from '@/domeinen/allocation-unit/ui';
 import { AllocationsApiProvider } from '@/domeinen/allocations/ui';
@@ -18,7 +19,9 @@ import { StatusOverlayProvider } from '@/shared/ui/status-overlay-host';
 import { FeedbackProvider } from '@/shared/ui/toast-host';
 import { SchedulerProvider } from '@/shared/ui/scheduler-context';
 import type { Container } from './container';
+import { copyAccessTokenToClipboard } from './dev/copy-access-token';
 import { DevToolsProvider } from './dev/dev-tools-context';
+import { createPostalAddressLookup } from './postal-address-lookup';
 
 /** Tells the session when the app returns to the foreground, so an expired token is renewed at once. */
 function useForegroundRefresh(container: Container): void {
@@ -43,7 +46,14 @@ export function AppProviders({
   useForegroundRefresh(container);
 
   const devTools = useMemo(
-    () => ({ loadDebugSnapshot: () => container.loadDebugSnapshot() }),
+    () => ({
+      loadDebugSnapshot: () => container.loadDebugSnapshot(),
+      copyAccessToken: () =>
+        copyAccessTokenToClipboard({
+          tokenProvider: container.tokenProvider,
+          clipboard: Clipboard,
+        }),
+    }),
     [container],
   );
   const settings = useMemo(
@@ -51,6 +61,7 @@ export function AppProviders({
       permissions: container.devicePermissions,
       languageSettings: container.languageSettings,
       signOutGuard: container.signOutGuard,
+      allocationUnitManagement: container.allocationUnitManagement,
       referenceDataService: container.referenceDataService,
     }),
     [container],
@@ -80,7 +91,9 @@ export function AppProviders({
                     <AllocationsApiProvider
                       value={{
                         api: container.allocationsApi,
+                        rdwApi: container.rdwApi,
                         actionsService: container.allocationActionsService,
+                        acceptFlow: container.allocationAcceptFlow,
                         serviceActionsService: container.serviceActionsService,
                         reassignService: container.reassignService,
                       }}
@@ -97,8 +110,13 @@ export function AppProviders({
                               value={{
                                 service: container.serviceFormService,
                                 drafts: container.serviceFormDrafts,
+                                logger: container.logger,
                                 fetchRdwInfo: (registrationNumber) =>
                                   container.rdwApi.lookupByRegistrationNumber(registrationNumber),
+                                lookupPostalAddress: createPostalAddressLookup(
+                                  (postalCode, houseNumber) =>
+                                    container.allocationsApi.checkZipcode(postalCode, houseNumber),
+                                ),
                                 signaturesApi: container.signaturesApi,
                               }}
                             >

@@ -8,12 +8,14 @@ import {
   Linking,
   Pressable,
   ScrollView,
+  Share,
   StyleSheet,
   Text,
   View,
+  type TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import type { Service } from '@/domeinen/allocations';
+import { canReturnToDispatch, type Service } from '@/domeinen/allocations';
 import {
   ACTION_FEEDBACK_MESSAGE,
   ServiceDeclineSheet,
@@ -25,9 +27,10 @@ import {
 import {
   PHOTO_PHASE,
   PHOTO_STATUS,
+  deliveryPhotoRequirements,
   photoPositionForRequirement,
   photoRequirementName,
-  unmatchedLoadPhotos,
+  reconcileHistoryPositions,
   type PhotoPhase,
 } from '@/domeinen/photos';
 import { usePhotoService } from '@/domeinen/photos/ui';
@@ -40,21 +43,30 @@ import { colors, spacing } from '@/shared/ui/theme';
 import { base64ToBytes, isJpegBase64 } from '@/domeinen/signatures';
 import { ReadonlyFieldSummary } from '../components/readonly-field-summary';
 import { ServiceFieldRenderer } from '../components/service-field-renderer';
+import { ServiceFormAddressGroup } from '../components/service-form-address-group';
 import { ServiceFormHeader } from '../components/service-form-header';
 import { ServiceFormToolbar } from '../components/service-form-toolbar';
 import { ServiceFormSection } from '../components/service-form-section';
 import { ServiceFormVehicleRegistrationGroup } from '../components/service-form-vehicle-registration-group';
+import { buildAddressEntrySectionRenderItems } from '../domain/address-entry';
 import { groupSectionFields } from '../domain/field-kind';
-import { serviceFormLanguageCode, serviceFormPhaseForStatus } from '../domain/form-context';
+import {
+  phaseNumbersFromDefinition,
+  serviceFormLanguageCode,
+  serviceFormPhaseForStatus,
+} from '../domain/form-context';
 import { resolveServiceFormLoadState } from '../domain/load-state';
-import { needsPhotoConfirmation } from '../domain/photos-confirm';
+import { areServicePhotosUploaded, needsPhotoConfirmation } from '../domain/photos-confirm';
 import { partitionVehicleRegistrationFields } from '../domain/rdw-autofill';
 import { normalizeServiceFormDefinition } from '../domain/schema';
+import { createServiceFormScenario } from '../domain/scenario-export';
 import {
   isServiceFormDirty,
+  selectNextVisibleServiceFormField,
   selectQuickViewSections,
   selectServiceFormProgress,
 } from '../domain/selectors';
+import type { ServiceFormFieldLayout } from '../domain/selectors';
 import { hasAnySignature } from '../domain/signature';
 import { buildUploadSignatureParams } from '../domain/signature-upload';
 import { buildSignaturePostData, buildServicePostBody } from '../domain/submission';
@@ -63,6 +75,7 @@ import type { NormalizedServiceForm, ServiceFormField } from '../domain/types';
 import {
   useFetchRdwInfo,
   useServiceFormDrafts,
+  useServiceFormLogger,
   useServiceFormService,
   useSignaturesApi,
 } from '../hooks/service-form-context';
@@ -70,6 +83,10 @@ import { useServiceDefinition } from '../hooks/use-service-definition';
 import { useServiceForm } from '../hooks/use-service-form';
 import type { ServiceFormDraft } from '../service/draft-storage';
 import { createServiceFormDraft, hasServiceFormDraftProgress } from '../service/draft-storage';
+import {
+  logServiceFormSubmitFailure,
+  type ServiceFormSubmitStage,
+} from '../service/service-form-service';
 import {
   ServiceFormStoreProvider,
   useServiceFormStore,
@@ -87,7 +104,6 @@ type ExitContext = {
 type DraftGate = { status: 'loading' } | { status: 'ready'; draft: ServiceFormDraft | null };
 
 const TERMS_URL = 'https://berging-mobiliteit.nl/';
-const NO_PHOTO_REQUIREMENTS: readonly string[] = [];
 
 /**
  * The processing form of one service: the schema from the synced reference data, filled in with
@@ -119,8 +135,9 @@ export function ServiceFormScreen({
   const { state, retry } = useServiceDefinition(service?.dn_servicetypecode ?? undefined);
   const pleaseSelectLabel = t('serviceForm.pleaseSelect');
   const languageCode = serviceFormLanguageCode(i18n.language);
-  const phase = serviceFormPhaseForStatus(service?.statuscode);
   const definition = state.status === 'ready' ? state.definition : null;
+  const phaseNumbers = phaseNumbersFromDefinition(definition?.definition);
+  const phase = serviceFormPhaseForStatus(service?.statuscode, phaseNumbers);
   const [draftGate, setDraftGate] = useState<DraftGate>(() =>
     preview ? { status: 'ready', draft: null } : { status: 'loading' },
   );
@@ -209,10 +226,7 @@ export function ServiceFormScreen({
     >
       <ServiceFormBody
         form={model.form}
-        loadPhotoRequirements={
-          definition?.definition?.find((phase) => phase.phase === 1)?.photosMandatory ??
-          NO_PHOTO_REQUIREMENTS
-        }
+        phaseNumbers={phaseNumbers}
         service={service}
         pleaseSelectLabel={pleaseSelectLabel}
         preview={preview}
@@ -230,14 +244,14 @@ export function ServiceFormScreen({
 
 function ServiceFormBody({
   form,
-  loadPhotoRequirements,
+  phaseNumbers,
   service,
   pleaseSelectLabel,
   preview,
   exitContext,
 }: {
   form: NormalizedServiceForm;
-  loadPhotoRequirements: readonly string[];
+  phaseNumbers: readonly number[];
   service: Service;
   pleaseSelectLabel: string;
   preview: boolean;
@@ -247,6 +261,7 @@ function ServiceFormBody({
   const router = useRouter();
   const navigation = useNavigation();
   const serviceFormService = useServiceFormService();
+  const logger = useServiceFormLogger();
   const signaturesApi = useSignaturesApi();
   const drafts = useServiceFormDrafts();
   const photoService = usePhotoService();
@@ -255,6 +270,7 @@ function ServiceFormBody({
   const statusOverlay = useStatusOverlay();
   const decline = useDeclineService({
     ...exitContext,
+    serviceStatuscode: service.statuscode,
     serviceTypeCode: service.dn_servicetypecode ?? undefined,
   });
   const {
@@ -264,7 +280,6 @@ function ServiceFormBody({
     visibility,
     visibleSections,
     progress,
-    nextIncompleteField,
     requiredFieldOverrides,
     updateAnswer,
     updateAnswers,
@@ -273,6 +288,7 @@ function ServiceFormBody({
     validateForm,
   } = useServiceForm(form, pleaseSelectLabel);
   const fetchRdwInfo = useFetchRdwInfo();
+  const initialAnswers = useServiceFormStore((state) => state.initialAnswers);
   const expandedSections = useServiceFormStore((state) => state.expandedSections);
   const toggleSection = useServiceFormStore((state) => state.toggleSection);
   const expandSection = useServiceFormStore((state) => state.expandSection);
@@ -286,14 +302,18 @@ function ServiceFormBody({
   const [quickViewActive, setQuickViewActive] = useState(false);
   const [overviewActive, setOverviewActive] = useState(false);
   const [focusedFieldId, setFocusedFieldId] = useState<string | null>(null);
+  const [activeFieldId, setActiveFieldId] = useState<string | null>(null);
+  const [fieldLayouts, setFieldLayouts] = useState<Record<string, ServiceFormFieldLayout>>({});
   const [photoCoverage, setPhotoCoverage] = useState<{
     required: string[];
     present: string[];
+    uploadsComplete: boolean;
   } | null>(null);
   const allowingLeave = useRef(false);
   const readOnly = preview || overviewActive;
   const photosComplete =
     photoCoverage !== null &&
+    photoCoverage.uploadsComplete &&
     !needsPhotoConfirmation(photoCoverage.required, photoCoverage.present);
   const displayedSections = useMemo(
     () =>
@@ -302,6 +322,7 @@ function ServiceFormBody({
             requiredFieldOverrides,
             hideSignature,
             noEmailConfirmation,
+            initialAnswers,
             focusedFieldId,
           })
         : visibleSections,
@@ -309,6 +330,7 @@ function ServiceFormBody({
       answers,
       focusedFieldId,
       hideSignature,
+      initialAnswers,
       noEmailConfirmation,
       quickViewActive,
       readOnly,
@@ -321,70 +343,97 @@ function ServiceFormBody({
   const scrollRef = useRef<ScrollView>(null);
   const contentRef = useRef<View>(null);
   const fieldRefs = useRef(new Map<string, View>());
+  const inputRefs = useRef(new Map<string, TextInput>());
   const pendingJump = useRef<string | null>(null);
+
+  const registerFieldRef = useCallback((fieldId: string, node: View | null): void => {
+    if (node) {
+      fieldRefs.current.set(fieldId, node);
+      return;
+    }
+
+    fieldRefs.current.delete(fieldId);
+    setFieldLayouts((current) => {
+      if (current[fieldId] === undefined) {
+        return current;
+      }
+      const next = { ...current };
+      delete next[fieldId];
+      return next;
+    });
+  }, []);
+
+  const registerInputRef = useCallback((fieldId: string, node: TextInput | null): void => {
+    if (node) {
+      inputRefs.current.set(fieldId, node);
+      return;
+    }
+    inputRefs.current.delete(fieldId);
+  }, []);
 
   const loadPhotoCoverage = useCallback(async (): Promise<{
     required: string[];
     present: string[];
+    uploadsComplete: boolean;
   }> => {
-    const phase: PhotoPhase = form.phase === 2 ? PHOTO_PHASE.delivery : PHOTO_PHASE.load;
+    const firstPhase = phaseNumbers[0];
+    const phase: PhotoPhase =
+      firstPhase !== undefined && form.phase !== firstPhase
+        ? PHOTO_PHASE.delivery
+        : PHOTO_PHASE.load;
     const photos = await photoService.listByService(exitContext.serviceId);
     const currentPhotos = photos.filter(
-      (photo) => photo.phase === phase && photo.status !== PHOTO_STATUS.failed,
+      (photo) => photo.phase === phase && photo.status === PHOTO_STATUS.sent,
     );
-    const present = currentPhotos.map((photo) => photoRequirementName(photo.position));
-    const required = [...form.photosMandatory];
+    let present = currentPhotos.map((photo) => photoRequirementName(photo.position));
+    let required = [...form.photosMandatory];
     if (phase === PHOTO_PHASE.delivery) {
       const loadPhotos = photos.filter(
         (photo) => photo.phase === PHOTO_PHASE.load && photo.status !== PHOTO_STATUS.failed,
       );
-      const loadFallback =
-        loadPhotos.length === 0
-          ? await photoService.listServerPhotos({
-              allocationId: exitContext.allocationId,
-              incidentId: exitContext.incidentId,
-              serviceId: exitContext.serviceId,
-              phase: PHOTO_PHASE.load,
-            })
-          : [];
-      const loadPositions =
-        loadPhotos.length > 0
-          ? loadPhotos.map((photo) => photo.position)
-          : loadFallback
-              .filter((photo) => photo.phase === PHOTO_PHASE.load)
-              .map((photo) => photo.position);
-      const mandatoryLoadPositions = loadPhotoRequirements.map(photoPositionForRequirement);
-      if (mandatoryLoadPositions.some((position) => position === null)) {
-        throw new Error('Unknown required load photo position');
-      }
-      required.push(
-        ...unmatchedLoadPhotos(
-          loadPositions,
-          mandatoryLoadPositions.filter((position) => position !== null),
-        ).map(photoRequirementName),
+      const serverLoadPhotos = await photoService.listServerPhotos({
+        allocationId: exitContext.allocationId,
+        incidentId: exitContext.incidentId,
+        serviceId: exitContext.serviceId,
+        phase: PHOTO_PHASE.load,
+      });
+      const loadPositions = reconcileHistoryPositions(
+        loadPhotos,
+        serverLoadPhotos
+          .filter((photo) => photo.phase === PHOTO_PHASE.load)
+          .map((photo) => photo.position),
+        true,
       );
+      const currentRequiredPositions = form.photosMandatory.map(photoPositionForRequirement);
+      if (currentRequiredPositions.some((position) => position === null)) {
+        throw new Error('Unknown required photo position');
+      }
+      required = deliveryPhotoRequirements(
+        currentRequiredPositions.filter((position) => position !== null),
+        loadPositions,
+      ).map(photoRequirementName);
     }
-    if (currentPhotos.length === 0 && needsPhotoConfirmation(required, present)) {
+    if (needsPhotoConfirmation(required, present)) {
       const serverPhotos = await photoService.listServerPhotos({
         allocationId: exitContext.allocationId,
         incidentId: exitContext.incidentId,
         serviceId: exitContext.serviceId,
         phase,
       });
-      present.push(
-        ...serverPhotos
-          .filter((photo) => photo.phase === phase)
-          .map((photo) => photoRequirementName(photo.position)),
-      );
+      present = reconcileHistoryPositions(
+        currentPhotos,
+        serverPhotos.filter((photo) => photo.phase === phase).map((photo) => photo.position),
+        true,
+      ).map(photoRequirementName);
     }
-    return { required, present };
+    return { required, present, uploadsComplete: areServicePhotosUploaded(photos) };
   }, [
     exitContext.allocationId,
     exitContext.incidentId,
     exitContext.serviceId,
     form.phase,
     form.photosMandatory,
-    loadPhotoRequirements,
+    phaseNumbers,
     photoService,
   ]);
 
@@ -496,6 +545,7 @@ function ServiceFormBody({
     }
     node.measureLayout(content, (_x, y) => {
       scrollRef.current?.scrollTo({ y: Math.max(0, y - spacing.md), animated: true });
+      inputRefs.current.get(fieldId)?.focus();
     });
   };
 
@@ -515,10 +565,40 @@ function ServiceFormBody({
   };
 
   const handleFieldLayout = (fieldId: string): void => {
+    const node = fieldRefs.current.get(fieldId);
+    const content = contentRef.current;
+    if (node && content) {
+      node.measureLayout(content, (x, y) => {
+        setFieldLayouts((current) => {
+          const previous = current[fieldId];
+          if (previous?.x === x && previous.y === y) {
+            return current;
+          }
+          return { ...current, [fieldId]: { fieldId, x, y } };
+        });
+      });
+    }
+
     if (pendingJump.current === fieldId) {
       pendingJump.current = null;
       scrollToField(fieldId);
     }
+  };
+
+  const nextVisibleField = useMemo(
+    () => selectNextVisibleServiceFormField(fields, Object.values(fieldLayouts), activeFieldId),
+    [activeFieldId, fieldLayouts, fields],
+  );
+
+  const activateField = (field: ServiceFormField): void => {
+    setActiveFieldId(field.id);
+    setFocusedFieldId(field.id);
+  };
+
+  const deactivateField = (field: ServiceFormField): void => {
+    setActiveFieldId(field.id);
+    setFocusedFieldId(null);
+    blurField(field);
   };
 
   const baseExit = {
@@ -535,7 +615,9 @@ function ServiceFormBody({
     if (submitting) {
       return;
     }
+    logger.info('serviceForm', 'Service form submit requested');
     if (!validateForm()) {
+      logger.warn('serviceForm', 'Service form submit stopped', { stage: 'field-validation' });
       const invalid = validateVisibleServiceForm(
         fields,
         visibility.visibleFieldIds,
@@ -548,14 +630,29 @@ function ServiceFormBody({
       return;
     }
 
-    let currentPhotoCoverage: { required: string[]; present: string[] };
+    let currentPhotoCoverage: { required: string[]; present: string[]; uploadsComplete: boolean };
     try {
+      logger.info('serviceForm', 'Checking required photos before submit');
       currentPhotoCoverage = await loadPhotoCoverage();
-    } catch {
+    } catch (error) {
+      logServiceFormSubmitFailure(logger, 'photo-check', error);
       Alert.alert(t('common.somethingWrong'));
       return;
     }
+    if (!currentPhotoCoverage.uploadsComplete) {
+      logger.warn('serviceForm', 'Service form submit stopped', { stage: 'photo-uploads' });
+      Alert.alert(
+        t('serviceForm.photos.uploadsPendingTitle'),
+        t('serviceForm.photos.uploadsPendingMessage'),
+      );
+      router.push({
+        pathname: '/allocations/[id]/services/[serviceId]/photos',
+        params: { id: exitContext.allocationId, serviceId: exitContext.serviceId },
+      });
+      return;
+    }
     if (needsPhotoConfirmation(currentPhotoCoverage.required, currentPhotoCoverage.present)) {
+      logger.warn('serviceForm', 'Service form submit stopped', { stage: 'missing-photos' });
       Alert.alert(t('serviceForm.photos.missingTitle'), t('serviceForm.photos.missingMessage'));
       router.push({
         pathname: '/allocations/[id]/services/[serviceId]/photos',
@@ -568,17 +665,21 @@ function ServiceFormBody({
       pleaseSelectLabel,
       hideSignature,
       noEmailConfirmation,
+      phaseNumbers,
     });
     if (termsAcceptanceRequired && !acceptedTermsAndConditions) {
+      logger.warn('serviceForm', 'Service form submit stopped', { stage: 'terms-acceptance' });
       Alert.alert(t('serviceForm.signature.termsRequired'));
       return;
     }
     setSubmitting(true);
     let shouldExit = false;
     let wasBlocked = false;
+    let submitStage: ServiceFormSubmitStage = 'signature-data';
     try {
       await statusOverlay.run(t('feedback.processing.submitService'), async () => {
         try {
+          logger.info('serviceForm', 'Preparing signature for submit');
           const signatureData = buildSignaturePostData(
             fields,
             visibility.visibleFieldIds,
@@ -588,6 +689,7 @@ function ServiceFormBody({
             form.phase,
           );
           if (hasAnySignature(signatureData)) {
+            submitStage = 'signature-validation';
             const upload = buildUploadSignatureParams({
               incidentId: exitContext.incidentId,
               serviceId: exitContext.serviceId,
@@ -596,6 +698,8 @@ function ServiceFormBody({
             if (!isJpegBase64(upload.signatureData)) {
               throw new Error('Signature image must be JPEG');
             }
+            submitStage = 'signature-upload';
+            logger.info('serviceForm', 'Uploading signature before service update');
             await signaturesApi.upload({
               incidentId: upload.incidentId,
               serviceId: upload.serviceId,
@@ -605,7 +709,9 @@ function ServiceFormBody({
               signatureType: upload.signatureType,
               fileBytes: base64ToBytes(upload.signatureData),
             });
+            logger.info('serviceForm', 'Signature uploaded');
           }
+          submitStage = 'service-update';
           const result = await serviceFormService.submit({
             serviceId: exitContext.serviceId,
             statuscode: service.statuscode,
@@ -614,16 +720,21 @@ function ServiceFormBody({
           if (result.kind === 'blocked') {
             wasBlocked = true;
             shouldExit = true;
+            submitStage = 'draft-clear';
             await clearDraftAndLeave();
             return { tone: 'none' as const };
           }
+          submitStage = 'draft-clear';
+          logger.info('serviceForm', 'Service update succeeded; clearing draft');
           await clearDraftAndLeave();
           shouldExit = true;
+          logger.info('serviceForm', 'Service form submit flow completed');
           return {
             tone: 'success' as const,
             message: t(ACTION_FEEDBACK_MESSAGE.serviceSubmitted),
           };
         } catch (error) {
+          logServiceFormSubmitFailure(logger, submitStage, error);
           setSubmitting(false);
           return {
             tone: 'error' as const,
@@ -652,6 +763,17 @@ function ServiceFormBody({
         setSubmitting(false);
       }
     }
+  };
+
+  const exportScenario = async (): Promise<void> => {
+    const body = buildServicePostBody(fields, visibility.visibleFieldIds, answers, form.phase, {
+      pleaseSelectLabel,
+      hideSignature,
+      noEmailConfirmation,
+      phaseNumbers,
+    });
+    const scenario = createServiceFormScenario(form, answers, body);
+    await Share.share({ message: JSON.stringify(scenario, null, 2) });
   };
 
   const confirmDecline = async (): Promise<void> => {
@@ -733,6 +855,9 @@ function ServiceFormBody({
                     const { vehicleFields, otherFields } = partitionVehicleRegistrationFields(
                       section.fields,
                     );
+                    const fieldGroups = readOnly
+                      ? groupSectionFields(otherFields, { readonly: true })
+                      : buildAddressEntrySectionRenderItems(otherFields);
                     return (
                       <>
                         {vehicleFields.length > 0 ? (
@@ -746,39 +871,41 @@ function ServiceFormBody({
                             updateAnswer={updateAnswer}
                             updateAnswers={updateAnswers}
                             setFieldsRequired={setFieldsRequired}
-                            onFocus={(field) => setFocusedFieldId(field.id)}
-                            onBlur={(field) => {
-                              setFocusedFieldId(null);
-                              blurField(field);
-                            }}
-                            registerFieldRef={(fieldId, node) => {
-                              if (node) {
-                                fieldRefs.current.set(fieldId, node);
-                              } else {
-                                fieldRefs.current.delete(fieldId);
-                              }
-                            }}
+                            onFocus={activateField}
+                            onBlur={deactivateField}
+                            registerFieldRef={registerFieldRef}
+                            registerInputRef={registerInputRef}
                             onFieldLayout={handleFieldLayout}
                           />
                         ) : null}
-                        {groupSectionFields(otherFields, { readonly: readOnly }).map((group) =>
+                        {fieldGroups.map((group) =>
                           group.kind === 'readonly' ? (
                             <ReadonlyFieldSummary
                               key={group.fields.map((field) => field.id).join(':')}
                               fields={group.fields}
                               answers={answers}
                             />
+                          ) : group.kind === 'address-entry' ? (
+                            <ServiceFormAddressGroup
+                              key={group.group.anchor.id}
+                              group={group.group}
+                              answers={answers}
+                              errors={errors}
+                              pleaseSelectLabel={pleaseSelectLabel}
+                              readOnly={readOnly}
+                              updateAnswer={updateAnswer}
+                              updateAnswers={updateAnswers}
+                              onFocus={activateField}
+                              onBlur={deactivateField}
+                              registerFieldRef={registerFieldRef}
+                              registerInputRef={registerInputRef}
+                              onFieldLayout={handleFieldLayout}
+                            />
                           ) : (
                             <View
                               key={group.field.id}
                               collapsable={false}
-                              ref={(node) => {
-                                if (node) {
-                                  fieldRefs.current.set(group.field.id, node);
-                                } else {
-                                  fieldRefs.current.delete(group.field.id);
-                                }
-                              }}
+                              ref={(node) => registerFieldRef(group.field.id, node)}
                               onLayout={() => handleFieldLayout(group.field.id)}
                             >
                               <ServiceFieldRenderer
@@ -793,11 +920,9 @@ function ServiceFormBody({
                                 pleaseSelectLabel={pleaseSelectLabel}
                                 onChange={updateAnswer}
                                 onAnswersChange={updateAnswers}
-                                onFocus={(field) => setFocusedFieldId(field.id)}
-                                onBlur={(field) => {
-                                  setFocusedFieldId(null);
-                                  blurField(field);
-                                }}
+                                registerInputRef={registerInputRef}
+                                onFocus={activateField}
+                                onBlur={deactivateField}
                               />
                             </View>
                           ),
@@ -813,6 +938,13 @@ function ServiceFormBody({
       </ScrollView>
       {!readOnly ? (
         <ScreenFooter>
+          {__DEV__ ? (
+            <Button
+              label={t('serviceForm.actions.exportScenario')}
+              variant="secondary"
+              onPress={() => void exportScenario()}
+            />
+          ) : null}
           {ready ? <Text style={styles.ready}>{t('serviceForm.readyToSubmit')}</Text> : null}
           {ready ? (
             <Button
@@ -824,8 +956,13 @@ function ServiceFormBody({
             <Button
               label={t('serviceForm.next')}
               variant="secondary"
-              disabled={!nextIncompleteField}
-              onPress={() => jumpToField(nextIncompleteField ?? undefined)}
+              disabled={!nextVisibleField}
+              onPress={() => {
+                if (nextVisibleField) {
+                  setActiveFieldId(nextVisibleField.id);
+                  jumpToField(nextVisibleField);
+                }
+              }}
             />
           )}
         </ScreenFooter>
@@ -833,6 +970,7 @@ function ServiceFormBody({
       {!preview ? (
         <ServiceDeclineSheet
           state={decline.state}
+          canReturnToDispatch={canReturnToDispatch(service.statuscode)}
           onClose={decline.close}
           onSelect={decline.select}
           onBack={decline.back}

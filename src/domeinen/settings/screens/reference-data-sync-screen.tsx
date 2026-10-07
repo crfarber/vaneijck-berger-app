@@ -1,8 +1,17 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import type { ReferenceDataSyncStatus, ReferenceDataTopicStatus } from '@/domeinen/reference-data';
+import { BottomSheet } from '@/shared/ui/bottom-sheet';
 import { Screen } from '@/shared/ui/screen';
 import { colors, radius, spacing } from '@/shared/ui/theme';
 import { useReferenceDataService } from '../hooks/settings-context';
@@ -46,6 +55,32 @@ export function ReferenceDataSyncScreen() {
   const [status, setStatus] = useState(() => referenceData.getSyncStatus());
   const [availableTopics, setAvailableTopics] = useState<string[]>([]);
   const [refreshingName, setRefreshingName] = useState<string | null>(null);
+  const [viewedTopic, setViewedTopic] = useState<string | null>(null);
+  const [jsonState, setJsonState] = useState<
+    { phase: 'loading' | 'missing' | 'error' } | { phase: 'ready'; content: string }
+  >({ phase: 'loading' });
+
+  useEffect(() => {
+    if (viewedTopic === null) return;
+    let cancelled = false;
+    void referenceData.getEntity(viewedTopic).then(
+      (entity) => {
+        if (!cancelled) {
+          setJsonState(
+            entity === null
+              ? { phase: 'missing' }
+              : { phase: 'ready', content: JSON.stringify(entity, null, 2) },
+          );
+        }
+      },
+      () => {
+        if (!cancelled) setJsonState({ phase: 'error' });
+      },
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, [referenceData, viewedTopic]);
 
   useEffect(() => referenceData.subscribeToSyncStatus(setStatus), [referenceData]);
 
@@ -135,6 +170,18 @@ export function ReferenceDataSyncScreen() {
                       <Ionicons name="refresh" size={22} color={colors.brandText} />
                     )}
                   </Pressable>
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={t('settings.referenceData.viewJson', { name: topic.name })}
+                    hitSlop={spacing.sm}
+                    onPress={() => {
+                      setJsonState({ phase: 'loading' });
+                      setViewedTopic(topic.name);
+                    }}
+                    style={({ pressed }) => [styles.retryButton, pressed && styles.pressed]}
+                  >
+                    <Ionicons name="eye-outline" size={22} color={colors.brandText} />
+                  </Pressable>
                 </View>
               );
             })}
@@ -143,6 +190,36 @@ export function ReferenceDataSyncScreen() {
       ) : status.phase === 'succeeded' ? (
         <Text style={styles.empty}>{t('settings.referenceData.noChanges')}</Text>
       ) : null}
+      <BottomSheet
+        visible={viewedTopic !== null}
+        title={viewedTopic ?? ''}
+        closeLabel={t('common.close')}
+        onClose={() => setViewedTopic(null)}
+        height="90%"
+      >
+        <ScrollView contentContainerStyle={styles.jsonContent}>
+          {jsonState.phase === 'ready' ? (
+            <Text selectable style={styles.json}>
+              {jsonState.content}
+            </Text>
+          ) : (
+            <View style={styles.jsonStatus}>
+              {jsonState.phase === 'loading' ? (
+                <ActivityIndicator color={colors.brandText} />
+              ) : null}
+              <Text style={styles.hint}>
+                {t(
+                  jsonState.phase === 'loading'
+                    ? 'settings.referenceData.jsonLoading'
+                    : jsonState.phase === 'missing'
+                      ? 'settings.referenceData.jsonMissing'
+                      : 'settings.referenceData.jsonError',
+                )}
+              </Text>
+            </View>
+          )}
+        </ScrollView>
+      </BottomSheet>
     </Screen>
   );
 }
@@ -161,8 +238,8 @@ const styles = StyleSheet.create({
   status: { flex: 1, fontSize: 17, fontWeight: '700', color: colors.text },
   hint: { fontSize: 14, color: colors.textMuted },
   retryButton: {
-    width: 40,
-    height: 40,
+    width: 44,
+    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -182,6 +259,14 @@ const styles = StyleSheet.create({
   },
   topicDot: { width: 8, height: 8, borderRadius: 4 },
   entity: { flex: 1, fontSize: 15, color: colors.text },
-  topicStatus: { fontSize: 14, color: colors.textMuted },
+  topicStatus: { flexShrink: 1, fontSize: 14, color: colors.textMuted },
+  jsonContent: { paddingBottom: spacing.md },
+  jsonStatus: { gap: spacing.sm, paddingVertical: spacing.md },
+  json: {
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+    fontSize: 13,
+    lineHeight: 20,
+    color: colors.text,
+  },
   empty: { fontSize: 14, color: colors.textMuted },
 });

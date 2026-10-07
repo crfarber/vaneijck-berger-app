@@ -13,9 +13,11 @@ import { AddressSearchSheet } from './address-search-sheet';
  */
 export function PlaceSearchControl({
   onSelected,
+  initialQuery,
   disabled = false,
 }: {
   onSelected: (address: StructuredAddress) => void | Promise<void>;
+  initialQuery: string;
   disabled?: boolean;
 }) {
   const { t } = useTranslation();
@@ -49,15 +51,18 @@ export function PlaceSearchControl({
       >
         <Ionicons name="search" size={22} color={colors.brandText} />
       </Pressable>
-      <AddressSearchSheet
-        visible={open}
-        places={places}
-        onClose={() => setOpen(false)}
-        onChoose={(prediction) => {
-          setOpen(false);
-          void apply(prediction.placeId, prediction.description);
-        }}
-      />
+      {open ? (
+        <AddressSearchSheet
+          visible
+          places={places}
+          initialQuery={initialQuery}
+          onClose={() => setOpen(false)}
+          onChoose={(prediction) => {
+            setOpen(false);
+            void apply(prediction.placeId, prediction.description);
+          }}
+        />
+      ) : null}
     </>
   );
 }

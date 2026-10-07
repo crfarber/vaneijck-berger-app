@@ -2,6 +2,7 @@
 export {
   ServiceFormProvider,
   useFetchRdwInfo,
+  useLookupPostalAddress,
   useServiceFormDrafts,
   useServiceFormService,
 } from './hooks/service-form-context';

@@ -35,8 +35,11 @@ Een push-bericht wordt gelezen (type in verschillende velden, soms in geneste JS
 ## 6. Foto's en handtekening
 
 De berger opent Foto's vanaf een dienst of PLTR. Per fase (laden of afleveren) maakt hij foto's van
-een gekozen type. Bij afleveren staan de laadfoto's read-only ter vergelijking. Uploaden loopt via
-een wachtrij: een tijdelijke fout houdt de versleutelde foto lokaal en probeert later opnieuw.
+een gekozen type. Opnames blijven lokaal totdat hij de fasebatch expliciet verstuurt. Bij afleveren
+staan alle laadfoto's als aanklikbare history ter vergelijking en wordt iedere laadfoto opnieuw
+verplicht. Een verzonden verplichte foto kan afzonderlijk worden vervangen; verzonden extra's zijn
+locked. Na aanbieden loopt upload via een wachtrij: een tijdelijke fout houdt de versleutelde foto
+lokaal en probeert later opnieuw.
 Pas na een door de server bevestigde `finish` van de opdracht wist de app de lokale foto's.
 
 Handtekeningen zet hij full-screen in het verwerkingsformulier (native pad, JPEG-upload vóór het

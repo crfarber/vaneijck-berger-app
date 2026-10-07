@@ -1,5 +1,19 @@
 import { describe, expect, it } from 'vitest';
-import { needsPhotoConfirmation } from './photos-confirm';
+import { areServicePhotosUploaded, needsPhotoConfirmation } from './photos-confirm';
+
+describe('areServicePhotosUploaded', () => {
+  it('allows services without local photos and services with only confirmed uploads', () => {
+    expect(areServicePhotosUploaded([])).toBe(true);
+    expect(areServicePhotosUploaded([{ status: 'sent' }, { status: 'sent' }])).toBe(true);
+  });
+
+  it.each(['queued', 'failed'] as const)(
+    'blocks service submission while a photo is %s, including extra photos',
+    (status) => {
+      expect(areServicePhotosUploaded([{ status: 'sent' }, { status }])).toBe(false);
+    },
+  );
+});
 
 describe('needsPhotoConfirmation', () => {
   it('is false when the phase has no mandatory photos', () => {

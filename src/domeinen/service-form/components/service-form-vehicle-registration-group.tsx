@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View, type TextInput } from 'react-native';
 import { colors, spacing } from '@/shared/ui/theme';
 import {
   getVehicleSectionFieldOrder,
@@ -32,6 +32,7 @@ export type ServiceFormVehicleRegistrationGroupProps = {
   onFocus?: (field: ServiceFormField) => void;
   onBlur: (field: ServiceFormField) => void;
   registerFieldRef?: (fieldId: string, node: View | null) => void;
+  registerInputRef?: (fieldId: string, node: TextInput | null) => void;
   onFieldLayout?: (fieldId: string) => void;
 };
 
@@ -53,6 +54,7 @@ export function ServiceFormVehicleRegistrationGroup({
   onFocus,
   onBlur,
   registerFieldRef,
+  registerInputRef,
   onFieldLayout,
 }: ServiceFormVehicleRegistrationGroupProps) {
   const { t } = useTranslation();
@@ -108,13 +110,18 @@ export function ServiceFormVehicleRegistrationGroup({
             ? { value: rdwDisplay, displayValue: rdwDisplay }
             : answers[field.key];
         const isPlate = isRdwPlateField(field.key);
+        const isNavigable = rdwDisplay === undefined && !field.readOnly;
 
         return (
           <View
             key={field.id}
             collapsable={false}
-            ref={(node) => registerFieldRef?.(field.id, node)}
-            onLayout={() => onFieldLayout?.(field.id)}
+            ref={(node) => registerFieldRef?.(field.id, isNavigable ? node : null)}
+            onLayout={() => {
+              if (isNavigable) {
+                onFieldLayout?.(field.id);
+              }
+            }}
           >
             <ServiceFieldRenderer
               field={rdwDisplay !== undefined ? { ...field, readOnly: true } : field}
@@ -131,6 +138,7 @@ export function ServiceFormVehicleRegistrationGroup({
                 }
                 updateAnswer(key, next);
               }}
+              registerInputRef={registerInputRef}
               onFocus={onFocus}
               onBlur={onBlur}
             />

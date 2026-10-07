@@ -71,6 +71,7 @@ export function useRegisterUnit(options: { isOnboarding?: boolean; onOpenWork?: 
     setBusy(true);
     setMessage(null);
     let dialog: 'active-incident' | null = null;
+    let saved = false;
     try {
       await statusOverlay.run(t('feedback.processing.registerUnit'), async () => {
         const result = await service.registerExternal({
@@ -86,9 +87,12 @@ export function useRegisterUnit(options: { isOnboarding?: boolean; onOpenWork?: 
           return { tone: 'error' as const, message: t('unit.errors.submitFailed') };
         }
         await endDatePreference.remember(endDate);
-        setDone(true);
+        saved = true;
         return { tone: 'none' as const };
       });
+      if (saved) {
+        setDone(true);
+      }
     } finally {
       setBusy(false);
     }

@@ -19,11 +19,13 @@ const CONFIRMATION_COPY: Readonly<
   Record<
     PhotoStatus,
     {
-      title: 'sentTitle' | 'queuedTitle' | 'failedTitle';
-      description: 'sentDescription' | 'queuedDescription' | 'failedDescription';
+      title: 'draftTitle' | 'sentTitle' | 'queuedTitle' | 'failedTitle';
+      description:
+        'draftDescription' | 'sentDescription' | 'queuedDescription' | 'failedDescription';
     }
   >
 > = {
+  draft: { title: 'draftTitle', description: 'draftDescription' },
   queued: { title: 'queuedTitle', description: 'queuedDescription' },
   sent: { title: 'sentTitle', description: 'sentDescription' },
   failed: { title: 'failedTitle', description: 'failedDescription' },
@@ -34,6 +36,7 @@ export function PhotoSentConfirmationScreen({
   serviceId,
   incidentId,
   serviceStatuscode,
+  phaseNumbers,
   photoId,
 }: PhotoSentConfirmationScreenProps) {
   const { t } = useTranslation();
@@ -46,6 +49,9 @@ export function PhotoSentConfirmationScreen({
     serviceId,
     incidentId,
     statuscode: String(serviceStatuscode),
+    ...(phaseNumbers !== undefined && phaseNumbers.length > 0
+      ? { phaseNumbers: phaseNumbers.join(',') }
+      : {}),
   };
 
   useEffect(() => {

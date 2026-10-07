@@ -1,18 +1,37 @@
-import type { ReactNode } from 'react';
+import { BlurView } from 'expo-blur';
+import { useContext, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { MapBackgroundBlurContext } from './map-background';
 import { colors, spacing } from './theme';
 
 /**
- * Sticky action bar that owns the bottom safe area: white fills to the home
- * indicator so the map background does not peek underneath. Screens without
- * this footer keep a transparent SafeAreaView edge instead.
+ * Sticky action bar with a non-interactive blur behind its content and bottom safe area.
+ * Screens without this footer keep a transparent SafeAreaView edge instead.
  */
-export function ScreenFooter({ children }: { children: ReactNode }) {
+export function ScreenFooter({
+  children,
+  backgroundColor = 'transparent',
+}: {
+  children: ReactNode;
+  backgroundColor?: string;
+}) {
   const insets = useSafeAreaInsets();
+  const backgroundTarget = useContext(MapBackgroundBlurContext);
+  const blurTarget = backgroundColor === 'transparent' ? backgroundTarget : undefined;
 
   return (
-    <View style={[styles.footer, { paddingBottom: spacing.md + insets.bottom }]}>{children}</View>
+    <View style={[styles.footer, { backgroundColor, paddingBottom: spacing.md + insets.bottom }]}>
+      <BlurView
+        pointerEvents="none"
+        intensity={35}
+        tint="light"
+        blurTarget={blurTarget}
+        blurMethod={blurTarget ? 'dimezisBlurView' : 'none'}
+        style={StyleSheet.absoluteFill}
+      />
+      {children}
+    </View>
   );
 }
 
@@ -21,7 +40,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingTop: spacing.md,
     gap: spacing.sm,
-    backgroundColor: colors.background,
+    backgroundColor: 'transparent',
+    overflow: 'hidden',
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors.border,
   },

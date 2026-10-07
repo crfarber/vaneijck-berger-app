@@ -9,12 +9,20 @@ export const PHOTO_PHASE = {
 export type PhotoPhase = (typeof PHOTO_PHASE)[keyof typeof PHOTO_PHASE];
 
 export const PHOTO_STATUS = {
+  draft: 'draft',
   queued: 'queued',
   sent: 'sent',
   failed: 'failed',
 } as const;
 
 export type PhotoStatus = (typeof PHOTO_STATUS)[keyof typeof PHOTO_STATUS];
+
+export const PHOTO_ROLE = {
+  mandatory: 'mandatory',
+  additional: 'additional',
+} as const;
+
+export type PhotoRole = (typeof PHOTO_ROLE)[keyof typeof PHOTO_ROLE];
 
 /**
  * Categories the berger can pick. Labels for `ImagePosition.name` stay Dutch: that is what the
@@ -76,6 +84,7 @@ export type Photo = {
   readonly incidentId: string;
   readonly allocationId: string;
   readonly phase: PhotoPhase;
+  readonly role: PhotoRole;
   readonly position: PhotoPosition;
   /** Absolute path on the device (no `file://` prefix needed for the store). */
   readonly filePath: string;
@@ -83,4 +92,6 @@ export type Photo = {
   /** Epoch milliseconds from the `Clock` when the photo was taken. */
   readonly takenAt: number;
   readonly status: PhotoStatus;
+  readonly overrideExisting?: boolean;
+  readonly isExtraOverride?: boolean;
 };

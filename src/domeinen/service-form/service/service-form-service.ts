@@ -2,6 +2,7 @@ import type { LocationReader } from '@/domeinen/location';
 import { resolveCurrentPosition } from '@/domeinen/location';
 import type { ReferenceDataService } from '@/domeinen/reference-data';
 import { isSubmitAllowed } from '@/domeinen/services';
+import { HttpError, isRetryable } from '@/shared/api/errors';
 import type { Logger } from '@/shared/logging/logger';
 import type { ServiceFormApi } from '../api/service-form-api';
 import { unwrapServiceFormDefinitions } from '../domain/schema';
@@ -30,6 +31,29 @@ export type SubmitServiceFormResult =
   | { kind: 'submitted' }
   /** The service has moved on to a status that no longer takes a form (e.g. already invoiced). */
   | { kind: 'blocked' };
+
+export type ServiceFormSubmitStage =
+  | 'photo-check'
+  | 'signature-data'
+  | 'signature-validation'
+  | 'signature-upload'
+  | 'service-update'
+  | 'draft-clear';
+
+export function logServiceFormSubmitFailure(
+  logger: Logger,
+  stage: ServiceFormSubmitStage,
+  error: unknown,
+): void {
+  logger.error('serviceForm', 'Service form submission step failed', {
+    stage,
+    errorType: error instanceof Error ? error.name : 'UnknownError',
+    retryable: isRetryable(error),
+    ...(error instanceof HttpError
+      ? { status: error.status, traceId: error.problem?.traceId }
+      : {}),
+  });
+}
 
 export type ServiceFormService = {
   /**
@@ -141,7 +165,17 @@ export function createServiceFormService(deps: ServiceFormServiceDeps): ServiceF
         });
         return { kind: 'blocked' };
       }
-      await api.updateService(serviceId, body);
+      logger?.info('serviceForm', 'Submitting service form');
+      try {
+        await api.updateService(serviceId, body);
+      } catch (error) {
+        logger?.error('serviceForm', 'Service form submission failed', {
+          errorType: error instanceof Error ? error.name : 'UnknownError',
+          ...(error instanceof HttpError ? { status: error.status } : {}),
+        });
+        throw error;
+      }
+      logger?.info('serviceForm', 'Service form submitted');
       return { kind: 'submitted' };
     },
   };

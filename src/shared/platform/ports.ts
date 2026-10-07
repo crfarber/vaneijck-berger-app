@@ -42,3 +42,15 @@ export type KeyValueStore = {
 
 /** Same shape, but backed by Keychain/Keystore. A separate type so the two cannot be swapped by accident. */
 export type SecretStore = KeyValueStore & { readonly secure: true };
+
+export type MultipartUploadFile = {
+  appendTo(body: FormData, fieldName: string): void;
+  remove(): Promise<void>;
+};
+
+export type MultipartUploadFiles = {
+  prepare(
+    bytes: Uint8Array,
+    metadata: { name: string; type: string },
+  ): Promise<MultipartUploadFile>;
+};

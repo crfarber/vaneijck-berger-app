@@ -52,13 +52,26 @@ describe('submit trigger', () => {
     expect(submit({ currentStatuscode: 999 }).exitKind).toBe('blocked');
   });
 
-  it('continues the incident after phase 1', () => {
-    expect(submit().exitKind).toBe('continueIncident');
+  it('continues the incident after an intermediate phase', () => {
+    expect(
+      submit({ postedBody: { statuscode: SERVICE_STATUS.HULPVERLENING_AKKOORD } }).exitKind,
+    ).toBe('continueIncident');
   });
 
-  it('goes to the closing screen after the delivery phase', () => {
-    const exit = submit({ currentStatuscode: SERVICE_STATUS.HULPVERLENING_AKKOORD });
+  it('goes to the closing screen after the last phase of a multi-phase service', () => {
+    const exit = submit({
+      currentStatuscode: SERVICE_STATUS.HULPVERLENING_AKKOORD,
+      postedBody: { statuscode: SERVICE_STATUS.HULPVERLENING_AFGEROND },
+    });
     expect(exit.exitKind).toBe('processingFinish');
+  });
+
+  it('ends a one-phase submit that posts afgerond from an earlier status', () => {
+    const exit = submit({
+      currentStatuscode: SERVICE_STATUS.IN_UITVOERING,
+      postedBody: { statuscode: SERVICE_STATUS.HULPVERLENING_AFGEROND },
+    });
+    expect(exit).toEqual({ exitKind: 'terminal', isEarlyComplete: false, isLcmh: false });
   });
 
   it('ends the service when a rule says it completes early', () => {
@@ -73,15 +86,10 @@ describe('submit trigger', () => {
     const exit = submit({
       currentStatuscode: SERVICE_STATUS.HULPVERLENING_AKKOORD,
       serviceTypeCode: SERVICE_TYPE.BERGING,
-      postedBody: { dn_ekv: true },
+      postedBody: { dn_ekv: true, statuscode: SERVICE_STATUS.HULPVERLENING_AFGEROND },
     });
     expect(exit.exitKind).toBe('terminal');
     expect(exit.isEarlyComplete).toBe(true);
-  });
-
-  it('ends an Afgifte submit', () => {
-    const exit = submit({ serviceTypeCode: SERVICE_TYPE.AFGIFTE });
-    expect(exit).toEqual({ exitKind: 'terminal', isEarlyComplete: false, isLcmh: false });
   });
 
   it('ends a submit that posts the Nacontrole status', () => {
@@ -104,7 +112,9 @@ describe('submit trigger', () => {
   });
 
   it.each([1002, 1005])('flags LCMH for im action status %i', (code) => {
-    const exit = submit({ postedBody: { dn_imactionstatuscode: code } });
+    const exit = submit({
+      postedBody: { statuscode: SERVICE_STATUS.HULPVERLENING_AKKOORD, dn_imactionstatuscode: code },
+    });
     expect(exit).toEqual({ exitKind: 'continueIncident', isEarlyComplete: false, isLcmh: true });
   });
 
@@ -115,8 +125,10 @@ describe('submit trigger', () => {
 
   it('keeps the LCMH flag when the service ends', () => {
     const exit = submit({
-      serviceTypeCode: SERVICE_TYPE.AFGIFTE,
-      postedBody: { dn_imactionstatuscode: 1005 },
+      postedBody: {
+        statuscode: SERVICE_STATUS.HULPVERLENING_AFGEROND,
+        dn_imactionstatuscode: 1005,
+      },
     });
     expect(exit).toEqual({ exitKind: 'terminal', isEarlyComplete: false, isLcmh: true });
   });

@@ -2,10 +2,56 @@ import { describe, expect, it, vi } from 'vitest';
 import type { CurrentLocation } from '@/domeinen/location';
 import type { SyncResult } from '@/domeinen/reference-data';
 import { SERVICE_STATUS } from '@/domeinen/services';
+import { HttpError } from '@/shared/api/errors';
 import { createLogger } from '@/shared/logging/logger';
 import { createFakeClock } from '@/test/fakes';
 import type { ServiceFormApi } from '../api/service-form-api';
-import { createServiceFormService } from './service-form-service';
+import { createServiceFormService, logServiceFormSubmitFailure } from './service-form-service';
+
+describe('submission diagnostics', () => {
+  it('identifies the failed step and HTTP response without logging server content', () => {
+    const logger = createLogger({ clock: createFakeClock() });
+    const error = new HttpError(
+      400,
+      {
+        title: 'Private server content',
+        detail: 'Private response data',
+        traceId: 'test-trace-id',
+      },
+      'Private raw body',
+    );
+
+    logServiceFormSubmitFailure(logger, 'service-update', error);
+
+    expect(logger.entries()).toEqual([
+      expect.objectContaining({
+        level: 'error',
+        category: 'serviceForm',
+        data: {
+          stage: 'service-update',
+          errorType: 'HttpError',
+          retryable: false,
+          status: 400,
+          traceId: 'test-trace-id',
+        },
+      }),
+    ]);
+    expect(JSON.stringify(logger.entries())).not.toContain('Private');
+  });
+
+  it('identifies local failures without logging their potentially sensitive message', () => {
+    const logger = createLogger({ clock: createFakeClock() });
+
+    logServiceFormSubmitFailure(logger, 'signature-validation', new Error('Private image data'));
+    logServiceFormSubmitFailure(logger, 'draft-clear', null);
+
+    expect(logger.entries().map((entry) => entry.data)).toEqual([
+      { stage: 'signature-validation', errorType: 'Error', retryable: false },
+      { stage: 'draft-clear', errorType: 'UnknownError', retryable: false },
+    ]);
+    expect(JSON.stringify(logger.entries())).not.toContain('Private');
+  });
+});
 
 const definition = (servicecode: number) => ({
   servicecode,
@@ -214,12 +260,33 @@ describe('submit', () => {
     expect(api.updateService).not.toHaveBeenCalled();
   });
 
-  it('lets a failed request reach the screen, so it can offer a retry', async () => {
-    const { service, api } = setup({});
-    vi.mocked(api.updateService).mockRejectedValueOnce(new Error('offline'));
+  it('logs a failed submit without logging the form body and lets the screen offer a retry', async () => {
+    const { service, api, logger } = setup({});
+    vi.mocked(api.updateService).mockRejectedValueOnce(new HttpError(503, null));
 
     await expect(
-      service.submit({ serviceId: 'svc-1', statuscode: SERVICE_STATUS.IN_UITVOERING, body: {} }),
-    ).rejects.toThrow('offline');
+      service.submit({
+        serviceId: 'svc-1',
+        statuscode: SERVICE_STATUS.IN_UITVOERING,
+        body: { dn_remarks: 'private form value' },
+      }),
+    ).rejects.toThrow('HTTP 503');
+
+    expect(logger.entries()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          category: 'serviceForm',
+          level: 'info',
+          message: 'Submitting service form',
+        }),
+        expect.objectContaining({
+          category: 'serviceForm',
+          level: 'error',
+          message: 'Service form submission failed',
+          data: { errorType: 'HttpError', status: 503 },
+        }),
+      ]),
+    );
+    expect(JSON.stringify(logger.entries())).not.toContain('private form value');
   });
 });

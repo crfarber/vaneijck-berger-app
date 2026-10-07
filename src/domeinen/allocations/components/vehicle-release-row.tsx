@@ -58,7 +58,7 @@ function ReleaseAssignmentRow({ release }: { release: VehicleReleaseAssignment }
 const styles = StyleSheet.create({
   header: {
     backgroundColor: colors.brand,
-    borderRadius: radius.md,
+    borderRadius: radius.lg,
     padding: spacing.md,
   },
   headerText: { color: colors.brandText, fontSize: 16, fontWeight: '600' },
@@ -67,7 +67,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     backgroundColor: colors.text,
-    borderRadius: radius.md,
+    borderRadius: radius.lg,
     padding: spacing.md,
   },
   assignmentLeft: { flex: 1 },

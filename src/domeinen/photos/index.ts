@@ -7,10 +7,13 @@ export type {
 } from './api/photos-api';
 export { isExtraForUpload } from './domain/extra';
 export { commentForPhase, photoPhaseFromServiceStatus } from './domain/phase';
+export { parsePhaseNumbersParam } from './domain/phase-numbers-param';
 export {
+  deliveryPhotoRequirements,
   EXTRA_PHOTO_CATEGORIES,
   missingPhotoPositions,
   photoPositionForRequirement,
+  reconcileHistoryPositions,
   requiresPhotoPositionDetail,
   unmatchedLoadPhotos,
 } from './domain/photo-position-options';
@@ -43,6 +46,7 @@ export {
   EXTERIOR_ANGLES,
   PHOTO_CATEGORY,
   PHOTO_PHASE,
+  PHOTO_ROLE,
   PHOTO_STATUS,
   TYRE_POSITIONS,
 } from './domain/types';
@@ -52,6 +56,7 @@ export type {
   PhotoCategory,
   PhotoPhase,
   PhotoPosition,
+  PhotoRole,
   PhotoStatus,
   TyrePosition,
 } from './domain/types';

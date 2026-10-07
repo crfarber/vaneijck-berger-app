@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { NetworkError } from '@/shared/api/errors';
+import { deferred } from '@/test/fakes';
 import type { AllocationUnitService, ReregisterOutcome } from '@/domeinen/allocation-unit';
 import type { ReferenceDataService } from '@/domeinen/reference-data';
 import type { AllocationsApi } from '../api/allocations-api';
@@ -60,6 +61,44 @@ function setup(
 }
 
 describe('accept', () => {
+  it('does not send or queue acceptance when the unit cannot be checked', async () => {
+    const { service, api, outbox } = setup(
+      {},
+      {
+        checkReregister: async () => {
+          throw new NetworkError();
+        },
+      },
+    );
+    expect(await service.accept('alloc-1', false)).toEqual({ kind: 'failed' });
+    expect(api.accept).not.toHaveBeenCalled();
+    expect(outbox.enqueue).not.toHaveBeenCalled();
+  });
+  it('does not send a late accept after the unit check is cancelled', async () => {
+    const waiting = deferred<ReregisterOutcome>();
+    const { service, api } = setup({}, { checkReregister: () => waiting.promise });
+    let current = true;
+    const accepting = service.accept('alloc-1', false, () => current);
+    current = false;
+    waiting.resolve({ kind: 'not-needed' });
+    await accepting;
+    expect(api.accept).not.toHaveBeenCalled();
+  });
+  it('does not accept with an expired shift while other assignments are active', async () => {
+    const { service, api } = setup(
+      {},
+      {
+        checkReregister: vi.fn(async (): Promise<ReregisterOutcome> => ({
+          kind: 'not-needed',
+          expiredWithActiveWork: true,
+        })),
+      },
+    );
+
+    expect(await service.accept('alloc-1', true)).toEqual({ kind: 'blocked' });
+    expect(api.accept).not.toHaveBeenCalled();
+  });
+
   it('accepts with the fixed status once the unit checks out', async () => {
     const { service, api, allocationUnitService } = setup();
 
@@ -83,7 +122,25 @@ describe('accept', () => {
 
     const result = await service.accept('alloc-1', false);
 
-    expect(result).toEqual({ kind: 'reregister-required' });
+    expect(result).toEqual({ kind: 'reregister-required', reason: 'no-unit' });
+    expect(api.accept).not.toHaveBeenCalled();
+  });
+
+  it('requires only working hours when the existing unit has expired', async () => {
+    const { service, api } = setup(
+      {},
+      {
+        checkReregister: vi.fn(async (): Promise<ReregisterOutcome> => ({
+          kind: 'required',
+          reason: 'expired',
+        })),
+      },
+    );
+
+    expect(await service.accept('alloc-1', false)).toEqual({
+      kind: 'reregister-required',
+      reason: 'expired',
+    });
     expect(api.accept).not.toHaveBeenCalled();
   });
 

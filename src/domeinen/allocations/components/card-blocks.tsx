@@ -127,7 +127,7 @@ const styles = StyleSheet.create({
   time: { gap: spacing.xs },
   pill: {
     alignSelf: 'flex-start',
-    borderRadius: radius.sm,
+    borderRadius: radius.xxl,
     backgroundColor: colors.brand,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
@@ -138,7 +138,7 @@ const styles = StyleSheet.create({
   actionButton: {
     flexDirection: 'row',
     alignItems: 'stretch',
-    borderRadius: radius.md,
+    borderRadius: radius.xxl,
     overflow: 'hidden',
   },
   actionIcon: {
@@ -147,16 +147,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.brandAction,
-    borderTopLeftRadius: radius.sm,
-    borderBottomLeftRadius: radius.sm,
+    borderTopLeftRadius: radius.xxl,
+    borderBottomLeftRadius: radius.xxl,
   },
   actionLabel: {
     height: 30,
+    paddingRight: spacing.md,
     justifyContent: 'center',
     paddingHorizontal: spacing.sm,
     backgroundColor: colors.brandDarker,
-    borderTopRightRadius: radius.sm,
-    borderBottomRightRadius: radius.sm,
+    borderTopRightRadius: radius.xxl,
+    borderBottomRightRadius: radius.xxl,
   },
   actionText: {
     color: colors.background,

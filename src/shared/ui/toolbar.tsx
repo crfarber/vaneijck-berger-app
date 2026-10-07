@@ -18,6 +18,7 @@ const styles = StyleSheet.create({
     width: '100%',
     alignItems: 'center',
     gap: spacing.sm,
+    paddingVertical: spacing.sm,
   },
   slot: {
     flex: 1,

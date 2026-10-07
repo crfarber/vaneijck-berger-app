@@ -1,6 +1,6 @@
 import { useLocalSearchParams } from 'expo-router';
 import { useAllocations, useServices } from '@/domeinen/allocations/ui';
-import { photoPhaseFromServiceStatus } from '@/domeinen/photos';
+import { phaseNumbersFromDefinition, serviceFormPhaseForStatus } from '@/domeinen/service-form';
 import { PhotoOverviewScreen } from '@/domeinen/photos/ui';
 import { useServiceDefinition } from '@/domeinen/service-form/ui';
 
@@ -21,8 +21,10 @@ export default function ServicePhotosOverviewRoute() {
   );
   const { state } = useServiceDefinition(service?.dn_servicetypecode ?? undefined);
   const definition = state.status === 'ready' ? state.definition.definition : undefined;
+  const phaseNumbers = phaseNumbersFromDefinition(definition);
   const serviceStatuscode = service?.statuscode ?? (Number(statuscode) || 0);
-  const phase = photoPhaseFromServiceStatus(serviceStatuscode) === 'delivery' ? 2 : 1;
+  const formPhase = serviceFormPhaseForStatus(serviceStatuscode, phaseNumbers);
+  const firstPhase = phaseNumbers[0];
 
   return (
     <PhotoOverviewScreen
@@ -30,8 +32,15 @@ export default function ServicePhotosOverviewRoute() {
       serviceId={serviceId}
       incidentId={resolvedIncidentId}
       serviceStatuscode={serviceStatuscode}
-      mandatoryNames={definition?.find((entry) => entry.phase === phase)?.photosMandatory ?? null}
-      loadMandatoryNames={definition?.find((entry) => entry.phase === 1)?.photosMandatory ?? null}
+      phaseNumbers={phaseNumbers}
+      mandatoryNames={
+        definition?.find((entry) => entry.phase === formPhase)?.photosMandatory ?? null
+      }
+      loadMandatoryNames={
+        firstPhase === undefined
+          ? null
+          : (definition?.find((entry) => entry.phase === firstPhase)?.photosMandatory ?? null)
+      }
     />
   );
 }

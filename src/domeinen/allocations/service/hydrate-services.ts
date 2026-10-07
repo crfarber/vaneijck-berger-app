@@ -6,7 +6,7 @@ import type { Service } from '../domain/types';
 export type HydrateServicesDeps = {
   api: Pick<AllocationsApi, 'getServicesByIncidentId' | 'getService'>;
   /** Adds vehicle data (RDW) to the services. Optional: without it the services are returned as fetched. */
-  enrich?: (services: Service[]) => Promise<Service[]>;
+  enrich?: (services: Service[], logger?: Logger) => Promise<Service[]>;
   logger?: Logger;
 };
 
@@ -63,5 +63,5 @@ export async function hydrateServices(
     });
   }
 
-  return deps.enrich ? deps.enrich(services) : services;
+  return deps.enrich ? deps.enrich(services, deps.logger) : services;
 }

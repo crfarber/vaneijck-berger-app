@@ -79,7 +79,8 @@ onbekend, te ver weg) werken echt.
 
 **Bewust niet gebouwd:** het openen van een dienst zelf (de knop "Preview", en het aantikken van een
 actieve dienst) — dat navigeert in de oude app naar de verwerkingsflow die het team zelf herbouwt.
-RDW-verrijking van voertuiggegevens op de kaart is niet meegenomen.
+Bij het ophalen van diensten worden ontbrekende voertuiggegevens inmiddels best-effort aangevuld via
+RDW voor herkende Nederlandse kentekens; een bestaand merk slaat de lookup over.
 
 **Nog niet gecontroleerd op een toestel:** geen diensten beschikbaar op het testaccount; alleen dat
 het scherm laadt en niet crasht is te controleren zonder een opdracht met echte diensten.

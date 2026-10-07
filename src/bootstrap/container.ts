@@ -5,12 +5,14 @@ import {
   ALLOCATION_DONE_STATUS,
   allocationKeys,
   createAllocationActionsService,
+  createAllocationAcceptFlow,
   createAllocationSections,
   createAllocationsApi,
   createReassignService,
   createServiceActionsService,
   hasActiveAllocations,
   type AllocationActionsService,
+  type AllocationAcceptFlow,
   type AllocationsApi,
   type ReassignService,
   type ServiceActionsService,
@@ -31,8 +33,10 @@ import { createSignaturesApi, type SignaturesApi } from '@/domeinen/signatures';
 import { createGooglePlacesClient, type PlacesClient } from '@/domeinen/places';
 import { createRdwApi, type RdwApi } from '@/domeinen/rdw';
 import {
+  createAllocationUnitManagement,
   createLanguageSettings,
   createSignOutGuard,
+  type AllocationUnitManagement,
   type DevicePermissions,
   type LanguageSettings,
   type SignOutGuard,
@@ -106,6 +110,7 @@ import {
   type Clock,
   type Haptics,
   type KeyValueStore,
+  type MultipartUploadFiles,
   type SecretStore,
   type Sleep,
 } from '@/shared/platform/ports';
@@ -137,6 +142,7 @@ export type ContainerInput = {
   logShare: LogShare;
   /** Durable JPEG storage for the photo queue. */
   photoFiles: PhotoFiles;
+  multipartUploadFiles: MultipartUploadFiles;
   /** Push delivery. A denied permission is a normal outcome, not a failure. */
   pushGateway: PushGateway;
   /** Opens the allocations overview after a tap. */
@@ -162,6 +168,7 @@ export type Container = {
   lifecycle: SessionLifecycle;
   allocationsApi: AllocationsApi;
   allocationActionsService: AllocationActionsService;
+  allocationAcceptFlow: AllocationAcceptFlow;
   serviceActionsService: ServiceActionsService;
   reassignService: ReassignService;
   workerApi: WorkerApi;
@@ -192,6 +199,7 @@ export type Container = {
   languageSettings: LanguageSettings;
   /** Voluntary sign-out from settings; blocked while an assignment is in progress. */
   signOutGuard: SignOutGuard;
+  allocationUnitManagement: AllocationUnitManagement;
   /**
    * Storage, session UI state and query cache for the __DEV__ debug screen.
    * Does not expose SecretStore on the container — only this snapshot.
@@ -295,7 +303,7 @@ export function createContainer(input: ContainerInput): Container {
     config.googlePlacesApiKey !== null
       ? createGooglePlacesClient({ apiKey: config.googlePlacesApiKey, fetch: fetchImpl })
       : null;
-  const signaturesApi = createSignaturesApi(http);
+  const signaturesApi = createSignaturesApi(http, input.multipartUploadFiles);
 
   const runReferenceDataSync = (): void => {
     referenceDataService.sync().catch((error: unknown) => {
@@ -314,7 +322,7 @@ export function createContainer(input: ContainerInput): Container {
 
   const securePhotoRepository = createPhotoRepository(input.secretStore);
   const photoService = createPhotoService({
-    api: createPhotosApi(http),
+    api: createPhotosApi(http, input.multipartUploadFiles),
     files: input.photoFiles,
     repository: securePhotoRepository,
     locationReader: input.locationReader,
@@ -523,21 +531,49 @@ export function createContainer(input: ContainerInput): Container {
     clock,
     logger,
   });
+  const allocationActionsService = createAllocationActionsService({
+    api: allocationsApi,
+    allocationUnitService,
+    referenceDataService,
+    outbox,
+    onFinished: cleanupFinishedAllocation,
+    logger,
+  });
+  const allocationAcceptFlow = createAllocationAcceptFlow({
+    actionsService: allocationActionsService,
+    canStart: () => sessionStore.getState().status === 'signed-in',
+    loadAllocations: () =>
+      queryClient.fetchQuery({
+        queryKey: allocationKeys.list(),
+        queryFn: ({ signal }) => allocationsApi.list({ signal }),
+        staleTime: 0,
+      }),
+  });
+  const unsubscribeAcceptFlowSession = sessionStore.subscribe((state, previous) => {
+    if (state.status !== 'signed-in' || state.userType !== previous.userType) {
+      allocationAcceptFlow.getState().cancel();
+    }
+  });
+  const hasActiveWork = async (): Promise<boolean> => {
+    let allocations: Awaited<ReturnType<AllocationsApi['list']>> | undefined;
+    try {
+      allocations = await allocationsApi.list();
+    } catch {
+      allocations = queryClient.getQueryData(allocationKeys.list());
+    }
+    if (allocations === undefined) {
+      return false;
+    }
+    return hasActiveAllocations(createAllocationSections(allocations, []));
+  };
   const signOutGuard = createSignOutGuard({
-    async hasActiveWork() {
-      let allocations: Awaited<ReturnType<AllocationsApi['list']>> | undefined;
-      try {
-        allocations = await allocationsApi.list();
-      } catch {
-        allocations = queryClient.getQueryData(allocationKeys.list());
-      }
-      if (allocations === undefined) {
-        return false;
-      }
-      return hasActiveAllocations(createAllocationSections(allocations, []));
-    },
+    hasActiveWork,
     cancelCurrentUnit: () => allocationUnitService.cancelCurrentUnit(),
     signOut: () => authService.signOut(),
+  });
+  const allocationUnitManagement = createAllocationUnitManagement({
+    hasActiveWork,
+    cancelCurrentUnit: () => allocationUnitService.cancelCurrentUnit(),
   });
 
   return {
@@ -551,14 +587,8 @@ export function createContainer(input: ContainerInput): Container {
     authService,
     lifecycle,
     allocationsApi,
-    allocationActionsService: createAllocationActionsService({
-      api: allocationsApi,
-      allocationUnitService,
-      referenceDataService,
-      outbox,
-      onFinished: cleanupFinishedAllocation,
-      logger,
-    }),
+    allocationActionsService,
+    allocationAcceptFlow,
     serviceActionsService: createServiceActionsService({
       api: allocationsApi,
       locationReader: input.locationReader,
@@ -595,6 +625,7 @@ export function createContainer(input: ContainerInput): Container {
     scheduler,
     languageSettings,
     signOutGuard,
+    allocationUnitManagement,
 
     loadDebugSnapshot: () =>
       collectDebugSnapshot({
@@ -630,6 +661,8 @@ export function createContainer(input: ContainerInput): Container {
       photoService.stop();
       outbox.stop();
       cancelPendingCacheSave();
+      allocationAcceptFlow.getState().cancel();
+      unsubscribeAcceptFlowSession();
       unbindSessionStore();
       unsubscribeSessionEvents();
       unsubscribePush();

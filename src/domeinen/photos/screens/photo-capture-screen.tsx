@@ -6,6 +6,7 @@ import { colors } from '@/shared/ui/theme';
 import {
   PHOTO_CATEGORY,
   PHOTO_CATEGORY_LABEL,
+  PHOTO_ROLE,
   photoPositionFromRouteParam,
   photoPhaseFromServiceStatus,
   simplePhotoPosition,
@@ -23,15 +24,22 @@ export function PhotoCaptureScreen({
   serviceId,
   incidentId,
   serviceStatuscode,
+  phaseNumbers,
   mode: modeParam,
   category: categoryParam,
   position: positionParam,
   help: helpParam,
+  overrideExisting = false,
+  isExtraOverride,
+  replacePhotoId,
 }: PhotoFlowContext & {
   mode: string;
   category?: string;
   position?: string;
   help?: string;
+  overrideExisting?: boolean;
+  isExtraOverride?: boolean;
+  replacePhotoId?: string;
 }) {
   const { t } = useTranslation();
   const { capture } = useServicePhotos(serviceId);
@@ -47,6 +55,9 @@ export function PhotoCaptureScreen({
     serviceId,
     incidentId,
     statuscode: String(serviceStatuscode),
+    ...(phaseNumbers !== undefined && phaseNumbers.length > 0
+      ? { phaseNumbers: phaseNumbers.join(',') }
+      : {}),
   };
   const label =
     mode === 'mandatory' && position !== null ? captureLabel(position) : t('photos.extraPhoto');
@@ -75,23 +86,20 @@ export function PhotoCaptureScreen({
       <PhotoCamera
         onCapture={async (sourceUri) => {
           if (helpVisible) return;
-          const photo = await capture({
+          await capture({
             incidentId,
             allocationId,
-            phase: photoPhaseFromServiceStatus(serviceStatuscode),
+            phase: photoPhaseFromServiceStatus(serviceStatuscode, phaseNumbers),
+            role: mode === 'mandatory' ? PHOTO_ROLE.mandatory : PHOTO_ROLE.additional,
             position,
             sourceUri,
+            overrideExisting,
+            isExtraOverride,
+            replacePhotoId,
           });
-          if (mode === 'mandatory') {
-            router.navigate({
-              pathname: '/allocations/[id]/services/[serviceId]/photos',
-              params: routeParams,
-            });
-            return;
-          }
-          router.replace({
-            pathname: '/allocations/[id]/services/[serviceId]/photos/sent',
-            params: { ...routeParams, photoId: photo.id },
+          router.navigate({
+            pathname: '/allocations/[id]/services/[serviceId]/photos',
+            params: routeParams,
           });
         }}
         overlay={

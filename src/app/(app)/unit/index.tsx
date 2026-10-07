@@ -8,16 +8,29 @@ import {
   useUnitRegistrationFlow,
 } from '@/domeinen/allocation-unit/ui';
 import { allocationKeys } from '@/domeinen/allocations';
+import { useCompleteAllocationAccept } from '@/domeinen/allocations/ui';
 import { useSession } from '@/domeinen/auth/ui';
 import { onboardingGateKey } from '@/domeinen/onboarding/ui';
 
 export default function UnitIndexRoute() {
   const userType = useSession((state) => state.userType);
   const queryClient = useQueryClient();
-  const { mode } = useLocalSearchParams<{ mode?: string }>();
+  const { mode, returnTo } = useLocalSearchParams<{ mode?: string; returnTo?: string }>();
   const { start } = useUnitRegistrationFlow();
+  const completeAccept = useCompleteAllocationAccept();
   const isOnboarding = mode === 'onboarding';
+  const isAccepting = mode === 'accept';
   const extendOnly = mode === 'extend';
+
+  const onSaved = useCallback(() => {
+    void completeAccept(() => {
+      void queryClient.invalidateQueries({ queryKey: onboardingGateKey });
+      void queryClient.invalidateQueries({ queryKey: allocationUnitKeys.current() });
+      router.replace(
+        returnTo === 'allocation-unit-management' ? '/allocation-unit-management' : '/',
+      );
+    });
+  }, [completeAccept, queryClient, returnTo]);
 
   const openRegistration = useCallback(
     (replace: boolean) => {
@@ -27,11 +40,7 @@ export default function UnitIndexRoute() {
 
       start({
         isOnboarding,
-        onRegistered: () => {
-          void queryClient.invalidateQueries({ queryKey: onboardingGateKey });
-          void queryClient.invalidateQueries({ queryKey: allocationUnitKeys.current() });
-          router.replace('/');
-        },
+        onRegistered: onSaved,
         onOpenWork: isOnboarding
           ? () => {
               void queryClient.invalidateQueries({ queryKey: allocationKeys.list() });
@@ -47,33 +56,25 @@ export default function UnitIndexRoute() {
         router.push(route);
       }
     },
-    [isOnboarding, queryClient, start, userType],
+    [isOnboarding, onSaved, queryClient, start, userType],
   );
 
   useEffect(() => {
-    if (!isOnboarding || extendOnly || userType === null) {
+    if ((!isOnboarding && !isAccepting) || extendOnly || userType === null) {
       return;
     }
     openRegistration(true);
-  }, [extendOnly, isOnboarding, openRegistration, userType]);
+  }, [extendOnly, isAccepting, isOnboarding, openRegistration, userType]);
 
   const changeUnit = useCallback(() => openRegistration(false), [openRegistration]);
   const registerMissingUnit = useCallback(() => openRegistration(true), [openRegistration]);
   const changeEndDate = useCallback(() => router.push('/unit?mode=extend'), []);
 
   if (extendOnly) {
-    return (
-      <ExtendShiftScreen
-        onExtended={() => {
-          void queryClient.invalidateQueries({ queryKey: onboardingGateKey });
-          router.replace('/');
-        }}
-        isOnboarding={false}
-      />
-    );
+    return <ExtendShiftScreen onExtended={onSaved} isOnboarding={false} />;
   }
 
-  if (isOnboarding || userType === null) {
+  if (isOnboarding || isAccepting || userType === null) {
     return null;
   }
 

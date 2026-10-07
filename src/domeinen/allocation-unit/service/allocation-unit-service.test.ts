@@ -392,8 +392,33 @@ describe('getFleet', () => {
 });
 
 describe('getHomebaseLocations', () => {
-  it('returns an empty list when reference-data has not synced it yet', async () => {
-    const { service } = setup();
+  it('refreshes homebase locations when they have not synced yet', async () => {
+    const locations = [{ dn_companylocationid: 'loc-1', dn_name: 'Utrecht', dn_city: 'Utrecht' }];
+    const { service, referenceDataService } = setup(
+      {},
+      {
+        getEntity: vi
+          .fn<ReferenceDataService['getEntity']>()
+          .mockResolvedValueOnce(null)
+          .mockResolvedValueOnce(locations),
+      },
+    );
+
+    expect(await service.getHomebaseLocations()).toEqual([
+      expect.objectContaining({ id: 'loc-1', name: 'Utrecht', city: 'Utrecht' }),
+    ]);
+    expect(referenceDataService.refreshEntity).toHaveBeenCalledWith('homebaselocations');
+  });
+
+  it('returns an empty list when refreshing missing homebase locations fails', async () => {
+    const { service } = setup(
+      {},
+      {
+        refreshEntity: vi.fn(async () => {
+          throw new Error('offline');
+        }),
+      },
+    );
 
     expect(await service.getHomebaseLocations()).toEqual([]);
   });

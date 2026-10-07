@@ -221,7 +221,16 @@ export function createAllocationUnitService(
     },
 
     async getHomebaseLocations() {
-      const raw = await referenceDataService.getEntity(HOMEBASE_ENTITY_NAME);
+      let raw = await referenceDataService.getEntity(HOMEBASE_ENTITY_NAME);
+      if (raw === null) {
+        try {
+          await referenceDataService.refreshEntity(HOMEBASE_ENTITY_NAME);
+          raw = await referenceDataService.getEntity(HOMEBASE_ENTITY_NAME);
+        } catch (error) {
+          logger?.warn('sync', 'Homebase locations refresh failed', { error });
+          return [];
+        }
+      }
       if (raw === null) {
         return [];
       }

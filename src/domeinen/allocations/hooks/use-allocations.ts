@@ -1,10 +1,28 @@
 import { useQuery } from '@tanstack/react-query';
+import type { QueryFunctionContext } from '@tanstack/react-query';
 import { useMemo } from 'react';
-import { allocationKeys, vehicleReleaseKeys } from '../domain/query-keys';
+import type { AllocationsApi } from '../api/allocations-api';
+import { allocationKeys, allocationQueryStaleTime, vehicleReleaseKeys } from '../domain/query-keys';
 import { createAllocationSections } from '../domain/sections';
 import { useAllocationsApi } from './allocations-context';
 
 export { allocationKeys, vehicleReleaseKeys };
+
+export function createAllocationListQueryOptions(api: Pick<AllocationsApi, 'list'>) {
+  return {
+    queryKey: allocationKeys.list(),
+    queryFn: ({ signal }: QueryFunctionContext) => api.list({ signal }),
+    staleTime: allocationQueryStaleTime,
+  };
+}
+
+export function createVehicleReleaseQueryOptions(api: Pick<AllocationsApi, 'listVehicleReleases'>) {
+  return {
+    queryKey: vehicleReleaseKeys.list(),
+    queryFn: ({ signal }: QueryFunctionContext) => api.listVehicleReleases({ signal }),
+    staleTime: allocationQueryStaleTime,
+  };
+}
 
 /**
  * The overview of the berger: active, pending and vehicle release blocks. Vehicle releases are
@@ -13,14 +31,8 @@ export { allocationKeys, vehicleReleaseKeys };
  */
 export function useAllocations() {
   const api = useAllocationsApi();
-  const allocations = useQuery({
-    queryKey: allocationKeys.list(),
-    queryFn: ({ signal }) => api.list({ signal }),
-  });
-  const vehicleReleases = useQuery({
-    queryKey: vehicleReleaseKeys.list(),
-    queryFn: ({ signal }) => api.listVehicleReleases({ signal }),
-  });
+  const allocations = useQuery(createAllocationListQueryOptions(api));
+  const vehicleReleases = useQuery(createVehicleReleaseQueryOptions(api));
 
   const sections = useMemo(
     () => createAllocationSections(allocations.data ?? [], vehicleReleases.data ?? []),

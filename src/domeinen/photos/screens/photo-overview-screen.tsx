@@ -1,24 +1,28 @@
+import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Button } from '@/shared/ui/button';
+import { CollapsibleSectionHeader } from '@/shared/ui/collapsible-section-header';
 import { CameraSVG } from '@/shared/ui/icons/camera';
 import CheckIcon from '@/shared/ui/icons/check';
 import { CarSVG, MotorcycleSVG, TruckSVG } from '@/shared/ui/icons/vehicles';
-import { colors, radius, spacing, type } from '@/shared/ui/theme';
+import { colors, spacing } from '@/shared/ui/theme';
 import {
   PHOTO_CATEGORY_LABEL,
   PHOTO_PHASE,
   PHOTO_STATUS,
+  deliveryPhotoRequirements,
   missingPhotoPositions,
   photoPositionForRequirement,
   photoPositionToRouteParam,
   photoPhaseFromServiceStatus,
   photoTypeKey,
+  reconcileHistoryPositions,
   standGridIndex,
-  unmatchedLoadPhotos,
   type PhotoPosition,
+  type PhotoRole,
   type PhotoStatus,
   type ServerPhotoSummary,
 } from '../index';
@@ -35,13 +39,23 @@ const VEHICLE_TYPES = [
 ] as const;
 
 type VehicleType = (typeof VEHICLE_TYPES)[number]['key'];
-type OverviewPhoto = { id: string; position: PhotoPosition; status: PhotoStatus; uri: string };
+type PhotoSectionKey = 'load' | 'mandatory' | 'extra';
+type OverviewPhoto = {
+  id: string;
+  position: PhotoPosition;
+  status: PhotoStatus;
+  uri: string;
+  role?: PhotoRole;
+  source?: 'local' | 'server';
+  isExtra?: boolean;
+};
 
 export function PhotoOverviewScreen({
   allocationId,
   serviceId,
   incidentId,
   serviceStatuscode,
+  phaseNumbers,
   mandatoryNames,
   loadMandatoryNames,
 }: PhotoFlowContext & {
@@ -49,15 +63,31 @@ export function PhotoOverviewScreen({
   loadMandatoryNames: readonly string[] | null;
 }) {
   const { t } = useTranslation();
-  const phase = photoPhaseFromServiceStatus(serviceStatuscode);
+  const phase = photoPhaseFromServiceStatus(serviceStatuscode, phaseNumbers);
   const photoService = usePhotoService();
-  const { photos, loaded, loadFailed, retry, busy } = useServicePhotos(serviceId);
+  const { photos, loaded, loadFailed, submitBatch, submitOverride, retry, busy } =
+    useServicePhotos(serviceId);
   const [vehicleType, setVehicleType] = useState<VehicleType>('AUTO');
+  const [collapsedSections, setCollapsedSections] = useState<ReadonlySet<PhotoSectionKey>>(
+    () => new Set(),
+  );
   const [serverPhotos, setServerPhotos] = useState<ServerPhotoSummary[]>([]);
   const [serverLoadPhotos, setServerLoadPhotos] = useState<ServerPhotoSummary[]>([]);
+  const [serverLookupComplete, setServerLookupComplete] = useState(false);
   const [lookupFailed, setLookupFailed] = useState(false);
   const phasePhotos = photos.filter((photo) => photo.phase === phase);
   const loadPhotos = photos.filter((photo) => photo.phase === PHOTO_PHASE.load);
+  const phasePhotoVersion = phasePhotos.map((photo) => `${photo.id}:${photo.status}`).join('|');
+  const loadPhotoVersion = loadPhotos.map((photo) => `${photo.id}:${photo.status}`).join('|');
+
+  const toggleSection = (key: PhotoSectionKey): void => {
+    setCollapsedSections((previous) => {
+      const next = new Set(previous);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
 
   useEffect(() => {
     if (!loaded || !incidentId) return;
@@ -65,10 +95,8 @@ export function PhotoOverviewScreen({
     const fetchMissing = async (): Promise<void> => {
       try {
         const [current, load] = await Promise.all([
-          phasePhotos.length === 0
-            ? photoService.listServerPhotos({ allocationId, incidentId, serviceId, phase })
-            : Promise.resolve([]),
-          phase === PHOTO_PHASE.delivery && loadPhotos.length === 0
+          photoService.listServerPhotos({ allocationId, incidentId, serviceId, phase }),
+          phase === PHOTO_PHASE.delivery
             ? photoService.listServerPhotos({
                 allocationId,
                 incidentId,
@@ -80,6 +108,7 @@ export function PhotoOverviewScreen({
         if (active) {
           setServerPhotos(current.filter((photo) => photo.phase === phase));
           setServerLoadPhotos(load.filter((photo) => photo.phase === PHOTO_PHASE.load));
+          setServerLookupComplete(true);
           setLookupFailed(false);
         }
       } catch {
@@ -97,32 +126,43 @@ export function PhotoOverviewScreen({
     serviceId,
     phase,
     photoService,
-    phasePhotos.length,
-    loadPhotos.length,
+    phasePhotoVersion,
+    loadPhotoVersion,
   ]);
 
-  const currentPhotos: OverviewPhoto[] = phasePhotos.map((photo) => ({
+  const localCurrentPhotos: OverviewPhoto[] = phasePhotos.map((photo) => ({
     id: photo.id,
     position: photo.position,
     status: photo.status,
     uri: photo.displayUri,
+    role: photo.role,
+    source: 'local',
+    isExtra: photo.isExtraOverride,
   }));
-  if (phasePhotos.length === 0) {
-    currentPhotos.push(
-      ...serverPhotos.map((photo, index) => ({
-        id: `server-${index}`,
-        position: photo.position,
-        status: PHOTO_STATUS.sent,
-        uri: photo.url,
-      })),
-    );
-  }
-  const loadPositions =
-    loadPhotos.length > 0
-      ? loadPhotos
-          .filter((photo) => photo.status !== PHOTO_STATUS.failed)
-          .map((photo) => photo.position)
-      : serverLoadPhotos.map((photo) => photo.position);
+  const serverCurrentPhotos: OverviewPhoto[] = serverPhotos.map((photo, index) => ({
+    id: `server-${index}`,
+    position: photo.position,
+    status: PHOTO_STATUS.sent,
+    uri: photo.url,
+    source: 'server',
+    isExtra: photo.isExtra,
+  }));
+  const includeLocalPhoto = (photo: OverviewPhoto): boolean =>
+    photo.status !== PHOTO_STATUS.sent || !serverLookupComplete || serverPhotos.length === 0;
+  const currentPhotos: OverviewPhoto[] = [
+    ...localCurrentPhotos.filter(
+      (photo) => photo.role !== 'additional' && includeLocalPhoto(photo),
+    ),
+    ...serverCurrentPhotos,
+    ...localCurrentPhotos.filter(
+      (photo) => photo.role === 'additional' && includeLocalPhoto(photo),
+    ),
+  ];
+  const loadPositions = reconcileHistoryPositions(
+    loadPhotos,
+    serverLoadPhotos.map((photo) => photo.position),
+    serverLookupComplete,
+  );
   const loadRequiredPositions = loadMandatoryNames?.map(photoPositionForRequirement) ?? [];
   const requiredPositions = mandatoryNames?.map(photoPositionForRequirement) ?? [];
   const definitionsValid =
@@ -130,15 +170,11 @@ export function PhotoOverviewScreen({
     loadMandatoryNames !== null &&
     !requiredPositions.includes(null) &&
     !loadRequiredPositions.includes(null);
-  const requirements = [
-    ...requiredPositions.filter((position) => position !== null),
-    ...(phase === PHOTO_PHASE.delivery
-      ? unmatchedLoadPhotos(
-          loadPositions,
-          loadRequiredPositions.filter((position) => position !== null),
-        )
-      : []),
-  ];
+  const currentRequirements = requiredPositions.filter((position) => position !== null);
+  const requirements =
+    phase === PHOTO_PHASE.delivery
+      ? deliveryPhotoRequirements(currentRequirements, loadPositions)
+      : currentRequirements;
   const usablePhotos = currentPhotos.filter((photo) => photo.status !== PHOTO_STATUS.failed);
   const remainingPhotos = [...usablePhotos];
   const mandatoryPhotos = requirements.map((position) => {
@@ -164,9 +200,23 @@ export function PhotoOverviewScreen({
     serviceId,
     incidentId,
     statuscode: String(serviceStatuscode),
+    ...(phaseNumbers !== undefined && phaseNumbers.length > 0
+      ? { phaseNumbers: phaseNumbers.join(',') }
+      : {}),
   };
 
-  const openMandatoryPhoto = (position: PhotoPosition): void => {
+  const openMandatoryPhoto = (position: PhotoPosition, photo: OverviewPhoto | null): void => {
+    const replacementParams = {
+      ...(photo?.status === PHOTO_STATUS.sent
+        ? {
+            overrideExisting: '1',
+            isExtraOverride: photo.isExtra === true ? '1' : '0',
+          }
+        : {}),
+      ...(photo?.source === 'local' && photo.status !== PHOTO_STATUS.sent
+        ? { replacePhotoId: photo.id }
+        : {}),
+    };
     if (standGridIndex(position) !== null) {
       router.push({
         pathname: '/allocations/[id]/services/[serviceId]/photos/camera',
@@ -176,6 +226,7 @@ export function PhotoOverviewScreen({
           category: position.category,
           position: photoPositionToRouteParam(position),
           help: '1',
+          ...replacementParams,
         },
       });
       return;
@@ -189,7 +240,12 @@ export function PhotoOverviewScreen({
     }
     router.push({
       pathname: '/allocations/[id]/services/[serviceId]/photos/camera',
-      params: { ...routeParams, mode: 'mandatory', category: position.category },
+      params: {
+        ...routeParams,
+        mode: 'mandatory',
+        category: position.category,
+        ...replacementParams,
+      },
     });
   };
 
@@ -200,10 +256,22 @@ export function PhotoOverviewScreen({
     });
   };
 
-  const primaryButtonLabel =
-    missingRequired > 0
+  const replacementDraft = phasePhotos.find(
+    (photo) => photo.status === PHOTO_STATUS.draft && photo.overrideExisting === true,
+  );
+  const primaryButtonLabel = replacementDraft
+    ? t('photos.sendReplacement')
+    : missingRequired > 0
       ? t('photos.remainingMandatory', { count: missingRequired })
       : t('photos.send');
+  const submitPhotos = async (): Promise<void> => {
+    if (replacementDraft) {
+      await submitOverride(replacementDraft.id);
+    } else {
+      await submitBatch(phase);
+    }
+    router.back();
+  };
 
   return (
     <Screen
@@ -212,7 +280,11 @@ export function PhotoOverviewScreen({
           {lookupFailed || loadFailed ? (
             <Text style={styles.counterText}>{t('common.somethingWrong')}</Text>
           ) : null}
-          <Button label={primaryButtonLabel} onPress={() => router.back()} disabled={!canLeave} />
+          <Button
+            label={primaryButtonLabel}
+            onPress={() => void submitPhotos()}
+            disabled={!canLeave || busy}
+          />
           <Pressable
             accessibilityRole="button"
             onPress={() => router.back()}
@@ -235,7 +307,7 @@ export function PhotoOverviewScreen({
                 style={[styles.segmentedOption, selected && styles.segmentedOptionSelected]}
               >
                 {Icon ? (
-                  <Icon size={22} color={selected ? colors.text : colors.textMuted} />
+                  <Icon size={22} color={selected ? colors.text : '#fff'} />
                 ) : (
                   <View style={styles.otherPill}>
                     <Text style={styles.otherPillText}>?</Text>
@@ -254,80 +326,97 @@ export function PhotoOverviewScreen({
         {phase === PHOTO_PHASE.delivery &&
         (loadPhotos.length > 0 || serverLoadPhotos.length > 0) ? (
           <>
-            <SectionHeader
-              label={t('photos.loadReference')}
-              count={t('photos.extraCount', {
-                count: loadPhotos.length || serverLoadPhotos.length,
-              })}
+            <CollapsibleSectionHeader
+              title={`${t('photos.loadReference')}`}
+              count={loadPhotos.length || serverLoadPhotos.length}
+              collapsed={collapsedSections.has('load')}
+              onPress={() => toggleSection('load')}
             />
-            <ScrollView
-              horizontal
-              nestedScrollEnabled
-              showsHorizontalScrollIndicator={false}
-              style={styles.loadStrip}
-              contentContainerStyle={styles.loadStripContent}
-            >
-              {loadPhotos.length > 0
-                ? loadPhotos.map((photo) => (
-                    <ExtraPhotoTile
-                      key={photo.id}
-                      variant="strip"
-                      photo={{
-                        id: photo.id,
-                        position: photo.position,
-                        status: photo.status,
-                        uri: photo.displayUri,
-                      }}
-                    />
-                  ))
-                : serverLoadPhotos.map((photo, index) => (
-                    <ExtraPhotoTile
-                      key={`load-server-${index}`}
-                      variant="strip"
-                      photo={{
-                        id: `load-server-${index}`,
-                        position: photo.position,
-                        status: PHOTO_STATUS.sent,
-                        uri: photo.url,
-                      }}
-                    />
-                  ))}
-            </ScrollView>
+            {!collapsedSections.has('load') ? (
+              <ScrollView
+                horizontal
+                nestedScrollEnabled
+                showsHorizontalScrollIndicator={false}
+                style={styles.loadStrip}
+                contentContainerStyle={styles.loadStripContent}
+              >
+                {loadPhotos.length > 0
+                  ? loadPhotos.map((photo) => (
+                      <ExtraPhotoTile
+                        key={photo.id}
+                        variant="strip"
+                        previewable
+                        photo={{
+                          id: photo.id,
+                          position: photo.position,
+                          status: photo.status,
+                          uri: photo.displayUri,
+                        }}
+                      />
+                    ))
+                  : serverLoadPhotos.map((photo, index) => (
+                      <ExtraPhotoTile
+                        key={`load-server-${index}`}
+                        variant="strip"
+                        previewable
+                        photo={{
+                          id: `load-server-${index}`,
+                          position: photo.position,
+                          status: PHOTO_STATUS.sent,
+                          uri: photo.url,
+                        }}
+                      />
+                    ))}
+              </ScrollView>
+            ) : null}
           </>
         ) : null}
-        <SectionHeader
-          label={t('photos.mandatory')}
+        <CollapsibleSectionHeader
+          title={`${t('photos.mandatory')}`}
           count={t('photos.mandatoryCount', {
             count: mandatoryPhotos.filter((entry) => entry.photo !== null).length,
+            total: mandatoryPhotos.length,
           })}
+          collapsed={collapsedSections.has('mandatory')}
+          onPress={() => toggleSection('mandatory')}
         />
-        <View style={styles.gridTwo}>
-          {mandatoryPhotos.map(({ position, photo }, index) => (
-            <MandatoryPhotoTile
-              key={`${photoTypeKey(position)}-${index}`}
-              position={position}
-              photo={photo}
-              onPress={() => openMandatoryPhoto(position)}
-            />
-          ))}
-        </View>
-        <SectionHeader
-          label={t('photos.extra')}
-          count={t('photos.extraCount', { count: extraPhotos.length })}
+        {!collapsedSections.has('mandatory') ? (
+          <View style={styles.gridTwo}>
+            {mandatoryPhotos.map(({ position, photo }, index) => (
+              <MandatoryPhotoTile
+                key={`${photoTypeKey(position)}-${index}`}
+                position={position}
+                photo={photo}
+                onPress={() => openMandatoryPhoto(position, photo)}
+              />
+            ))}
+          </View>
+        ) : null}
+        <CollapsibleSectionHeader
+          title={`${t('photos.extra')}`}
+          count={`${extraPhotos.length}`}
+          collapsed={collapsedSections.has('extra')}
+          onPress={() => toggleSection('extra')}
         />
-        <View style={styles.gridThree}>
-          {extraPhotos.map((photo) => (
-            <ExtraPhotoTile key={photo.id} photo={photo} />
-          ))}
-          <Pressable
-            accessibilityRole="button"
-            onPress={openExtraPhotoPosition}
-            style={styles.addTile}
-          >
-            <CameraSVG size={26} color={colors.textMuted} />
-            <Text style={styles.addTileText}>{t('photos.extraPhoto')}</Text>
-          </Pressable>
-        </View>
+        {!collapsedSections.has('extra') ? (
+          <View style={styles.gridThree}>
+            {extraPhotos.map((photo) => (
+              <ExtraPhotoTile
+                key={photo.id}
+                photo={photo}
+                locked={photo.status === PHOTO_STATUS.sent}
+              />
+            ))}
+            <Pressable
+              accessibilityRole="button"
+              onPress={openExtraPhotoPosition}
+              style={styles.addTile}
+            >
+              <CameraSVG size={26} color={colors.textMuted} />
+              <Text style={styles.addTileText}>{t('photos.extraPhoto')}</Text>
+            </Pressable>
+          </View>
+        ) : null}
         <View style={styles.footer}>
           {photos.some((photo) => photo.status === PHOTO_STATUS.failed && photo.phase === phase) ? (
             <Button
@@ -348,17 +437,6 @@ export function PhotoOverviewScreen({
         </View>
       </ScrollView>
     </Screen>
-  );
-}
-
-function SectionHeader({ label, count }: { label: string; count: string }) {
-  return (
-    <View style={styles.header}>
-      <Text style={styles.sectionLabel}>{label}</Text>
-      <Text style={styles.counterText} numberOfLines={1}>
-        {count}
-      </Text>
-    </View>
   );
 }
 
@@ -421,9 +499,9 @@ function MandatoryPhotoTile({
               <Text style={styles.retakeBadgeText}>{t('photos.retake')}</Text>
             </View>
           </View>
-          <TileFooter label={positionName(position)} />
         </>
       )}
+      <TileFooter label={positionName(position)} />
     </Pressable>
   );
 }
@@ -440,24 +518,58 @@ function TileFooter({ label, required = false }: { label: string; required?: boo
 function ExtraPhotoTile({
   photo,
   variant = 'grid',
+  locked = false,
+  previewable = false,
 }: {
   photo: OverviewPhoto;
   variant?: 'grid' | 'strip';
+  locked?: boolean;
+  previewable?: boolean;
 }) {
+  const { t } = useTranslation();
+  const [previewVisible, setPreviewVisible] = useState(false);
   const strip = variant === 'strip';
   return (
-    <View style={[styles.extraTile, strip && styles.stripTile]}>
-      <Image
-        source={{ uri: photo.uri }}
-        style={[styles.extraImage, strip && styles.stripImage]}
-        resizeMode="cover"
-      />
-      <View style={[styles.extraFooter, styles.extraFooterPositioned, strip && styles.stripFooter]}>
-        <Text style={[styles.extraFooterText, strip && styles.stripFooterText]} numberOfLines={1}>
-          {positionName(photo.position)}
-        </Text>
-      </View>
-    </View>
+    <>
+      <Pressable
+        accessibilityRole={previewable ? 'button' : undefined}
+        accessibilityLabel={previewable ? t('photos.viewPhoto') : undefined}
+        disabled={!previewable}
+        onPress={() => setPreviewVisible(true)}
+        style={[styles.extraTile, strip && styles.stripTile]}
+      >
+        <Image
+          source={{ uri: photo.uri }}
+          style={[styles.extraImage, strip && styles.stripImage]}
+          resizeMode="cover"
+        />
+        {locked ? (
+          <View style={styles.lockBadge} accessibilityLabel={t('photos.locked')}>
+            <Ionicons name="lock-closed" size={14} color="#fff" />
+          </View>
+        ) : null}
+        <View
+          style={[styles.extraFooter, styles.extraFooterPositioned, strip && styles.stripFooter]}
+        >
+          <Text style={[styles.extraFooterText, strip && styles.stripFooterText]} numberOfLines={1}>
+            {positionName(photo.position)}
+          </Text>
+        </View>
+      </Pressable>
+      <Modal
+        animationType="fade"
+        transparent
+        visible={previewVisible}
+        onRequestClose={() => setPreviewVisible(false)}
+      >
+        <Pressable style={styles.previewBackdrop} onPress={() => setPreviewVisible(false)}>
+          <Image source={{ uri: photo.uri }} style={styles.previewImage} resizeMode="contain" />
+          <View style={styles.previewClose}>
+            <Ionicons name="close" size={28} color="#fff" />
+          </View>
+        </Pressable>
+      </Modal>
+    </>
   );
 }
 
@@ -469,7 +581,7 @@ function positionName(position: PhotoPosition): string {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#F7F7F8' },
-  content: { paddingTop: 8, paddingBottom: 24, gap: 12 },
+  content: { paddingTop: 8, paddingBottom: 24, gap: 0 },
   fieldLabel: {
     color: colors.textMuted,
     fontSize: 11,
@@ -480,7 +592,9 @@ const styles = StyleSheet.create({
   },
   segmentedContainer: {
     flexDirection: 'row',
-    backgroundColor: colors.surface,
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.025)',
     borderRadius: 14,
     padding: 5,
     gap: 6,
@@ -494,45 +608,30 @@ const styles = StyleSheet.create({
     paddingTop: 6,
   },
   segmentedOptionSelected: {
-    backgroundColor: colors.background,
+    backgroundColor: colors.brand,
     shadowColor: '#000',
     shadowOpacity: 0.08,
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 1 },
     elevation: 2,
   },
-  segmentedText: { color: colors.textMuted, fontWeight: '700', fontSize: 11.5 },
+  segmentedText: { color: '#fff', fontWeight: '700', fontSize: 11.5 },
   segmentedTextSelected: { color: colors.text },
   otherPill: {
     width: 22,
     height: 22,
     borderRadius: 11,
-    backgroundColor: colors.border,
+    backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
   },
   otherPillText: { color: colors.textMuted, fontSize: 14, fontWeight: '700' },
-  header: {
-    gap: spacing.sm,
-    padding: spacing.md,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: colors.brandDark,
-    borderRadius: radius.md,
-  },
-  sectionLabel: {
-    ...type.label,
-    color: colors.brandLight,
-  },
   counterText: { color: colors.textMuted, fontSize: 12, fontWeight: '700' },
   gridTwo: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   requiredTile: {
     width: '48.5%',
     height: 118,
     borderRadius: 14,
-    borderWidth: 1.5,
-    borderColor: colors.text,
     backgroundColor: '#FAFAFB',
     overflow: 'hidden',
     justifyContent: 'space-between',
@@ -559,17 +658,18 @@ const styles = StyleSheet.create({
   requiredGridCellActive: { backgroundColor: colors.brand, borderColor: colors.brand },
   requiredTileFooter: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    height: 36,
-    backgroundColor: '#F6F6F6',
-    paddingHorizontal: 10,
-    borderTopWidth: 1,
-    borderTopColor: '#E9EBEE',
+    backgroundColor: colors.brand,
+    borderRadius: 8,
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    position: 'absolute',
+    bottom: 6,
+    left: 6,
   },
-  requiredTileLabel: { color: colors.text, fontSize: 11.5, fontWeight: '700' },
+  requiredTileLabel: { color: colors.text, fontSize: 9.5, fontWeight: '700' },
   requiredDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: colors.danger },
-  tileImage: { width: '100%', height: 82, backgroundColor: colors.border },
+  tileImage: { width: '100%', height: '100%', backgroundColor: colors.border },
   tileTopBadgeRow: {
     position: 'absolute',
     top: 8,
@@ -626,6 +726,34 @@ const styles = StyleSheet.create({
   },
   extraImage: { width: '100%', height: 70, backgroundColor: '#E7E8EA' },
   stripImage: { height: 82, backgroundColor: '#222428' },
+  lockBadge: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.text,
+  },
+  previewBackdrop: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: spacing.lg,
+    backgroundColor: 'rgba(0, 0, 0, 0.88)',
+  },
+  previewImage: { width: '100%', height: '82%' },
+  previewClose: {
+    position: 'absolute',
+    top: 52,
+    right: 20,
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   extraFooter: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 6 },
   extraFooterPending: { backgroundColor: '#FEEB8C' },
   extraFooterPositioned: { backgroundColor: colors.surface },

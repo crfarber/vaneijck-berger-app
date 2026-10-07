@@ -25,7 +25,7 @@ export const colors = {
 
 export const spacing = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24 } as const;
 
-export const radius = { sm: 6, md: 8, lg: 12, xl: 16 } as const;
+export const radius = { sm: 6, md: 8, lg: 12, xl: 16, xxl: 24 } as const;
 
 /** iOS Dynamic Type at the default Large size. Sizes are points. */
 export const type = {

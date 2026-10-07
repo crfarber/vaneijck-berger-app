@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
@@ -13,24 +13,57 @@ import { BottomSheet } from '@/shared/ui/bottom-sheet';
 import { Button } from '@/shared/ui/button';
 import { colors, radius, spacing } from '@/shared/ui/theme';
 import type { PlacePrediction, PlacesClient } from '../api/google-places-client';
+import { initialAddressSearchQuery } from '../domain/initial-address-search';
 
 /** Search sheet that any screen can mount. Pass the client from `usePlacesClient()`. */
 export function AddressSearchSheet({
   visible,
   places,
+  initialQuery = '',
   onChoose,
   onClose,
 }: {
   visible: boolean;
   places: PlacesClient;
+  initialQuery?: string;
   onChoose: (prediction: PlacePrediction) => void;
   onClose: () => void;
 }) {
   const { t } = useTranslation();
-  const [query, setQuery] = useState('');
+  const initialQueryToSearch = initialAddressSearchQuery(visible, initialQuery);
+  const [query, setQuery] = useState(initialQuery);
   const [predictions, setPredictions] = useState<PlacePrediction[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(initialQueryToSearch !== null);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!initialQueryToSearch) {
+      return;
+    }
+
+    let isCurrentSearch = true;
+    void places
+      .autocomplete(initialQueryToSearch)
+      .then((results) => {
+        if (isCurrentSearch) {
+          setPredictions(results);
+        }
+      })
+      .catch(() => {
+        if (isCurrentSearch) {
+          setError(t('places.searchFailed'));
+        }
+      })
+      .finally(() => {
+        if (isCurrentSearch) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      isCurrentSearch = false;
+    };
+  }, [initialQueryToSearch, places, t]);
 
   const reset = (): void => {
     setQuery('');

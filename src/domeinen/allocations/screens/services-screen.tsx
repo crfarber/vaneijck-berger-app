@@ -59,14 +59,16 @@ export function ServicesScreen({
     () => [
       {
         key: 'active',
-        title: `${t('allocations.sections.active')} (${activeServices.length})`,
+        title: `${t('allocations.sections.active')}`,
         data: collapsedKeys.active === true ? [] : activeServices,
+        count: activeServices.length,
         collapsed: collapsedKeys.active === true,
       },
       {
         key: 'pending',
-        title: `${t('allocations.sections.pending')} (${pendingServices.length})`,
+        title: `${t('allocations.sections.pending')}`,
         data: collapsedKeys.pending === true ? [] : pendingServices,
+        count: pendingServices.length,
         collapsed: collapsedKeys.pending === true,
       },
     ],
@@ -88,10 +90,11 @@ export function ServicesScreen({
     setCollapsedKeys((prev) => ({ ...prev, [key]: prev[key] !== true }));
   };
 
+  const toolbarHeader =
+    toolbar !== undefined ? <View style={styles.toolbar}>{toolbar}</View> : null;
+
   return (
     <SafeAreaView style={styles.safeArea} edges={['bottom']}>
-      {toolbar !== undefined ? <View style={styles.toolbar}>{toolbar}</View> : null}
-      <Text style={styles.title}>{t('services.title')}</Text>
       {servicesQuery.isError ? (
         <View style={styles.center}>
           <Text style={styles.message}>{t('common.somethingWrong')}</Text>
@@ -118,11 +121,16 @@ export function ServicesScreen({
             <CollapsibleSectionHeader
               title={section.title}
               collapsed={section.collapsed}
+              count={section.count}
               onPress={() => toggleSection(section.key)}
             />
           )}
           ListHeaderComponent={
-            <IncidentCard model={resolveIncidentCardModel(allocation)} preview={preview} />
+            <>
+              {toolbarHeader}
+              <Text style={styles.title}>{t('services.title')}</Text>
+              <IncidentCard model={resolveIncidentCardModel(allocation)} preview={preview} />
+            </>
           }
           ListHeaderComponentStyle={styles.incidentHeader}
           renderSectionFooter={() => null}
@@ -139,8 +147,6 @@ export function ServicesScreen({
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: 'transparent' },
   toolbar: {
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.sm,
     paddingBottom: spacing.xs,
   },
   list: { padding: spacing.md },
@@ -162,7 +168,6 @@ const styles = StyleSheet.create({
   title: {
     ...type.large,
     color: colors.text,
-    margin: spacing.md,
-    marginBottom: 0,
+    marginBottom: spacing.sm,
   },
 });

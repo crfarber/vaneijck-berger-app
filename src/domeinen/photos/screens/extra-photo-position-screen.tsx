@@ -14,6 +14,7 @@ export function ExtraPhotoPositionScreen({
   serviceId,
   incidentId,
   serviceStatuscode,
+  phaseNumbers,
 }: PhotoFlowContext) {
   const { t } = useTranslation();
   const [position, setPosition] = useState<PhotoPosition | null>(null);
@@ -22,6 +23,9 @@ export function ExtraPhotoPositionScreen({
     serviceId,
     incidentId,
     statuscode: String(serviceStatuscode),
+    ...(phaseNumbers !== undefined && phaseNumbers.length > 0
+      ? { phaseNumbers: phaseNumbers.join(',') }
+      : {}),
   };
 
   return (

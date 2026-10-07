@@ -79,12 +79,18 @@ export function parseFleetRows(rows: readonly unknown[]): ParsedFleet {
 
 const optionalText = z.string().nullable().optional();
 
+const optionalTextOrNumber = z
+  .union([z.string(), z.number()])
+  .transform(String)
+  .nullable()
+  .optional();
+
 /** One row of the `homebaselocations` reference-data entity. */
 const homebaseLocationRowSchema = z.looseObject({
   dn_companylocationid: z.string().min(1),
   dn_name: z.string(),
   dn_street: optionalText,
-  dn_housenumber: optionalText,
+  dn_housenumber: optionalTextOrNumber,
   dn_housenumberaddition: optionalText,
   dn_postalcode: optionalText,
   dn_city: optionalText,

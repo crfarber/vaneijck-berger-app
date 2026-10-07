@@ -69,3 +69,7 @@ export function reduceServiceDecline(
 export function statuscodeForDeclineAction(action: ServiceDeclineAction): number {
   return SERVICE_DECLINE_STATUS[action];
 }
+
+export function canReturnToDispatch(statuscode: number): boolean {
+  return statuscode === SERVICE_STATUS.IN_UITVOERING;
+}

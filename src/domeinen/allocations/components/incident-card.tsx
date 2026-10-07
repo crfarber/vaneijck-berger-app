@@ -55,6 +55,7 @@ export function IncidentCard({
       onForward={onForward}
       pendingConnection={pendingConnection}
       showVehicle={showVehicle}
+      preview={preview}
     />
   );
 }
@@ -99,6 +100,15 @@ function StandardIncidentCard({
     ]);
   };
 
+  const call = (): void => {
+    if (!model.phone) {
+      return;
+    }
+    void Linking.openURL(`tel:${model.phone}`).catch(() => {
+      Alert.alert(t('common.somethingWrong'));
+    });
+  };
+
   const main = (
     <>
       <View style={styles.headerRow}>
@@ -135,6 +145,7 @@ function StandardIncidentCard({
               {model.location[1]}
             </Text>
           ) : null}
+          {model.showCall ? <Text style={styles.address}>{model.phone}</Text> : null}
           {pendingConnection ? (
             <Text style={styles.pending}>{t('feedback.pendingConnection')}</Text>
           ) : null}
@@ -150,20 +161,24 @@ function StandardIncidentCard({
     </>
   );
 
-  const showFooter = (!preview && model.showNavigate) || showForward || Boolean(age);
+  const showFooter =
+    (!preview && model.showNavigate) || model.showCall || showForward || Boolean(age);
   const footer = showFooter ? (
     <View style={styles.footerRow}>
-      {!preview && model.showNavigate ? (
-        <CardActionButton label={t('pltr.navigate')} icon="navigate" onPress={openMaps} />
-      ) : showForward && onForward ? (
-        <CardActionButton
-          label={t('allocations.card.forward')}
-          icon="arrow-forward"
-          onPress={onForward}
-        />
-      ) : (
-        <View />
-      )}
+      <View style={styles.pltrActions}>
+        {!preview && model.showNavigate ? (
+          <CardActionButton label={t('pltr.navigate')} icon="navigate" onPress={openMaps} />
+        ) : showForward && onForward ? (
+          <CardActionButton
+            label={t('allocations.card.forward')}
+            icon="arrow-forward"
+            onPress={onForward}
+          />
+        ) : null}
+        {model.showCall ? (
+          <CardActionButton label={t('allocations.card.callClient')} icon="call" onPress={call} />
+        ) : null}
+      </View>
       {age ? (
         <View style={styles.agePill}>
           <ClockSVG size={14} color={colors.background} />
@@ -199,6 +214,7 @@ function PltrIncidentCard({
   onForward,
   pendingConnection,
   showVehicle,
+  preview,
 }: {
   model: Extract<IncidentCardModel, { kind: 'pltr' }>;
   onPress?: () => void;
@@ -206,16 +222,48 @@ function PltrIncidentCard({
   onForward?: () => void;
   pendingConnection: boolean;
   showVehicle: boolean;
+  preview: boolean;
 }) {
   const { t } = useTranslation();
   const title = model.title ?? t('allocations.unnamed');
   const clock = model.createdOn ? formatIncidentClock(model.createdOn) : undefined;
   const age = useIncidentAge(model.createdOn);
-  const vehicleLine = [model.vehicle.plate, model.vehicle.description, model.vehicle.color]
-    .filter((part): part is string => Boolean(part))
-    .join(' ');
+  const vehicleLine =
+    `${model.vehicle.plate ?? ''}\n${model.vehicle.description ?? ''}\n${model.vehicle.color ?? ''}`
+      .split('\n')
+      .filter((part): part is string => Boolean(part))
+      .join('\n');
   const detailLine = showVehicle ? vehicleLine : model.location[0];
   const localityLine = showVehicle ? undefined : model.location[1];
+  const showNavigate = !showVehicle && !preview && model.showNavigate;
+  const showCall = !showVehicle && model.showCall;
+
+  const openMaps = (): void => {
+    if (!model.coordinate) {
+      return;
+    }
+    const links = externalMapLinks(model.coordinate);
+    const open = (url: string): void => {
+      void Linking.openURL(url).catch(() => {
+        Alert.alert(t('common.somethingWrong'));
+      });
+    };
+    Alert.alert(t('pltr.navigate'), undefined, [
+      { text: t('pltr.maps.apple'), onPress: () => open(links.apple) },
+      { text: t('pltr.maps.google'), onPress: () => open(links.google) },
+      { text: t('pltr.maps.waze'), onPress: () => open(links.waze) },
+      { text: t('common.cancel'), style: 'cancel' },
+    ]);
+  };
+
+  const call = (): void => {
+    if (!model.phone) {
+      return;
+    }
+    void Linking.openURL(`tel:${model.phone}`).catch(() => {
+      Alert.alert(t('common.somethingWrong'));
+    });
+  };
 
   const main = (
     <>
@@ -241,10 +289,10 @@ function PltrIncidentCard({
           </View>
         ) : null}
       </View>
-      {detailLine || pendingConnection ? (
+      {detailLine || localityLine || showCall || pendingConnection ? (
         <View style={styles.locationColumn}>
           {detailLine ? (
-            <Text style={styles.address} numberOfLines={2}>
+            <Text style={styles.address} numberOfLines={showVehicle ? 3 : 2}>
               {detailLine}
             </Text>
           ) : null}
@@ -253,6 +301,7 @@ function PltrIncidentCard({
               {localityLine}
             </Text>
           ) : null}
+          {showCall ? <Text style={styles.address}>{model.phone}</Text> : null}
           {pendingConnection ? (
             <Text style={styles.pending}>{t('feedback.pendingConnection')}</Text>
           ) : null}
@@ -262,17 +311,23 @@ function PltrIncidentCard({
   );
 
   const footer =
-    (showForward && onForward) || age ? (
+    showNavigate || showCall || (showForward && onForward) || age ? (
       <View style={styles.footerRow}>
-        {showForward && onForward ? (
-          <CardActionButton
-            label={t('allocations.card.forward')}
-            icon="arrow-forward"
-            onPress={onForward}
-          />
-        ) : (
-          <View />
-        )}
+        <View style={styles.pltrActions}>
+          {showNavigate ? (
+            <CardActionButton label={t('pltr.navigate')} icon="navigate" onPress={openMaps} />
+          ) : null}
+          {showCall ? (
+            <CardActionButton label={t('allocations.card.callClient')} icon="call" onPress={call} />
+          ) : null}
+          {showForward && onForward ? (
+            <CardActionButton
+              label={t('allocations.card.forward')}
+              icon="arrow-forward"
+              onPress={onForward}
+            />
+          ) : null}
+        </View>
         {age ? (
           <View style={styles.agePill}>
             <ClockSVG size={14} color={colors.background} />
@@ -302,12 +357,18 @@ function PltrIncidentCard({
 }
 
 const styles = StyleSheet.create({
+  pltrActions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    flex: 1,
+    gap: spacing.sm,
+  },
   standardCard: {
     backgroundColor: colors.brand,
-    borderRadius: radius.md,
+    borderRadius: radius.xl,
     padding: spacing.md,
     gap: spacing.md,
-    minHeight: 160,
+    minHeight: 180,
     justifyContent: 'space-between',
   },
   mainPressable: { gap: spacing.md },
@@ -331,7 +392,12 @@ const styles = StyleSheet.create({
   clockDate: { color: colors.text, fontSize: 14, fontWeight: '600' },
   clockTimeRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   clockTime: { color: colors.text, fontSize: 14 },
-  locationRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  locationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginTop: spacing.sm,
+  },
   locationColumn: { flex: 1, gap: spacing.xs },
   address: {
     color: colors.text,
@@ -350,7 +416,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.xs,
     backgroundColor: colors.brandDarker,
-    borderRadius: radius.md,
+    borderRadius: radius.lg,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
   },
@@ -361,7 +427,7 @@ const styles = StyleSheet.create({
   },
   pltrBadge: {
     backgroundColor: colors.brandDarker,
-    borderRadius: radius.sm,
+    borderRadius: radius.xxl,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
   },

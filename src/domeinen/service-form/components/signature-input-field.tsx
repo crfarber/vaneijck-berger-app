@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View, type TextInput } from 'react-native';
 import { hasSignatureInk } from '@/domeinen/signatures';
 import { TextField } from '@/shared/ui/text-field';
 import { colors, spacing } from '@/shared/ui/theme';
@@ -16,12 +16,16 @@ export function SignatureInputField({
   answer,
   error,
   onChange,
+  registerInputRef,
+  onFocus,
   onBlur,
 }: {
   field: ServiceFormField;
   answer: ServiceFormAnswer | undefined;
   error: ServiceFormError | undefined;
   onChange: (fieldKey: string, answer: ServiceFormAnswer) => void;
+  registerInputRef?: (fieldId: string, node: TextInput | null) => void;
+  onFocus?: (field: ServiceFormField) => void;
   onBlur: (field: ServiceFormField) => void;
 }) {
   const { t } = useTranslation();
@@ -63,6 +67,7 @@ export function SignatureInputField({
           }}
           hasError={false}
           onChange={(next) => {
+            onFocus?.(field);
             if ((next === true) !== hidden) {
               toggleHideSignature(field.key);
             }
@@ -75,9 +80,11 @@ export function SignatureInputField({
         {!hidden ? (
           <>
             <TextField
+              inputRef={(node) => registerInputRef?.(field.id, node)}
               label={t('serviceForm.signature.name')}
               value={answer?.signatureName ?? ''}
               onChangeText={(signatureName) => patch({ signatureName })}
+              onFocus={() => onFocus?.(field)}
               onBlur={() => onBlur(field)}
               error={error?.code === 'signature-name-required' ? errorText : null}
             />
@@ -88,6 +95,7 @@ export function SignatureInputField({
                 autoCapitalize="none"
                 keyboardType="email-address"
                 onChangeText={(email) => patch({ email })}
+                onFocus={() => onFocus?.(field)}
                 onBlur={() => onBlur(field)}
                 error={error?.code === 'signature-email-required' ? errorText : null}
               />
@@ -102,6 +110,7 @@ export function SignatureInputField({
               }}
               hasError={false}
               onChange={(next) => {
+                onFocus?.(field);
                 if ((next === true) !== noEmail) {
                   toggleNoEmailConfirmation(field.key);
                 }
@@ -121,12 +130,18 @@ export function SignatureInputField({
                   clear: t('serviceForm.clear'),
                 }}
                 hasError={false}
-                onChange={(next) => setAcceptedTerms(next === true)}
+                onChange={(next) => {
+                  onFocus?.(field);
+                  setAcceptedTerms(next === true);
+                }}
               />
             ) : null}
             <Pressable
               accessibilityRole="button"
-              onPress={() => setOpen(true)}
+              onPress={() => {
+                onFocus?.(field);
+                setOpen(true);
+              }}
               style={({ pressed }) => [styles.capture, pressed && styles.pressed]}
             >
               <Text style={styles.captureText}>

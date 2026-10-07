@@ -1,11 +1,17 @@
 import { createContext, useContext, type ReactNode } from 'react';
 import type { ReferenceDataService } from '@/domeinen/reference-data';
-import type { DevicePermissions, LanguageSettings, SignOutGuard } from '../index';
+import type {
+  AllocationUnitManagement,
+  DevicePermissions,
+  LanguageSettings,
+  SignOutGuard,
+} from '../index';
 
 type SettingsContextValue = {
   permissions: DevicePermissions;
   languageSettings: LanguageSettings;
   signOutGuard: SignOutGuard;
+  allocationUnitManagement: AllocationUnitManagement;
   referenceDataService: ReferenceDataService;
 };
 
@@ -39,6 +45,10 @@ export function useLanguageSettings(): LanguageSettings {
 
 export function useSignOutGuard(): SignOutGuard {
   return useSettings().signOutGuard;
+}
+
+export function useAllocationUnitManagement(): AllocationUnitManagement {
+  return useSettings().allocationUnitManagement;
 }
 
 export function useReferenceDataService(): ReferenceDataService {

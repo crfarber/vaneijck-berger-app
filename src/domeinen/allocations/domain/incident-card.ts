@@ -1,5 +1,6 @@
 import { addressLines, toCoordinate, type Coordinate } from '@/domeinen/location';
 import {
+  getServiceContact,
   getServiceParty,
   getServiceVehicle,
   isPltrType,
@@ -19,6 +20,8 @@ export type IncidentCardModel =
       createdOn?: string;
       coordinate?: Coordinate;
       showNavigate: boolean;
+      phone?: string;
+      showCall: boolean;
     }
   | {
       kind: 'pltr';
@@ -29,6 +32,10 @@ export type IncidentCardModel =
       location: string[];
       vehicle: VehicleSummary;
       createdOn?: string;
+      phone?: string;
+      coordinate?: Coordinate;
+      showNavigate: boolean;
+      showCall: boolean;
     };
 
 function presentDate(value: string | undefined): string | undefined {
@@ -43,6 +50,14 @@ export function resolveIncidentCardModel(allocation: Allocation): IncidentCardMo
   const typeKey = getAllocationTypeKey(allocation.type);
   const createdOn = presentDate(allocation.incident.createdon);
   const service = allocation.services?.[0];
+  const active = classifyAllocation(allocation) === 'active';
+  const coordinate = toCoordinate(
+    allocation.incident.dn_latitude,
+    allocation.incident.dn_longtitude,
+  );
+  const showNavigate = active && coordinate !== null;
+  const phone = getServiceContact(service)?.phone;
+  const showCall = active && phone !== undefined;
 
   if (isPltrType(allocation.type)) {
     return {
@@ -53,15 +68,14 @@ export function resolveIncidentCardModel(allocation: Allocation): IncidentCardMo
       location: addressLines(allocation.incident),
       vehicle: getServiceVehicle(service),
       createdOn,
+      ...(phone ? { phone } : {}),
+      ...(coordinate ? { coordinate } : {}),
+      showNavigate,
+      showCall,
     };
   }
 
   const reference = allocation.incident.dn_lcmnumber_vhd?.trim();
-  const coordinate = toCoordinate(
-    allocation.incident.dn_latitude,
-    allocation.incident.dn_longtitude,
-  );
-  const showNavigate = classifyAllocation(allocation) === 'active' && coordinate !== null;
   return {
     kind: 'standard',
     title: allocation.incident.dn_name,
@@ -70,7 +84,9 @@ export function resolveIncidentCardModel(allocation: Allocation): IncidentCardMo
     location: addressLines(allocation.incident),
     createdOn,
     ...(coordinate ? { coordinate } : {}),
+    ...(phone ? { phone } : {}),
     showNavigate,
+    showCall,
   };
 }
 

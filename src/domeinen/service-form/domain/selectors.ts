@@ -1,4 +1,5 @@
 import type { ServiceFormVisibility } from './conditions';
+import { FIELD_KIND, resolveFieldKind } from './field-kind';
 import {
   isServiceFormFieldFilled,
   isServiceFormFieldRequired,
@@ -19,6 +20,12 @@ export type ServiceFormProgress = {
   completed: number;
   total: number;
   remaining: number;
+};
+
+export type ServiceFormFieldLayout = {
+  fieldId: string;
+  x: number;
+  y: number;
 };
 
 export function selectVisibleServiceFormSections(
@@ -119,14 +126,58 @@ export function selectNextIncompleteServiceFormField(
   );
 }
 
+export function selectNextVisibleServiceFormField(
+  fields: ServiceFormField[],
+  layouts: ServiceFormFieldLayout[],
+  currentFieldId: string | null,
+): ServiceFormField | null {
+  const fieldById = new Map(fields.map((field) => [field.id, field]));
+  const orderedFields = layouts
+    .map((layout, index) => ({ field: fieldById.get(layout.fieldId), index, layout }))
+    .filter(
+      (
+        entry,
+      ): entry is {
+        field: ServiceFormField;
+        index: number;
+        layout: ServiceFormFieldLayout;
+      } => {
+        if (entry.field === undefined || entry.field.readOnly) {
+          return false;
+        }
+        const kind = resolveFieldKind(entry.field);
+        return kind !== FIELD_KIND.date && kind !== FIELD_KIND.unsupported;
+      },
+    )
+    .sort(
+      (left, right) =>
+        left.layout.y - right.layout.y ||
+        left.layout.x - right.layout.x ||
+        left.index - right.index,
+    )
+    .map((entry) => entry.field);
+
+  if (currentFieldId === null) {
+    return orderedFields[0] ?? null;
+  }
+
+  const currentIndex = orderedFields.findIndex((field) => field.id === currentFieldId);
+  if (currentIndex < 0) {
+    return orderedFields[0] ?? null;
+  }
+  return orderedFields[currentIndex + 1] ?? null;
+}
+
 export type QuickViewContext = ServiceFormValidationContext & {
+  /** Backend answers before draft and in-session changes were applied. */
+  initialAnswers?: ServiceFormAnswers;
   /** Keep the currently focused field visible even if it just became filled. */
   focusedFieldId?: string | null;
 };
 
 /**
- * Fields still relevant in quick view: editable, not yet validly filled, plus the currently
- * focused field so it does not disappear mid-edit.
+ * Fields still relevant in quick view: editable, not yet validly filled, plus required fields
+ * filled by the user and the currently focused field so it does not disappear mid-edit.
  */
 export function selectQuickViewFields(
   fields: ServiceFormField[],
@@ -138,6 +189,7 @@ export function selectQuickViewFields(
     requiredFieldOverrides = {},
     hideSignature = {},
     noEmailConfirmation = {},
+    initialAnswers,
     focusedFieldId = null,
   } = context;
 
@@ -151,9 +203,25 @@ export function selectQuickViewFields(
     if (focusedFieldId !== null && field.id === focusedFieldId) {
       return true;
     }
-    return !isServiceFormFieldFilled(
+    const isFilled = isServiceFormFieldFilled(
       field,
       answers,
+      requiredFieldOverrides,
+      hideSignature,
+      noEmailConfirmation,
+    );
+    if (!isFilled) {
+      return true;
+    }
+    if (
+      initialAnswers === undefined ||
+      !isServiceFormFieldRequired(field, answers, requiredFieldOverrides)
+    ) {
+      return false;
+    }
+    return !isServiceFormFieldFilled(
+      field,
+      initialAnswers,
       requiredFieldOverrides,
       hideSignature,
       noEmailConfirmation,

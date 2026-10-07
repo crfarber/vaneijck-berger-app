@@ -4,7 +4,9 @@ import { hasActiveServices } from '@/domeinen/services';
 import { useStatusOverlay } from '@/shared/ui/status-overlay-host';
 import { feedbackForDeclineService } from '../domain/action-feedback';
 import {
+  canReturnToDispatch,
   reduceServiceDecline,
+  SERVICE_DECLINE_ACTION,
   statuscodeForDeclineAction,
   type ServiceDeclineAction,
   type ServiceDeclineStep,
@@ -17,7 +19,9 @@ import { useProcessingExit, type ExitContext } from './use-processing-exit';
  * Opens the service-decline sheet, confirms, sends, then exits processing the same way the old
  * `ProcessingServiceWrapper` did after `executeServiceDecline`.
  */
-export function useDeclineService(exitContext: ExitContext & { services: readonly Service[] }) {
+export function useDeclineService(
+  exitContext: ExitContext & { services: readonly Service[]; serviceStatuscode: number },
+) {
   const { t } = useTranslation();
   const service = useServiceActionsService();
   const statusOverlay = useStatusOverlay();
@@ -38,6 +42,12 @@ export function useDeclineService(exitContext: ExitContext & { services: readonl
   };
 
   const select = (action: ServiceDeclineAction): void => {
+    if (
+      action === SERVICE_DECLINE_ACTION.returnToDispatch &&
+      !canReturnToDispatch(exitContext.serviceStatuscode)
+    ) {
+      return;
+    }
     dispatch({ type: 'select', action });
   };
 
@@ -50,6 +60,13 @@ export function useDeclineService(exitContext: ExitContext & { services: readonl
       return;
     }
     const action = state.action;
+    if (
+      action === SERVICE_DECLINE_ACTION.returnToDispatch &&
+      !canReturnToDispatch(exitContext.serviceStatuscode)
+    ) {
+      dispatch({ type: 'close' });
+      return;
+    }
     dispatch({ type: 'confirm' });
     // Close the sheet before the status overlay — a View cannot sit above the sheet Modal.
     dispatch({ type: 'done' });

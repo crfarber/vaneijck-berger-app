@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Linking, Pressable, StyleSheet, Text, View, type TextInput } from 'react-native';
 import { PlaceSearchControl } from '@/domeinen/places/ui';
 import { TextField } from '@/shared/ui/text-field';
 import { colors, spacing } from '@/shared/ui/theme';
@@ -33,6 +33,7 @@ export type FieldRendererProps = {
   onChange: (fieldKey: string, answer: ServiceFormAnswer) => void;
   /** Multi-key updates (address place select fills street/city/…). */
   onAnswersChange?: (answers: ServiceFormAnswers) => void;
+  registerInputRef?: (fieldId: string, node: TextInput | null) => void;
   onFocus?: (field: ServiceFormField) => void;
   onBlur: (field: ServiceFormField) => void;
 };
@@ -48,7 +49,15 @@ const EMPTY_DECIMALS = new Set(['00.00', '0.00']);
 const text = (value: unknown): string =>
   value === null || value === undefined ? '' : String(value);
 
-function TextInputField({ field, answer, error, onChange, onFocus, onBlur }: FieldRendererProps) {
+function TextInputField({
+  field,
+  answer,
+  error,
+  onChange,
+  registerInputRef,
+  onFocus,
+  onBlur,
+}: FieldRendererProps) {
   const { t } = useTranslation();
   const errorText = useErrorText(error);
   const kind = resolveFieldKind(field);
@@ -58,6 +67,7 @@ function TextInputField({ field, answer, error, onChange, onFocus, onBlur }: Fie
   return (
     <View style={styles.inputRow}>
       <TextField
+        inputRef={(node) => registerInputRef?.(field.id, node)}
         containerStyle={styles.grow}
         label={field.optional ? `${field.label} (${t('serviceForm.optional')})` : field.label}
         value={value}
@@ -103,6 +113,7 @@ function SelectInputField({
   dependencyAnswer,
   pleaseSelectLabel,
   onChange,
+  onFocus,
   onBlur,
 }: FieldRendererProps) {
   const select = useServiceFormSelectOption({
@@ -125,6 +136,7 @@ function SelectInputField({
         disabled={field.readOnly}
         onPress={() => {
           if (!field.readOnly) {
+            onFocus?.(field);
             void select.open();
           }
         }}
@@ -157,7 +169,14 @@ function SelectInputField({
   );
 }
 
-function BooleanInputField({ field, answer, error, onChange, onBlur }: FieldRendererProps) {
+function BooleanInputField({
+  field,
+  answer,
+  error,
+  onChange,
+  onFocus,
+  onBlur,
+}: FieldRendererProps) {
   const { t } = useTranslation();
   const service = useServiceFormService();
   const labels = {
@@ -167,6 +186,7 @@ function BooleanInputField({ field, answer, error, onChange, onBlur }: FieldRend
   };
 
   const handleChange = async (next: boolean | null): Promise<void> => {
+    onFocus?.(field);
     const rows = field.table ? await service.loadTable(field.table) : [];
     onChange(
       field.key,
@@ -213,6 +233,7 @@ function AddressInputField({
   error,
   onChange,
   onAnswersChange,
+  registerInputRef,
   onFocus,
   onBlur,
 }: FieldRendererProps) {
@@ -225,6 +246,7 @@ function AddressInputField({
   return (
     <View style={styles.inputRow}>
       <TextField
+        inputRef={(node) => registerInputRef?.(field.id, node)}
         containerStyle={styles.grow}
         label={field.optional ? `${field.label} (${t('serviceForm.optional')})` : field.label}
         value={shown}
@@ -242,6 +264,7 @@ function AddressInputField({
       />
       {mapping && !field.readOnly ? (
         <PlaceSearchControl
+          initialQuery={shown}
           onSelected={async (address) => {
             if (!onAnswersChange) {
               return;

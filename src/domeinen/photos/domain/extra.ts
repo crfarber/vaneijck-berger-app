@@ -12,8 +12,15 @@ import type { Photo } from './types';
  *
  * Order is `takenAt`, then `id` when the clock stamps collide.
  */
-export function isExtraForUpload(photo: Photo, photos: readonly Photo[]): boolean {
+export function isExtraForUpload(
+  photo: Photo,
+  photos: readonly Photo[],
+  existingPositions: readonly Photo['position'][] = [],
+): boolean {
   const type = photoTypeKey(photo.position);
+  if (existingPositions.some((position) => photoTypeKey(position) === type)) {
+    return true;
+  }
   const siblings = photos
     .filter(
       (candidate) =>

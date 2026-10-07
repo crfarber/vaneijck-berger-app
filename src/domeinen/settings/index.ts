@@ -15,3 +15,8 @@ export { createLanguageSettings, LANGUAGE_KEY } from './service/language-setting
 export type { LanguageSettings } from './service/language-settings';
 export { createSignOutGuard } from './service/sign-out-guard';
 export type { SignOutFailure, SignOutGuard } from './service/sign-out-guard';
+export { createAllocationUnitManagement } from './service/allocation-unit-management';
+export type {
+  AllocationUnitManagement,
+  AllocationUnitManagementFailure,
+} from './service/allocation-unit-management';

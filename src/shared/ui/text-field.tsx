@@ -1,3 +1,4 @@
+import type { Ref } from 'react';
 import {
   StyleSheet,
   Text,
@@ -24,19 +25,26 @@ type TextFieldProps = Pick<
   | 'onFocus'
   | 'onBlur'
   | 'autoCapitalize'
-> & { label?: string; error?: string | null; containerStyle?: StyleProp<ViewStyle> };
+> & {
+  label?: string;
+  error?: string | null;
+  containerStyle?: StyleProp<ViewStyle>;
+  inputRef?: Ref<TextInput>;
+};
 
 export function TextField({
   label,
   error,
   containerStyle,
   accessibilityLabel,
+  inputRef,
   ...input
 }: TextFieldProps) {
   return (
     <View style={[styles.container, containerStyle]}>
       {label ? <Text style={styles.label}>{label}</Text> : null}
       <TextInput
+        ref={inputRef}
         accessibilityLabel={accessibilityLabel ?? label}
         autoCapitalize="none"
         autoCorrect={false}

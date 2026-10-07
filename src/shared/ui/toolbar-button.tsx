@@ -1,3 +1,4 @@
+import { BlurView } from 'expo-blur';
 import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors, radius, spacing } from './theme';
@@ -8,7 +9,7 @@ type ToolbarButtonProps = {
   accessibilityLabel: string;
   onPress: () => void;
   children: ReactNode;
-  /** Red background (GPS off, unread, no permission). Default is brand secondary. */
+  /** Red glass background (GPS off, unread, no permission). Default is brand secondary. */
   variant?: 'default' | 'alert' | 'success';
   /** Unread count or similar; shown as a badge in the top-right. */
   badge?: string | null;
@@ -36,13 +37,21 @@ export function ToolbarButton({
       onPress={onPress}
       style={({ pressed }) => [
         styles.base,
-        variant === 'alert' && styles.alert,
         variant === 'success' && styles.success,
+        variant === 'alert' && styles.alert,
         selected === true && styles.selected,
         pressed && styles.pressed,
       ]}
       hitSlop={spacing.xs}
     >
+      <View pointerEvents="none" style={styles.glass}>
+        <BlurView
+          pointerEvents="none"
+          intensity={35}
+          tint="light"
+          style={StyleSheet.absoluteFill}
+        />
+      </View>
       {children}
       {badge !== null && badge !== '' ? (
         <View style={styles.badge} accessibilityElementsHidden>
@@ -59,15 +68,22 @@ const styles = StyleSheet.create({
   base: {
     height: SIZE,
     width: '100%',
-    borderRadius: radius.sm,
-    backgroundColor: colors.brandDark,
+    borderRadius: radius.xxl,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.025)',
   },
-  alert: { backgroundColor: colors.danger },
-  success: { backgroundColor: colors.success },
-  selected: { backgroundColor: colors.brand },
+  glass: {
+    borderRadius: radius.xxl,
+    overflow: 'hidden',
+  },
+  defaultTint: { backgroundColor: `${colors.brandDark}BF` },
+  alert: { backgroundColor: `${colors.danger}BF` },
+  success: { backgroundColor: `${colors.success}BF` },
+  selected: { backgroundColor: `${colors.brand}BF` },
   pressed: { opacity: 0.7 },
   badge: {
     position: 'absolute',

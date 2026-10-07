@@ -2,13 +2,16 @@
 export {
   AllocationsApiProvider,
   useAllocationActionsService,
+  useAllocationAcceptFlow,
   useReassignService,
   useAllocationsApi,
+  useRdwApi,
   useServiceActionsService,
 } from './hooks/allocations-context';
 export type { AllocationsContextValue } from './hooks/allocations-context';
 export { useAcceptService } from './hooks/use-accept-service';
 export { useAllocationActions } from './hooks/use-allocation-actions';
+export { useCompleteAllocationAccept } from './hooks/use-complete-allocation-accept';
 export { useDeclineAllocation } from './hooks/use-decline-allocation';
 export { useDeclineService } from './hooks/use-decline-service';
 export { allocationKeys, useAllocations, vehicleReleaseKeys } from './hooks/use-allocations';
@@ -22,3 +25,4 @@ export { ServicesScreen } from './screens/services-screen';
 export { PreviewBanner } from './components/preview-banner';
 export { ServiceDeclineSheet } from './components/service-decline-sheet';
 export { ACTION_FEEDBACK_MESSAGE } from './domain/action-feedback';
+export { hasActiveAllocations } from './domain/sections';

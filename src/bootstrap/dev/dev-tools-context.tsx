@@ -3,11 +3,12 @@ import type { DebugSnapshot } from './collect-debug-snapshot';
 
 export type DevToolsValue = {
   loadDebugSnapshot(): Promise<DebugSnapshot>;
+  copyAccessToken(): Promise<boolean>;
 };
 
 const DevToolsContext = createContext<DevToolsValue | null>(null);
 
-/** Hands only the debug snapshot loader to the React tree — never the whole container. */
+/** Hands explicit debug actions to the React tree — never the whole container. */
 export function DevToolsProvider({
   value,
   children,

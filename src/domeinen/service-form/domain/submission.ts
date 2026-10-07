@@ -13,6 +13,7 @@
  * construction.
  */
 import { SERVICE_STATUS } from '@/domeinen/services';
+import { isLastServiceFormPhase } from './form-context';
 import { isSignatureKey, type SignatureDataInput } from './signature';
 import type { ServiceFormAnswer, ServiceFormAnswers, ServiceFormField } from './types';
 
@@ -134,13 +135,17 @@ export function resolveSignatureAbsentFlags(
 
 /**
  * Maps the current form phase to the CRM `statuscode`/`statecode` pair.
- * Phase 1 → "Hulpverlening akkoord" (still open, phase 2 may follow).
- * Phase 2 → "Hulpverlening afgerond" (final phase complete).
+ * The last phase in the definition → "Hulpverlening afgerond".
+ * Any earlier phase → "Hulpverlening akkoord" (still open, a later phase may follow).
  */
-function resolveStatusFields(phase: number): { statuscode: number; statecode: number } {
+export function resolveStatusFields(
+  phase: number,
+  phaseNumbers: readonly number[],
+): { statuscode: number; statecode: number } {
   return {
-    statuscode:
-      phase === 2 ? SERVICE_STATUS.HULPVERLENING_AFGEROND : SERVICE_STATUS.HULPVERLENING_AKKOORD,
+    statuscode: isLastServiceFormPhase(phase, phaseNumbers)
+      ? SERVICE_STATUS.HULPVERLENING_AFGEROND
+      : SERVICE_STATUS.HULPVERLENING_AKKOORD,
     statecode: 0,
   };
 }
@@ -152,6 +157,11 @@ export type ServiceFormSubmissionOptions = {
   hideSignature: Record<string, true>;
   /** Field keys of signature fields where the email confirmation was skipped. */
   noEmailConfirmation: Record<string, true>;
+  /**
+   * Phase numbers from the synced service definition. The last number marks the submit as
+   * complete; missing list treats the current phase as last so a one-phase definition still ends.
+   */
+  phaseNumbers: readonly number[];
 };
 
 /**
@@ -167,7 +177,7 @@ export function buildServicePostBody(
   options: ServiceFormSubmissionOptions,
 ): Record<string, unknown> {
   const body: Record<string, unknown> = {
-    ...resolveStatusFields(phase),
+    ...resolveStatusFields(phase, options.phaseNumbers),
     ...resolveSignatureAbsentFlags(options.hideSignature, options.noEmailConfirmation),
   };
 

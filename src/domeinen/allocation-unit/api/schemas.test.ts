@@ -53,7 +53,7 @@ describe('parseHomebaseLocationRows', () => {
         dn_companylocationid: 'loc-1',
         dn_name: 'Van Eijck Utrecht',
         dn_street: 'Stationsplein',
-        dn_housenumber: '1',
+        dn_housenumber: 1,
         dn_housenumberaddition: 'A',
         dn_postalcode: '3511 ED',
         dn_city: 'Utrecht',

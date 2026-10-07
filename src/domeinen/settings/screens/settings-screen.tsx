@@ -24,17 +24,30 @@ const appVersion = Constants.expoConfig?.version ?? '';
 type MenuItem = {
   key: string;
   labelKey:
+    | 'settings.allocationUnitManagement.open'
     | 'settings.language.title'
     | 'settings.permissions.open'
     | 'settings.referenceData.open'
     | 'support.open'
     | 'debug.open';
-  route: '/language' | '/permissions' | '/reference-data-sync' | '/support' | '/debug';
+  route:
+    | '/allocation-unit-management'
+    | '/language'
+    | '/permissions'
+    | '/reference-data-sync'
+    | '/support'
+    | '/debug';
   icon: ReactNode;
   devOnly?: boolean;
 };
 
 const MENU_ITEMS: readonly MenuItem[] = [
+  {
+    key: 'allocation-unit-management',
+    labelKey: 'settings.allocationUnitManagement.open',
+    route: '/allocation-unit-management',
+    icon: <Ionicons name="car-outline" size={20} color={colors.text} />,
+  },
   {
     key: 'language',
     labelKey: 'settings.language.title',

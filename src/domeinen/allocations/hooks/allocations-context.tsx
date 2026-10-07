@@ -1,12 +1,16 @@
 import { createContext, useContext, type ReactNode } from 'react';
+import type { RdwApi } from '@/domeinen/rdw';
 import type { AllocationsApi } from '../api/allocations-api';
 import type { AllocationActionsService } from '../service/allocation-actions-service';
 import type { ReassignService } from '../service/reassign-service';
 import type { ServiceActionsService } from '../service/service-actions-service';
+import type { AllocationAcceptFlow } from '../store/allocation-accept-flow';
 
 export type AllocationsContextValue = {
   api: AllocationsApi;
+  rdwApi: RdwApi;
   actionsService: AllocationActionsService;
+  acceptFlow: AllocationAcceptFlow;
   serviceActionsService: ServiceActionsService;
   reassignService: ReassignService;
 };
@@ -33,9 +37,12 @@ function useAllocationsContext(): AllocationsContextValue {
 }
 
 export const useAllocationsApi = (): AllocationsApi => useAllocationsContext().api;
+export const useRdwApi = (): RdwApi => useAllocationsContext().rdwApi;
 
 export const useAllocationActionsService = (): AllocationActionsService =>
   useAllocationsContext().actionsService;
+export const useAllocationAcceptFlow = (): AllocationAcceptFlow =>
+  useAllocationsContext().acceptFlow;
 
 export const useServiceActionsService = (): ServiceActionsService =>
   useAllocationsContext().serviceActionsService;
