@@ -20,7 +20,7 @@ describe('reference data sync screen', () => {
     expect(source).toContain('settings.referenceData.jsonLoading');
     expect(source).toContain('settings.referenceData.jsonMissing');
     expect(source).toContain('settings.referenceData.jsonError');
-    expect(source).toContain('onClose={() => setViewedTopic(null)}');
+    expect(source).toMatch(/onClose=\{\(\) => \{\s*setViewedTopic\(null\);/);
     expect(source).toContain('if (!cancelled)');
   });
 

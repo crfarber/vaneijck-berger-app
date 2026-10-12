@@ -61,18 +61,16 @@ describe('current allocation unit card', () => {
         (element) => element.props.children === 'unit.restrictionChip.notAvailableForIM',
       ),
     ).toBe(true);
-    expect(
-      rendered.some(
-        (element) => element.props.accessibilityLabel === 'unit.overview.useLastVehicle',
-      ),
-    ).toBe(false);
+    expect(rendered.some((element) => element.props.label === 'unit.overview.useLastVehicle')).toBe(
+      false,
+    );
   });
 
   it('offers reuse of the last vehicle when the shift is inactive', () => {
     const rendered = elements(CurrentAllocationUnitCard({ ...props, isActive: false }));
     expect(rendered.some((element) => element.props.children === 'unit.recentVehicles')).toBe(true);
     const button = rendered.find(
-      (element) => element.props.accessibilityLabel === 'unit.overview.useLastVehicle',
+      (element) => element.props.label === 'unit.overview.useLastVehicle',
     );
     expect(button?.props.onPress).toBe(props.onUseLastVehicle);
   });
@@ -90,10 +88,8 @@ describe('current allocation unit card', () => {
     expect(
       rendered.some((element) => element.props.children === 'unit.overview.noRestrictions'),
     ).toBe(true);
-    expect(
-      rendered.some(
-        (element) => element.props.accessibilityLabel === 'unit.overview.useLastVehicle',
-      ),
-    ).toBe(true);
+    expect(rendered.some((element) => element.props.label === 'unit.overview.useLastVehicle')).toBe(
+      true,
+    );
   });
 });
