@@ -24,6 +24,10 @@ export function normalizeDutchPostalCode(value: string): string | null {
   return `${match[1]} ${match[2].toUpperCase()}`;
 }
 
+export function isPostalAddressLookupReady(postalCode: string, houseNumber: string): boolean {
+  return normalizeDutchPostalCode(postalCode) !== null && /^\d+$/.test(houseNumber.trim());
+}
+
 const buildAddress = (
   street: string,
   city: string,

@@ -49,5 +49,5 @@ Gevonden bij het overnemen van het gedrag. Elke rij heeft in de nieuwe app een r
 ## Niet overgenomen, ter controle
 
 - `getIncidentStatus` en de lijsten `INCIDENT_ACTIVE/PENDING/COMPLETED_STATUSCODES` (hun overlap maakt "wachtend" onbereikbaar voor 875920007). Als er iets op leunt, zoeken we de bedoeling bij de eigenaar.
-- Het uitloggen wiste ook de taalkeuze en de sync-datum. Zie [open vragen](open-vragen.md).
-- De oude `NavigationBar` stuurde bij eerste openen door naar `LocationPermissionDisclosureScreen`. De nieuwe app vraagt alleen voorgrondlocatie; de uitleg staat op het instellingenscherm (zie open vraag 31).
+- Het uitloggen wiste ook de taalkeuze. De nieuwe app bewaart alleen de taal; sync-datum en overige lokale data gaan weg (open vraag 12).
+- De oude app had drie aparte disclosure-schermen (meldingen, locatie, camera) tijdens onboarding. De nieuwe app heeft één wizard na inloggen (`PermissionDisclosureScreen`) en daarnaast uitleg onder Instellingen → Toestemmingen (zie open vraag 31).

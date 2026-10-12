@@ -42,7 +42,9 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     slug: 'vaneijck-berger-app',
     version: '2.0.0',
     orientation: 'portrait',
-    icon: './assets/images/icon.png',
+    // One sharp source for every variant. A per-APP_VARIANT icon waits until there are
+    // square 1024 sources for internal (red) and acceptance (orange).
+    icon: './assets/ios/1024.png',
     scheme,
     userInterfaceStyle: 'automatic',
     ios: {
@@ -63,9 +65,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       googleServicesFile: './google-services.json',
       adaptiveIcon: {
         backgroundColor: '#FEC900',
-        foregroundImage: './assets/images/android-icon-foreground.png',
-        backgroundImage: './assets/images/android-icon-background.png',
-        monochromeImage: './assets/images/android-icon-monochrome.png',
+        foregroundImage: './assets/ios/1024.png',
       },
       predictiveBackGestureEnabled: false,
     },

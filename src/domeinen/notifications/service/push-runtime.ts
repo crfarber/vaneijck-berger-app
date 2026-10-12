@@ -40,7 +40,10 @@ export type PushNavigation = {
 };
 
 export type PushRuntime = {
-  /** Asks permission, registers the token and starts listening. Safe to call again. */
+  /**
+   * Reads permission (does not ask), registers the token when allowed, and starts listening.
+   * Safe to call again — e.g. after the disclosure screen grants notifications.
+   */
   start(): Promise<void>;
   stop(): void;
 };

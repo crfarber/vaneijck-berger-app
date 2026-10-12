@@ -59,6 +59,7 @@ export function SelectSheet({
         keyExtractor={(item, index) => `${String(item.value)}-${index}`}
         keyboardShouldPersistTaps="handled"
         onScrollBeginDrag={Keyboard.dismiss}
+        style={styles.list}
         initialNumToRender={20}
         ListEmptyComponent={<Text style={styles.empty}>{t('serviceForm.select.noResults')}</Text>}
         renderItem={({ item }) => {
@@ -96,6 +97,7 @@ const styles = StyleSheet.create({
     color: colors.text,
     marginBottom: spacing.sm,
   },
+  list: { flexGrow: 1, flexShrink: 1 },
   item: {
     minHeight: 48,
     justifyContent: 'center',

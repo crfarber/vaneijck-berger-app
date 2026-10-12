@@ -34,3 +34,7 @@ terug.
 
 - De systeemteksten in `app.config.ts` blijven hardcoded Nederlands (Info.plist, geen i18n).
 - Terugkomen op het scherm leest de status opnieuw, ook na een bezoek aan de systeeminstellingen.
+- Na inloggen toont de app een eenmalige disclosure-wizard (meldingen → locatie → camera) via
+  `/permission-disclosure` vóór de onboarding-gate. OS-dialogen lopen via `DevicePermissions`;
+  `PushGateway.permission()` leest alleen. Uitleg en herstel blijven ook onder Instellingen →
+  Toestemmingen (open vraag 31).

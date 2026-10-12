@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 import { Button } from '@/shared/ui/button';
 import { confirm } from '@/shared/ui/confirm';
 import { Screen } from '@/shared/ui/screen';
@@ -36,32 +36,9 @@ export function AllocationUnitManagementScreen({
   };
 
   return (
-    <Screen contentStyle={styles.content}>
-      <View style={styles.intro}>
-        <Text style={styles.title}>{t('settings.allocationUnitManagement.title')}</Text>
-        <Text style={styles.hint}>
-          {t(
-            hasUnit
-              ? 'settings.allocationUnitManagement.hint'
-              : 'settings.allocationUnitManagement.noUnitHint',
-          )}
-        </Text>
-      </View>
-      <View style={styles.actions}>
-        <Button
-          label={t(
-            hasUnit
-              ? 'settings.allocationUnitManagement.changeVehicle'
-              : 'settings.allocationUnitManagement.registerVehicle',
-          )}
-          onPress={() => router.push('/unit?returnTo=allocation-unit-management')}
-        />
-        <Button
-          label={t('settings.allocationUnitManagement.changeEndDate')}
-          variant="secondary"
-          disabled={!hasUnit}
-          onPress={() => router.push('/unit?mode=extend&returnTo=allocation-unit-management')}
-        />
+    <Screen
+      contentStyle={styles.content}
+      footer={
         <Button
           label={t('settings.allocationUnitManagement.cancel')}
           variant="danger"
@@ -69,7 +46,23 @@ export function AllocationUnitManagementScreen({
           loading={cancelling}
           onPress={() => void confirmCancellation()}
         />
-      </View>
+      }
+    >
+      <Button
+        label={t(
+          hasUnit
+            ? 'settings.allocationUnitManagement.changeVehicle'
+            : 'settings.allocationUnitManagement.registerVehicle',
+        )}
+        onPress={() => router.push('/unit?returnTo=allocation-unit-management')}
+      />
+      <Button
+        label={t('settings.allocationUnitManagement.changeEndDate')}
+        variant="secondary"
+        disabled={!hasUnit}
+        onPress={() => router.push('/unit?mode=extend&returnTo=allocation-unit-management')}
+      />
+
       {hasActiveWork ? (
         <Text style={styles.warning}>
           {t('settings.allocationUnitManagement.activeWorkMessage')}

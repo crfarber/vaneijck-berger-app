@@ -36,7 +36,9 @@ export function resolveCountryAnswer(
   if (!iso2Code || !countryRows?.length) {
     return null;
   }
-  const match = countryRows.find((row) => row.dn_iso2code === iso2Code);
+  const match = countryRows.find(
+    (row) => row.dn_iso2code?.toUpperCase() === iso2Code.toUpperCase(),
+  );
   if (!match?.dn_countryid) {
     return null;
   }
@@ -45,6 +47,21 @@ export function resolveCountryAnswer(
     displayValue: match.dn_name ?? iso2Code,
     table: 'dn_country',
   };
+}
+
+/** Appends the country name to a formatted address when it is not already present. */
+export function withCountryInAddressSummary(
+  formatted: string,
+  countryDisplay: string | undefined,
+): string {
+  const country = countryDisplay?.trim();
+  if (!country) {
+    return formatted;
+  }
+  if (formatted.toLowerCase().includes(country.toLowerCase())) {
+    return formatted;
+  }
+  return `${formatted}, ${country}`;
 }
 
 /**

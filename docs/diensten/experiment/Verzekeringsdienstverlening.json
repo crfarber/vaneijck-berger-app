@@ -1,14 +1,14 @@
 [
   {
-    "servicecode": 1012,
+    "servicecode": 1014,
     "servicename": [
       {
         "language-code": 1043,
-        "value": "Planbaar Transport"
+        "value": "Verzekeringsdienstverlening"
       },
       {
         "language-code": 1044,
-        "value": "Planned Transport"
+        "value": "Insurer Services"
       }
     ],
     "definition": [
@@ -24,7 +24,15 @@
             "value": "Aanvang"
           }
         ],
-        "photosMandatory": ["links-voor", "rechts-voor", "rechts-achter", "links-achter"],
+        "photosMandatory": [
+          "links-voor",
+          "rechts-voor",
+          "rechts-achter",
+          "links-achter",
+          "Interieur",
+          "Motor",
+          "Overzicht"
+        ],
         "tabs": [
           {
             "header": [
@@ -74,25 +82,6 @@
                   "readonly": true,
                   "optional": true,
                   "value": "dn_servicelocationdescription"
-                }
-              },
-              {
-                "name": "dn_aisamenvatting",
-                "label": [
-                  {
-                    "language-code": 1043,
-                    "value": "Samenvatting"
-                  },
-                  {
-                    "language-code": 1044,
-                    "value": "Sit-rap"
-                  }
-                ],
-                "type": "textarea",
-                "autoform": {
-                  "readonly": true,
-                  "optional": true,
-                  "value": "dn_aisamenvatting"
                 }
               },
               {
@@ -295,7 +284,7 @@
                 "type": "select",
                 "table": "dn_country",
                 "autoform": {
-                  "readonly": true,
+                  "readonly": false,
                   "optional": false,
                   "autocomplete": true,
                   "value": "_dn_vehiclecountryoforiginid_value"
@@ -315,8 +304,8 @@
                 ],
                 "type": "string",
                 "autoform": {
-                  "readonly": true,
-                  "optional": true,
+                  "readonly": false,
+                  "optional": false,
                   "value": "dn_vehicleregistrationno"
                 }
               },
@@ -378,6 +367,52 @@
                 }
               },
               {
+                "name": "_dn_vehiclebrandid_value",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Automerk"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Car brand"
+                  }
+                ],
+                "type": "select",
+                "table": "dn_vehiclebrands",
+                "autoform": {
+                  "readonly": false,
+                  "optional": false,
+                  "autocomplete": true,
+                  "value": "_dn_vehiclebrandid_value"
+                }
+              },
+              {
+                "name": "_dn_vehicletypeid_value",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Autotype"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Car type"
+                  }
+                ],
+                "type": "select",
+                "table": "dn_vehicletypes",
+                "autoform": {
+                  "readonly": false,
+                  "optional": true,
+                  "autocomplete": true,
+                  "value": "_dn_vehicletypeid_value"
+                },
+                "dependencies": {
+                  "required": "_dn_vehiclebrandid_value",
+                  "value": "ABCDEFGHI"
+                }
+              },
+              {
                 "name": "dn_numberofkilometers",
                 "label": [
                   {
@@ -392,7 +427,7 @@
                 "type": "number",
                 "autoform": {
                   "readonly": false,
-                  "optional": true,
+                  "optional": false,
                   "value": "dn_numberofkilometers"
                 }
               },
@@ -443,30 +478,30 @@
                 ],
                 "type": "textarea",
                 "autoform": {
-                  "readonly": true,
+                  "readonly": false,
                   "optional": true,
                   "value": "dn_restrictionsonsite"
                 }
               },
               {
-                "name": "dn_bordercrossing",
+                "name": "dn_typeoftransportcode",
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Grensoverschrijdend vervoer"
+                    "value": "Direct Transport Type"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Cross border transport"
+                    "value": "Direct Transport Type"
                   }
                 ],
                 "type": "select",
-                "table": "dn_truefalse",
+                "table": "dn_typeoftransportcode",
                 "autoform": {
                   "readonly": false,
-                  "optional": true,
+                  "optional": false,
                   "autocomplete": true,
-                  "value": "dn_bordercrossing"
+                  "value": "dn_typeoftransportcode@OData.Community.Display.V1.FormattedValue"
                 }
               },
               {
@@ -533,211 +568,142 @@
                 }
               },
               {
-                "name": "dn_plannabletransportsituationdescription",
+                "name": "dn_damagedescription",
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Omschrijving transport"
+                    "value": "Omschrijving bekende schade"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Transport description"
+                    "value": "Known damage description"
+                  }
+                ],
+                "type": "textarea",
+                "autoform": {
+                  "readonly": true,
+                  "optional": false,
+                  "autocomplete": true,
+                  "value": "dn_damagedescription"
+                }
+              },
+              {
+                "name": "dn_noofpersonstocarry",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Aantal personen"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Number of persons"
+                  }
+                ],
+                "type": "number",
+                "autoform": {
+                  "readonly": false,
+                  "optional": false,
+                  "autocomplete": true,
+                  "value": "dn_noofpersonstocarry"
+                }
+              },
+              {
+                "name": "dn_cleanvehiclecode",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Schoonmaken"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Clean"
+                  }
+                ],
+                "type": "select",
+                "table": "dn_optionalyesno",
+                "autoform": {
+                  "readonly": false,
+                  "optional": false,
+                  "autocomplete": true,
+                  "value": "dn_cleanvehiclecode"
+                },
+                "requiredvisibility": {
+                  "property": "dn_typeoftransportcode",
+                  "value": 1004
+                }
+              },
+              {
+                "name": "dn_damageatstartservicecode",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Schade aan huurauto"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Damage on rentalcar"
+                  }
+                ],
+                "type": "select",
+                "table": "dn_optionalyesno",
+                "autoform": {
+                  "readonly": false,
+                  "optional": false,
+                  "autocomplete": true,
+                  "value": "dn_damageatstartservicecode"
+                },
+                "requiredvisibility": {
+                  "property": "dn_typeoftransportcode",
+                  "value": 1004
+                }
+              },
+              {
+                "name": "dn_additionaldescriptiondamage",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Toelichting schade huurauto"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Explanation damage rental"
                   }
                 ],
                 "type": "textarea",
                 "autoform": {
                   "readonly": false,
-                  "optional": true,
+                  "optional": false,
                   "autocomplete": true,
-                  "value": "dn_plannabletransportsituationdescription"
+                  "value": "dn_additionaldescriptiondamage"
+                },
+                "requiredvisibility": {
+                  "property": "dn_damageatstartservicecode",
+                  "value": 1
                 }
               },
               {
-                "name": "dn_roofboxcode",
+                "name": "dn_transportloadfuelcode",
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Dakkoffer"
+                    "value": "Afgetankt door ons? (foto bon bijsluiten aub)"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Roofbox"
+                    "value": "Gassed up by us? Please upload ticket-photo"
                   }
                 ],
                 "type": "select",
-                "table": "dn_roofboxcode",
+                "table": "dn_optionalyesno",
                 "autoform": {
                   "readonly": false,
                   "optional": false,
                   "autocomplete": true,
-                  "value": "dn_roofboxcode"
-                }
-              },
-              {
-                "name": "dn_bicyclecarriercode",
-                "label": [
-                  {
-                    "language-code": 1043,
-                    "value": "Fietsendrager"
-                  },
-                  {
-                    "language-code": 1044,
-                    "value": "Bicycle carrier"
-                  }
-                ],
-                "type": "select",
-                "table": "dn_bicyclecarriercode",
-                "autoform": {
-                  "readonly": false,
-                  "optional": false,
-                  "autocomplete": true,
-                  "value": "dn_bicyclecarriercode"
-                }
-              },
-              {
-                "name": "dn_vehiclecategorycode",
-                "label": [
-                  {
-                    "language-code": 1043,
-                    "value": "Voertuig categorie"
-                  },
-                  {
-                    "language-code": 1044,
-                    "value": "Vehicle category"
-                  }
-                ],
-                "type": "select",
-                "table": "dn_vehiclecategorycode",
-                "autoform": {
-                  "readonly": false,
-                  "optional": false,
-                  "autocomplete": true,
-                  "value": "dn_vehiclecategorycode"
-                }
-              },
-              {
-                "name": "dn_damagecategorycode",
-                "label": [
-                  {
-                    "language-code": 1043,
-                    "value": "Schade categorie"
-                  },
-                  {
-                    "language-code": 1044,
-                    "value": "Damage category"
-                  }
-                ],
-                "type": "select",
-                "table": "dn_damagecategorycode",
-                "autoform": {
-                  "readonly": false,
-                  "optional": false,
-                  "autocomplete": true,
-                  "value": "dn_damagecategorycode"
-                }
-              }
-            ]
-          },
-          {
-            "header": [
-              {
-                "language-code": 1043,
-                "value": "Laadlocatie"
-              },
-              {
-                "language-code": 1044,
-                "value": "Loading location"
-              }
-            ],
-            "fields": [
-              {
-                "name": "dn_loadinglocationname",
-                "label": [
-                  {
-                    "language-code": 1043,
-                    "value": "Laadlocatie"
-                  },
-                  {
-                    "language-code": 1044,
-                    "value": "Loading location"
-                  }
-                ],
-                "type": "string",
-                "autoform": {
-                  "readonly": true,
-                  "optional": true,
-                  "value": "dn_loadinglocationname"
-                }
-              },
-              {
-                "name": "dn_total_servicestartlocation",
-                "label": [
-                  {
-                    "language-code": 1043,
-                    "value": "Laadlocatie adres"
-                  },
-                  {
-                    "language-code": 1044,
-                    "value": "Loading location address"
-                  }
-                ],
-                "type": "string",
-                "autoform": {
-                  "readonly": true,
-                  "optional": true,
-                  "value": "dn_total_servicestartlocation"
-                }
-              }
-            ]
-          },
-          {
-            "header": [
-              {
-                "language-code": 1043,
-                "value": "Afleverlocatie"
-              },
-              {
-                "language-code": 1044,
-                "value": "delivery location"
-              }
-            ],
-            "fields": [
-              {
-                "name": "dn_deliveryname",
-                "label": [
-                  {
-                    "language-code": 1043,
-                    "value": "Afleverlocatie"
-                  },
-                  {
-                    "language-code": 1044,
-                    "value": "delivery location"
-                  }
-                ],
-                "type": "string",
-                "autoform": {
-                  "readonly": true,
-                  "optional": true,
-                  "value": "dn_deliveryname"
-                }
-              },
-              {
-                "name": "dn_total_servicedeliverylocation",
-                "label": [
-                  {
-                    "language-code": 1043,
-                    "value": "Afleverlocatie adres"
-                  },
-                  {
-                    "language-code": 1044,
-                    "value": "Delivery location address"
-                  }
-                ],
-                "type": "string",
-                "autoform": {
-                  "readonly": true,
-                  "optional": true,
-                  "value": "dn_total_servicedeliverylocation"
+                  "value": "dn_transportloadfuelcode"
+                },
+                "requiredvisibility": {
+                  "property": "dn_typeoftransportcode",
+                  "value": 1004
                 }
               }
             ]
@@ -755,273 +721,372 @@
             ],
             "fields": [
               {
-                "name": "dn_registrationownersalutationcode",
+                "name": "dn_driverstatecode",
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Kentekenhouder: Aanhef"
+                    "value": "Bestuurder aanwezig?"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Licenseholder: Salutation"
+                    "value": "Driver at location?"
+                  }
+                ],
+                "type": "select",
+                "table": "dn_truefalse",
+                "autoform": {
+                  "readonly": false,
+                  "optional": false,
+                  "autocomplete": true,
+                  "value": "dn_driverstatecode"
+                }
+              },
+              {
+                "name": "dn_driverstatuscode",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Bestuurder: Status"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Driver: Status"
+                  }
+                ],
+                "type": "select",
+                "table": "dn_driverstatuscode",
+                "autoform": {
+                  "readonly": false,
+                  "optional": false,
+                  "autocomplete": true,
+                  "value": "dn_driverstatuscode"
+                }
+              },
+              {
+                "name": "dn_driversalutationcode",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Bestuurder: Aanhef"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Driver: Salutation"
                   }
                 ],
                 "type": "select",
                 "table": "dn_salutation",
                 "autoform": {
-                  "readonly": true,
+                  "readonly": false,
                   "optional": true,
                   "autocomplete": true,
-                  "value": "dn_registrationownersalutationcode"
+                  "value": "dn_driversalutationcode"
+                },
+                "requiredvisibility": {
+                  "property": "dn_driverstatecode",
+                  "value": true
                 }
               },
               {
-                "name": "dn_registrationownerinitials",
+                "name": "dn_driverinitials",
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Kentekenhouder: Voorletter(s)"
+                    "value": "Bestuurder: Voorletter(s)"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Licenseholder: Initial(s)"
+                    "value": "Driver: Initial(s)"
                   }
                 ],
                 "type": "string",
                 "autoform": {
-                  "readonly": true,
+                  "readonly": false,
                   "optional": true,
-                  "value": "dn_registrationownerinitials"
+                  "value": "dn_driverinitials"
+                },
+                "requiredvisibility": {
+                  "property": "dn_driverstatecode",
+                  "value": true
                 }
               },
               {
-                "name": "dn_registrationownerfirstname",
+                "name": "dn_driverfirstname",
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Kentekenhouder: Voornaam"
+                    "value": "Bestuurder: Voornaam"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Licenseholder: Firstname"
+                    "value": "Driver: Firstname"
                   }
                 ],
                 "type": "string",
                 "autoform": {
-                  "readonly": true,
+                  "readonly": false,
                   "optional": true,
-                  "value": "dn_registrationownerfirstname"
+                  "value": "dn_driverfirstname"
+                },
+                "requiredvisibility": {
+                  "property": "dn_driverstatecode",
+                  "value": true
                 }
               },
               {
-                "name": "dn_registrationownermiddlename",
+                "name": "dn_drivermiddlename",
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Kentekenhouder: Tussenvoegsel(s)"
+                    "value": "Bestuurder: Tussenvoegsel(s)"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Licenseholder: Insertion(s)"
+                    "value": "Driver: Insertion(s)"
                   }
                 ],
                 "type": "string",
                 "autoform": {
-                  "readonly": true,
+                  "readonly": false,
                   "optional": true,
-                  "value": "dn_registrationownermiddlename"
+                  "value": "dn_drivermiddlename"
+                },
+                "requiredvisibility": {
+                  "property": "dn_driverstatecode",
+                  "value": true
                 }
               },
               {
-                "name": "dn_registrationownerlastname",
+                "name": "dn_driverlastname",
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Kentekenhouder: Achternaam"
+                    "value": "Bestuurder: Achternaam"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Licenseholder: Lastname"
+                    "value": "Driver: Lastname"
                   }
                 ],
                 "type": "string",
                 "autoform": {
-                  "readonly": true,
+                  "readonly": false,
                   "optional": true,
-                  "value": "dn_registrationownerlastname"
+                  "value": "dn_driverlastname"
+                },
+                "requiredvisibility": {
+                  "property": "dn_driverstatecode",
+                  "value": true
                 }
               },
               {
-                "name": "_dn_registrationownercountryid_value",
+                "name": "_dn_drivercountryid_value",
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Kentekenhouder: Land"
+                    "value": "Bestuurder: Land"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Licenseholder: Country"
+                    "value": "Driver: Country"
                   }
                 ],
                 "type": "select",
                 "table": "dn_country",
                 "autoform": {
-                  "readonly": true,
+                  "readonly": false,
                   "optional": true,
                   "autocomplete": true,
-                  "value": "_dn_registrationownercountryid_value"
+                  "value": "_dn_drivercountryid_value"
+                },
+                "requiredvisibility": {
+                  "property": "dn_driverstatecode",
+                  "value": true
                 }
               },
               {
-                "name": "dn_registrationownerpostalcode",
+                "name": "dn_driverpostalcode",
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Kentekenhouder: Postcode"
+                    "value": "Bestuurder: Postcode"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Licenseholder: Postalcode"
+                    "value": "Driver: Postalcode"
                   }
                 ],
                 "type": "string",
                 "autoform": {
-                  "readonly": true,
+                  "readonly": false,
                   "optional": true,
-                  "value": "dn_registrationownerpostalcode"
+                  "value": "dn_driverpostalcode"
+                },
+                "requiredvisibility": {
+                  "property": "dn_driverstatecode",
+                  "value": true
                 }
               },
               {
-                "name": "dn_registrationownerhouseno",
+                "name": "dn_driverhouseno",
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Kentekenhouder: Huisnummer"
+                    "value": "Bestuurder: Huisnummer"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Licenseholder: Housenumber"
+                    "value": "Driver: housenumber"
                   }
                 ],
                 "type": "number",
                 "autoform": {
-                  "readonly": true,
+                  "readonly": false,
                   "optional": true,
-                  "value": "dn_registrationownerhouseno"
+                  "value": "dn_driverhouseno"
+                },
+                "requiredvisibility": {
+                  "property": "dn_driverstatecode",
+                  "value": true
                 }
               },
               {
-                "name": "dn_registrationownerhousenoaddition",
+                "name": "dn_driverhousenoaddition",
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Kentekenhouder: Huisnummer toev."
+                    "value": "Bestuurder: Huisnummer toev."
                   },
                   {
                     "language-code": 1044,
-                    "value": "Licenseholder: Housenumber addition"
+                    "value": "Driver: Housenumber addition"
                   }
                 ],
                 "type": "string",
                 "autoform": {
-                  "readonly": true,
+                  "readonly": false,
                   "optional": true,
-                  "value": "dn_registrationownerhousenoaddition"
+                  "value": "dn_driverhousenoaddition"
+                },
+                "requiredvisibility": {
+                  "property": "dn_driverstatecode",
+                  "value": true
                 }
               },
               {
-                "name": "dn_registrationownerstreet",
+                "name": "dn_driverstreet",
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Kentekenhouder: Straat"
+                    "value": "Bestuurder: Straat"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Licenseholder: Street"
+                    "value": "Driver: Street"
                   }
                 ],
                 "type": "string",
                 "autoform": {
-                  "readonly": true,
+                  "readonly": false,
                   "optional": true,
-                  "value": "dn_registrationownerstreet"
+                  "autocomplete": true,
+                  "value": "dn_driverstreet"
+                },
+                "requiredvisibility": {
+                  "property": "dn_driverstatecode",
+                  "value": true
                 }
               },
               {
-                "name": "dn_registrationownercity",
+                "name": "dn_drivercity",
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Kentekenhouder: Plaats"
+                    "value": "Bestuurder: Plaats"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Licenseholder: City"
+                    "value": "Driver: City"
                   }
                 ],
                 "type": "string",
                 "autoform": {
-                  "readonly": true,
+                  "readonly": false,
                   "optional": true,
-                  "value": "dn_registrationownercity"
+                  "value": "dn_drivercity"
+                },
+                "requiredvisibility": {
+                  "property": "dn_driverstatecode",
+                  "value": true
                 }
               },
               {
-                "name": "dn_registrationownertelephonenumber1",
+                "name": "dn_drivertelephonenumber1",
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Kentekenhouder: telnr 1"
+                    "value": "Bestuurder: telnr 1"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Licenseholder: phoneno 1"
+                    "value": "Driver: phoneno 1"
                   }
                 ],
                 "type": "phonenumber",
                 "autoform": {
-                  "readonly": true,
+                  "readonly": false,
                   "optional": true,
-                  "value": "dn_registrationownertelephonenumber1"
+                  "value": "dn_drivertelephonenumber1"
+                },
+                "requiredvisibility": {
+                  "property": "dn_driverstatecode",
+                  "value": true
                 }
               },
               {
-                "name": "dn_registrationownertelephonenumber2",
+                "name": "dn_drivertelephonenumber2",
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Kentekenhouder: telnr 2"
+                    "value": "Bestuurder: telnr 2"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Licenseholder: phoneno 2"
+                    "value": "Driver: phoneno 2"
                   }
                 ],
                 "type": "phonenumber",
                 "autoform": {
-                  "readonly": true,
+                  "readonly": false,
                   "optional": true,
-                  "value": "dn_registrationownertelephonenumber2"
+                  "value": "dn_drivertelephonenumber2"
+                },
+                "requiredvisibility": {
+                  "property": "dn_driverstatecode",
+                  "value": true
                 }
               },
               {
-                "name": "dn_registrationowneremail",
+                "name": "dn_driveremail",
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Kentekenhouder: Email"
+                    "value": "Bestuurder: Email"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Licenseholder: Email"
+                    "value": "Driver: Email"
                   }
                 ],
                 "type": "string",
                 "autoform": {
-                  "readonly": true,
+                  "readonly": false,
                   "optional": true,
-                  "value": "dn_registrationowneremail"
+                  "value": "dn_driveremail"
+                },
+                "requiredvisibility": {
+                  "property": "dn_driverstatecode",
+                  "value": true
                 }
               }
             ]
@@ -1039,15 +1104,259 @@
             ],
             "fields": [
               {
+                "name": "dn_typeoftransportinsurancecode",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Type Verzekeringsdienst"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Type of insurer service"
+                  }
+                ],
+                "type": "select",
+                "table": "dn_typeoftransportinsurancecode",
+                "autoform": {
+                  "readonly": true,
+                  "optional": false,
+                  "autocomplete": true,
+                  "value": "dn_typeoftransportinsurancecode"
+                }
+              },
+              {
+                "name": "dn_directtransportsettlementcode",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Afhandeling"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Handling"
+                  }
+                ],
+                "type": "select",
+                "table": "dn_directtransportsettlementcode",
+                "autoform": {
+                  "readonly": false,
+                  "optional": false,
+                  "autocomplete": true,
+                  "value": "dn_directtransportsettlementcode"
+                }
+              },
+              {
+                "name": "_dn_locationid_value",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Depot"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Depot"
+                  }
+                ],
+                "type": "select",
+                "table": "dn_locations",
+                "sortoptions": {
+                  "orderby": "distance",
+                  "direction": "ascending"
+                },
+                "autoform": {
+                  "readonly": false,
+                  "optional": false,
+                  "autocomplete": true,
+                  "value": "_dn_locationid_value"
+                },
+                "requiredvisibility": {
+                  "property": "dn_directtransportsettlementcode",
+                  "value": 875920001
+                }
+              },
+              {
+                "name": "dn_deliveryname",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Afleverlocatie"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Delivery location"
+                  }
+                ],
+                "type": "string",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "dn_deliveryname"
+                },
+                "requiredvisibility": {
+                  "property": "dn_directtransportsettlementcode",
+                  "value": ["875920000", "875920001"]
+                }
+              },
+              {
+                "name": "_dn_deliverycountryid_value",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Afleverland"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Delivery country"
+                  }
+                ],
+                "type": "string",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "_dn_deliverycountryid_value"
+                },
+                "requiredvisibility": {
+                  "property": "dn_directtransportsettlementcode",
+                  "value": ["875920000", "875920001"]
+                }
+              },
+              {
+                "name": "dn_deliverypostalcode",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Afleverpostcode"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Delivery postalcode"
+                  }
+                ],
+                "type": "string",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "dn_deliverypostalcode"
+                },
+                "requiredvisibility": {
+                  "property": "dn_directtransportsettlementcode",
+                  "value": ["875920000", "875920001"]
+                },
+                "zipcode_components": {
+                  "postalcode": "dn_deliverypostalcode",
+                  "houseno": "dn_deliveryhouseno",
+                  "city": "dn_deliverycity",
+                  "street": "dn_deliverystreet"
+                }
+              },
+              {
+                "name": "dn_deliveryhouseno",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Afleverhuisnummer"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Delivery housenumber"
+                  }
+                ],
+                "type": "number",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "dn_deliveryhouseno"
+                },
+                "requiredvisibility": {
+                  "property": "dn_directtransportsettlementcode",
+                  "value": ["875920000", "875920001"]
+                },
+                "zipcode_components": {
+                  "postalcode": "dn_deliverypostalcode",
+                  "houseno": "dn_deliveryhouseno",
+                  "city": "dn_deliverycity",
+                  "street": "dn_deliverystreet"
+                }
+              },
+              {
+                "name": "dn_deliveryhousenoaddition",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Afleverhuisnummer toev."
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Delivery housenumber addition"
+                  }
+                ],
+                "type": "string",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "dn_deliveryhousenoaddition"
+                },
+                "requiredvisibility": {
+                  "property": "dn_directtransportsettlementcode",
+                  "value": ["875920000", "875920001"]
+                }
+              },
+              {
+                "name": "dn_deliverystreet",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Afleverstraat"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Delivery street"
+                  }
+                ],
+                "type": "string",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "dn_deliverystreet"
+                },
+                "requiredvisibility": {
+                  "property": "dn_directtransportsettlementcode",
+                  "value": ["875920000", "875920001"]
+                }
+              },
+              {
+                "name": "dn_deliverycity",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Afleverplaats"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Delivery city"
+                  }
+                ],
+                "type": "string",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "dn_deliverycity"
+                },
+                "requiredvisibility": {
+                  "property": "dn_directtransportsettlementcode",
+                  "value": ["875920000", "875920001"]
+                }
+              },
+              {
                 "name": "dn_deliverydistance",
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Afstandsberekening A-B"
+                    "value": "Afstandsberekening"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Distance calculation A-B"
+                    "value": "Distance calculation"
                   }
                 ],
                 "type": "number",
@@ -1055,6 +1364,29 @@
                   "readonly": true,
                   "optional": true,
                   "value": "dn_deliverydistance"
+                },
+                "requiredvisibility": {
+                  "property": "dn_directtransportsettlementcode",
+                  "value": 875920000
+                }
+              },
+              {
+                "name": "dn_deliverydistancedepot",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Afstandsberekening"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Distance calculation"
+                  }
+                ],
+                "type": "number",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "dn_deliverydistancedepot"
                 }
               },
               {
@@ -1073,7 +1405,7 @@
                 "table": "dn_storageblockcolorcode",
                 "autoform": {
                   "readonly": false,
-                  "optional": false,
+                  "optional": true,
                   "autocomplete": true,
                   "value": "dn_storageblockcolorcode"
                 },
@@ -1223,27 +1555,23 @@
                     ],
                     "type": "string",
                     "autoform": {
-                      "copyfrom": ["dn_registrationowneremail"]
+                      "copyfrom": ["dn_driveremail"]
                     }
                   },
                   "name": {
                     "label": [
                       {
                         "language-code": 1043,
-                        "value": "Afzender voor+achternaam"
+                        "value": "Afzender Naam"
                       },
                       {
                         "language-code": 1044,
-                        "value": "Sender name+surname"
+                        "value": "Sender name"
                       }
                     ],
                     "type": "string",
                     "autoform": {
-                      "copyfrom": [
-                        "dn_registrationownerfirstname",
-                        "dn_registrationownermiddlename",
-                        "dn_registrationownerlastname"
-                      ]
+                      "copyfrom": ["dn_driverinitials", "dn_drivermiddlename", "dn_driverlastname"]
                     }
                   },
                   "transportConditions": {
@@ -1268,7 +1596,7 @@
                   },
                   {
                     "language-code": 1044,
-                    "value": "Handtekening afzender"
+                    "value": "Handttekening afzender"
                   }
                 ],
                 "type": "signature",
@@ -1293,7 +1621,7 @@
             "value": "Delivery"
           }
         ],
-        "photosMandatory": ["links-voor", "rechts-voor", "rechts-achter", "links-achter"],
+        "photosMandatory": ["Overzicht"],
         "tabs": [
           {
             "header": [
@@ -1343,25 +1671,6 @@
                   "readonly": true,
                   "optional": true,
                   "value": "dn_servicelocationdescription"
-                }
-              },
-              {
-                "name": "dn_aisamenvatting",
-                "label": [
-                  {
-                    "language-code": 1043,
-                    "value": "Samenvatting"
-                  },
-                  {
-                    "language-code": 1044,
-                    "value": "Sit-rap"
-                  }
-                ],
-                "type": "textarea",
-                "autoform": {
-                  "readonly": true,
-                  "optional": true,
-                  "value": "dn_aisamenvatting"
                 }
               },
               {
@@ -1585,7 +1894,7 @@
                 "type": "string",
                 "autoform": {
                   "readonly": true,
-                  "optional": true,
+                  "optional": false,
                   "value": "dn_vehicleregistrationno"
                 }
               },
@@ -1647,6 +1956,52 @@
                 }
               },
               {
+                "name": "_dn_vehiclebrandid_value",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Automerk"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Car brand"
+                  }
+                ],
+                "type": "select",
+                "table": "dn_vehiclebrands",
+                "autoform": {
+                  "readonly": true,
+                  "optional": false,
+                  "autocomplete": true,
+                  "value": "_dn_vehiclebrandid_value"
+                }
+              },
+              {
+                "name": "_dn_vehicletypeid_value",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Autotype"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Car type"
+                  }
+                ],
+                "type": "select",
+                "table": "dn_vehicletypes",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "autocomplete": true,
+                  "value": "_dn_vehicletypeid_value"
+                },
+                "dependencies": {
+                  "required": "_dn_vehiclebrandid_value",
+                  "value": "ABCDEFGHI"
+                }
+              },
+              {
                 "name": "dn_numberofkilometers",
                 "label": [
                   {
@@ -1661,7 +2016,7 @@
                 "type": "number",
                 "autoform": {
                   "readonly": false,
-                  "optional": true,
+                  "optional": false,
                   "value": "dn_numberofkilometers"
                 }
               },
@@ -1718,24 +2073,24 @@
                 }
               },
               {
-                "name": "dn_bordercrossing",
+                "name": "dn_typeoftransportcode",
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Grensoverschrijdend vervoer"
+                    "value": "Direct Transport Type"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Cross border transport"
+                    "value": "Direct Transport Type"
                   }
                 ],
                 "type": "select",
-                "table": "dn_truefalse",
+                "table": "dn_typeoftransportcode",
                 "autoform": {
                   "readonly": true,
-                  "optional": true,
+                  "optional": false,
                   "autocomplete": true,
-                  "value": "dn_bordercrossing"
+                  "value": "dn_typeoftransportcode@OData.Community.Display.V1.FormattedValue"
                 }
               },
               {
@@ -1753,7 +2108,7 @@
                 "type": "select",
                 "table": "dn_optionalyesno",
                 "autoform": {
-                  "readonly": true,
+                  "readonly": false,
                   "optional": false,
                   "autocomplete": true,
                   "value": "dn_keyavailablecode"
@@ -1802,211 +2157,142 @@
                 }
               },
               {
-                "name": "dn_plannabletransportsituationdescription",
+                "name": "dn_damagedescription",
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Omschrijving transport"
+                    "value": "Omschrijving bekende schade"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Transport description"
+                    "value": "Known damage description"
                   }
                 ],
                 "type": "textarea",
                 "autoform": {
                   "readonly": true,
-                  "optional": true,
+                  "optional": false,
                   "autocomplete": true,
-                  "value": "dn_plannabletransportsituationdescription"
+                  "value": "dn_damagedescription"
                 }
               },
               {
-                "name": "dn_roofboxcode",
+                "name": "dn_noofpersonstocarry",
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Dakkoffer"
+                    "value": "Aantal personen"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Roofbox"
+                    "value": "Number of persons"
                   }
                 ],
-                "type": "select",
-                "table": "dn_roofboxcode",
+                "type": "number",
                 "autoform": {
                   "readonly": true,
                   "optional": false,
                   "autocomplete": true,
-                  "value": "dn_roofboxcode"
+                  "value": "dn_noofpersonstocarry"
                 }
               },
               {
-                "name": "dn_bicyclecarriercode",
+                "name": "dn_cleanvehiclecode",
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Fietsendrager"
+                    "value": "Schoonmaken"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Bicycle carrier"
+                    "value": "Clean"
                   }
                 ],
                 "type": "select",
-                "table": "dn_bicyclecarriercode",
+                "table": "dn_optionalyesno",
                 "autoform": {
-                  "readonly": true,
+                  "readonly": false,
                   "optional": false,
                   "autocomplete": true,
-                  "value": "dn_bicyclecarriercode"
+                  "value": "dn_cleanvehiclecode"
+                },
+                "requiredvisibility": {
+                  "property": "dn_typeoftransportcode",
+                  "value": "1004"
                 }
               },
               {
-                "name": "dn_vehiclecategorycode",
+                "name": "dn_damageatstartservicecode",
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Voertuig categorie"
+                    "value": "Schade aan huurauto"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Vehicle category"
+                    "value": "Damage on rentalcar"
                   }
                 ],
                 "type": "select",
-                "table": "dn_vehiclecategorycode",
+                "table": "dn_optionalyesno",
                 "autoform": {
-                  "readonly": true,
+                  "readonly": false,
                   "optional": false,
                   "autocomplete": true,
-                  "value": "dn_vehiclecategorycode"
+                  "value": "dn_damageatstartservicecode"
+                },
+                "requiredvisibility": {
+                  "property": "dn_typeoftransportcode",
+                  "value": 1004
                 }
               },
               {
-                "name": "dn_damagecategorycode",
+                "name": "dn_additionaldescriptiondamage",
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Schade categorie"
+                    "value": "Toelichting schade huurauto"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Damage category"
+                    "value": "Explanation damage rental"
+                  }
+                ],
+                "type": "textarea",
+                "autoform": {
+                  "readonly": false,
+                  "optional": false,
+                  "autocomplete": true,
+                  "value": "dn_additionaldescriptiondamage"
+                },
+                "requiredvisibility": {
+                  "property": "dn_damageatstartservicecode",
+                  "value": 1
+                }
+              },
+              {
+                "name": "dn_transportloadfuelcode",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Afgetankt door ons? (foto bon bijsluiten aub)"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Gassed up by us? (upload ticket-photo please)"
                   }
                 ],
                 "type": "select",
-                "table": "dn_damagecategorycode",
+                "table": "dn_optionalyesno",
                 "autoform": {
-                  "readonly": true,
+                  "readonly": false,
                   "optional": false,
                   "autocomplete": true,
-                  "value": "dn_damagecategorycode"
-                }
-              }
-            ]
-          },
-          {
-            "header": [
-              {
-                "language-code": 1043,
-                "value": "Laadlocatie"
-              },
-              {
-                "language-code": 1044,
-                "value": "Loading location"
-              }
-            ],
-            "fields": [
-              {
-                "name": "dn_loadinglocationname",
-                "label": [
-                  {
-                    "language-code": 1043,
-                    "value": "Laadlocatie"
-                  },
-                  {
-                    "language-code": 1044,
-                    "value": "Loading location"
-                  }
-                ],
-                "type": "string",
-                "autoform": {
-                  "readonly": true,
-                  "optional": true,
-                  "value": "dn_loadinglocationname"
-                }
-              },
-              {
-                "name": "dn_total_servicestartlocation",
-                "label": [
-                  {
-                    "language-code": 1043,
-                    "value": "Laadlocatie adres"
-                  },
-                  {
-                    "language-code": 1044,
-                    "value": "Loading location address"
-                  }
-                ],
-                "type": "string",
-                "autoform": {
-                  "readonly": true,
-                  "optional": true,
-                  "value": "dn_total_servicestartlocation"
-                }
-              }
-            ]
-          },
-          {
-            "header": [
-              {
-                "language-code": 1043,
-                "value": "Afleverlocatie"
-              },
-              {
-                "language-code": 1044,
-                "value": "delivery location"
-              }
-            ],
-            "fields": [
-              {
-                "name": "dn_deliveryname",
-                "label": [
-                  {
-                    "language-code": 1043,
-                    "value": "Afleverlocatie"
-                  },
-                  {
-                    "language-code": 1044,
-                    "value": "delivery location"
-                  }
-                ],
-                "type": "string",
-                "autoform": {
-                  "readonly": true,
-                  "optional": true,
-                  "value": "dn_deliveryname"
-                }
-              },
-              {
-                "name": "dn_total_servicedeliverylocation",
-                "label": [
-                  {
-                    "language-code": 1043,
-                    "value": "Afleverlocatie adres"
-                  },
-                  {
-                    "language-code": 1044,
-                    "value": "Delivery location address"
-                  }
-                ],
-                "type": "string",
-                "autoform": {
-                  "readonly": true,
-                  "optional": true,
-                  "value": "dn_total_servicedeliverylocation"
+                  "value": "dn_transportloadfuelcode"
+                },
+                "requiredvisibility": {
+                  "property": "dn_typeoftransportcode",
+                  "value": 1004
                 }
               }
             ]
@@ -2024,273 +2310,317 @@
             ],
             "fields": [
               {
-                "name": "dn_registrationownersalutationcode",
+                "name": "dn_driverstatecode",
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Kentekenhouder: Aanhef"
+                    "value": "Bestuurder aanwezig?"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Licenseholder: Salutation"
+                    "value": "Driver at location?"
+                  }
+                ],
+                "type": "select",
+                "table": "dn_truefalse",
+                "autoform": {
+                  "readonly": false,
+                  "optional": false,
+                  "autocomplete": true,
+                  "value": "dn_driverstatecode"
+                }
+              },
+              {
+                "name": "dn_driverstatuscode",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Bestuurder: Status"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Driver: Status"
+                  }
+                ],
+                "type": "select",
+                "table": "dn_driverstatuscode",
+                "autoform": {
+                  "readonly": false,
+                  "optional": false,
+                  "autocomplete": true,
+                  "value": "dn_driverstatuscode"
+                }
+              },
+              {
+                "name": "dn_driversalutationcode",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Bestuurder: Aanhef"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Driver: Salutation"
                   }
                 ],
                 "type": "select",
                 "table": "dn_salutation",
                 "autoform": {
-                  "readonly": true,
+                  "readonly": false,
                   "optional": true,
                   "autocomplete": true,
-                  "value": "dn_registrationownersalutationcode"
+                  "value": "dn_driversalutationcode"
                 }
               },
               {
-                "name": "dn_registrationownerinitials",
+                "name": "dn_driverinitials",
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Kentekenhouder: Voorletter(s)"
+                    "value": "Bestuurder: Voorletter(s)"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Licenseholder: Initial(s)"
+                    "value": "Driver: Initial(s)"
                   }
                 ],
                 "type": "string",
                 "autoform": {
-                  "readonly": true,
+                  "readonly": false,
                   "optional": true,
-                  "value": "dn_registrationownerinitials"
+                  "value": "dn_driverinitials"
                 }
               },
               {
-                "name": "dn_registrationownerfirstname",
+                "name": "dn_driverfirstname",
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Kentekenhouder: Voornaam"
+                    "value": "Bestuurder: Voornaam"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Licenseholder: Firstname"
+                    "value": "Driver: Firstname"
                   }
                 ],
                 "type": "string",
                 "autoform": {
-                  "readonly": true,
+                  "readonly": false,
                   "optional": true,
-                  "value": "dn_registrationownerfirstname"
+                  "value": "dn_driverfirstname"
                 }
               },
               {
-                "name": "dn_registrationownermiddlename",
+                "name": "dn_drivermiddlename",
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Kentekenhouder: Tussenvoegsel(s)"
+                    "value": "Bestuurder: Tussenvoegsel(s)"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Licenseholder: Insertion(s)"
+                    "value": "Driver: Insertion(s)"
                   }
                 ],
                 "type": "string",
                 "autoform": {
-                  "readonly": true,
+                  "readonly": false,
                   "optional": true,
-                  "value": "dn_registrationownermiddlename"
+                  "value": "dn_drivermiddlename"
                 }
               },
               {
-                "name": "dn_registrationownerlastname",
+                "name": "dn_driverlastname",
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Kentekenhouder: Achternaam"
+                    "value": "Bestuurder: Achternaam"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Licenseholder: Lastname"
+                    "value": "Driver: Lastname"
                   }
                 ],
                 "type": "string",
                 "autoform": {
-                  "readonly": true,
+                  "readonly": false,
                   "optional": true,
-                  "value": "dn_registrationownerlastname"
+                  "value": "dn_driverlastname"
                 }
               },
               {
-                "name": "_dn_registrationownercountryid_value",
+                "name": "_dn_drivercountryid_value",
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Kentekenhouder: Land"
+                    "value": "Bestuurder: Land"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Licenseholder: Country"
+                    "value": "Driver: Country"
                   }
                 ],
                 "type": "select",
                 "table": "dn_country",
                 "autoform": {
-                  "readonly": true,
+                  "readonly": false,
                   "optional": true,
                   "autocomplete": true,
-                  "value": "_dn_registrationownercountryid_value"
+                  "value": "_dn_drivercountryid_value"
                 }
               },
               {
-                "name": "dn_registrationownerpostalcode",
+                "name": "dn_driverpostalcode",
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Kentekenhouder: Postcode"
+                    "value": "Bestuurder: Postcode"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Licenseholder: Postalcode"
+                    "value": "Driver: Postalcode"
                   }
                 ],
                 "type": "string",
                 "autoform": {
-                  "readonly": true,
+                  "readonly": false,
                   "optional": true,
-                  "value": "dn_registrationownerpostalcode"
+                  "value": "dn_driverpostalcode"
                 }
               },
               {
-                "name": "dn_registrationownerhouseno",
+                "name": "dn_driverhouseno",
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Kentekenhouder: Huisnummer"
+                    "value": "Bestuurder: Huisnummer"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Licenseholder: Housenumber"
+                    "value": "Driver: housenumber"
                   }
                 ],
                 "type": "number",
                 "autoform": {
-                  "readonly": true,
+                  "readonly": false,
                   "optional": true,
-                  "value": "dn_registrationownerhouseno"
+                  "value": "dn_driverhouseno"
                 }
               },
               {
-                "name": "dn_registrationownerhousenoaddition",
+                "name": "dn_driverhousenoaddition",
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Kentekenhouder: Huisnummer toev."
+                    "value": "Bestuurder: Huisnummer toev."
                   },
                   {
                     "language-code": 1044,
-                    "value": "Licenseholder: Housenumber addition"
+                    "value": "Driver: Housenumber addition"
                   }
                 ],
                 "type": "string",
                 "autoform": {
-                  "readonly": true,
+                  "readonly": false,
                   "optional": true,
-                  "value": "dn_registrationownerhousenoaddition"
+                  "value": "dn_driverhousenoaddition"
                 }
               },
               {
-                "name": "dn_registrationownerstreet",
+                "name": "dn_driverstreet",
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Kentekenhouder: Straat"
+                    "value": "Bestuurder: Straat"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Licenseholder: Street"
+                    "value": "Driver: Street"
+                  }
+                ],
+                "type": "string",
+                "table": "dn_driverstreet",
+                "autoform": {
+                  "readonly": false,
+                  "optional": true,
+                  "autocomplete": true,
+                  "value": "dn_driverstreet"
+                }
+              },
+              {
+                "name": "dn_drivercity",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Bestuurder: Plaats"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Driver: City"
                   }
                 ],
                 "type": "string",
                 "autoform": {
-                  "readonly": true,
+                  "readonly": false,
                   "optional": true,
-                  "value": "dn_registrationownerstreet"
+                  "value": "dn_drivercity"
                 }
               },
               {
-                "name": "dn_registrationownercity",
+                "name": "dn_drivertelephonenumber1",
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Kentekenhouder: Plaats"
+                    "value": "Bestuurder: telnr 1"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Licenseholder: City"
-                  }
-                ],
-                "type": "string",
-                "autoform": {
-                  "readonly": true,
-                  "optional": true,
-                  "value": "dn_registrationownercity"
-                }
-              },
-              {
-                "name": "dn_registrationownertelephonenumber1",
-                "label": [
-                  {
-                    "language-code": 1043,
-                    "value": "Kentekenhouder: telnr 1"
-                  },
-                  {
-                    "language-code": 1044,
-                    "value": "Licenseholder: phoneno 1"
+                    "value": "Driver: phoneno 1"
                   }
                 ],
                 "type": "phonenumber",
                 "autoform": {
-                  "readonly": true,
+                  "readonly": false,
                   "optional": true,
-                  "value": "dn_registrationownertelephonenumber1"
+                  "value": "dn_drivertelephonenumber1"
                 }
               },
               {
-                "name": "dn_registrationownertelephonenumber2",
+                "name": "dn_drivertelephonenumber2",
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Kentekenhouder: telnr 2"
+                    "value": "Bestuurder: telnr 2"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Licenseholder: phoneno 2"
+                    "value": "Driver: phoneno 2"
                   }
                 ],
                 "type": "phonenumber",
                 "autoform": {
-                  "readonly": true,
+                  "readonly": false,
                   "optional": true,
-                  "value": "dn_registrationownertelephonenumber2"
+                  "value": "dn_drivertelephonenumber2"
                 }
               },
               {
-                "name": "dn_registrationowneremail",
+                "name": "dn_driveremail",
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Kentekenhouder: Email"
+                    "value": "Bestuurder: Email"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Licenseholder: Email"
+                    "value": "Driver: Email"
                   }
                 ],
                 "type": "string",
                 "autoform": {
-                  "readonly": true,
+                  "readonly": false,
                   "optional": true,
-                  "value": "dn_registrationowneremail"
+                  "value": "dn_driveremail"
                 }
               }
             ]
@@ -2308,15 +2638,259 @@
             ],
             "fields": [
               {
+                "name": "dn_typeoftransportinsurancecode",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Type Verzekeringsdienst"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Type of insurer service"
+                  }
+                ],
+                "type": "select",
+                "table": "dn_typeoftransportinsurancecode",
+                "autoform": {
+                  "readonly": true,
+                  "optional": false,
+                  "autocomplete": true,
+                  "value": "dn_typeoftransportinsurancecode"
+                }
+              },
+              {
+                "name": "dn_directtransportsettlementcode",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Afhandeling"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Handling"
+                  }
+                ],
+                "type": "select",
+                "table": "dn_directtransportsettlementcode",
+                "autoform": {
+                  "readonly": false,
+                  "optional": false,
+                  "autocomplete": true,
+                  "value": "dn_directtransportsettlementcode"
+                }
+              },
+              {
+                "name": "_dn_locationid_value",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Depot"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Depot"
+                  }
+                ],
+                "type": "select",
+                "table": "dn_locations",
+                "sortoptions": {
+                  "orderby": "distance",
+                  "direction": "ascending"
+                },
+                "autoform": {
+                  "readonly": false,
+                  "optional": false,
+                  "autocomplete": true,
+                  "value": "_dn_locationid_value"
+                },
+                "requiredvisibility": {
+                  "property": "dn_directtransportsettlementcode",
+                  "value": 875920001
+                }
+              },
+              {
+                "name": "dn_deliveryname",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Afleverlocatie"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Delivery location"
+                  }
+                ],
+                "type": "string",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "dn_deliveryname"
+                },
+                "requiredvisibility": {
+                  "property": "dn_directtransportsettlementcode",
+                  "value": ["875920000", "875920001"]
+                }
+              },
+              {
+                "name": "_dn_deliverycountryid_value",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Afleverland"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Delivery country"
+                  }
+                ],
+                "type": "string",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "_dn_deliverycountryid_value"
+                },
+                "requiredvisibility": {
+                  "property": "dn_directtransportsettlementcode",
+                  "value": ["875920000", "875920001"]
+                }
+              },
+              {
+                "name": "dn_deliverypostalcode",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Afleverpostcode"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Delivery postalcode"
+                  }
+                ],
+                "type": "string",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "dn_deliverypostalcode"
+                },
+                "requiredvisibility": {
+                  "property": "dn_directtransportsettlementcode",
+                  "value": ["875920000", "875920001"]
+                },
+                "zipcode_components": {
+                  "postalcode": "dn_deliverypostalcode",
+                  "houseno": "dn_deliveryhouseno",
+                  "city": "dn_deliverycity",
+                  "street": "dn_deliverystreet"
+                }
+              },
+              {
+                "name": "dn_deliveryhouseno",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Afleverhuisnummer"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Delivery housenumber"
+                  }
+                ],
+                "type": "number",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "dn_deliveryhouseno"
+                },
+                "requiredvisibility": {
+                  "property": "dn_directtransportsettlementcode",
+                  "value": ["875920000", "875920001"]
+                },
+                "zipcode_components": {
+                  "postalcode": "dn_deliverypostalcode",
+                  "houseno": "dn_deliveryhouseno",
+                  "city": "dn_deliverycity",
+                  "street": "dn_deliverystreet"
+                }
+              },
+              {
+                "name": "dn_deliveryhousenoaddition",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Afleverhuisnummer toev."
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Delivery housenumber addition"
+                  }
+                ],
+                "type": "string",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "dn_deliveryhousenoaddition"
+                },
+                "requiredvisibility": {
+                  "property": "dn_directtransportsettlementcode",
+                  "value": ["875920000", "875920001"]
+                }
+              },
+              {
+                "name": "dn_deliverystreet",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Afleverstraat"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Delivery street"
+                  }
+                ],
+                "type": "string",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "dn_deliverystreet"
+                },
+                "requiredvisibility": {
+                  "property": "dn_directtransportsettlementcode",
+                  "value": ["875920000", "875920001"]
+                }
+              },
+              {
+                "name": "dn_deliverycity",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Afleverplaats"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Delivery city"
+                  }
+                ],
+                "type": "string",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "dn_deliverycity"
+                },
+                "requiredvisibility": {
+                  "property": "dn_directtransportsettlementcode",
+                  "value": ["875920000", "875920001"]
+                }
+              },
+              {
                 "name": "dn_deliverydistance",
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Afstandsberekening A-B"
+                    "value": "Afstandsberekening"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Distance calculation A-B"
+                    "value": "Distance calculation"
                   }
                 ],
                 "type": "number",
@@ -2324,6 +2898,29 @@
                   "readonly": true,
                   "optional": true,
                   "value": "dn_deliverydistance"
+                },
+                "requiredvisibility": {
+                  "property": "dn_directtransportsettlementcode",
+                  "value": 875920000
+                }
+              },
+              {
+                "name": "dn_deliverydistancedepot",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Afstandsberekening"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Distance calculation"
+                  }
+                ],
+                "type": "number",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "dn_deliverydistancedepot"
                 }
               },
               {
@@ -2342,7 +2939,7 @@
                 "table": "dn_storageblockcolorcode",
                 "autoform": {
                   "readonly": false,
-                  "optional": false,
+                  "optional": true,
                   "autocomplete": true,
                   "value": "dn_storageblockcolorcode"
                 },
@@ -2356,11 +2953,11 @@
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Bloknummer"
+                    "value": "Bloknummer (1-99)"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Blocknumber"
+                    "value": "Blocknumber (1-99)"
                   }
                 ],
                 "type": "number",
@@ -2460,17 +3057,17 @@
                   "email": [
                     {
                       "language-code": 1043,
-                      "value": "Geadresseerde emailadres"
+                      "value": "E-mailadres geadresseerde"
                     },
                     {
                       "language-code": 1044,
-                      "value": "e-mailadres addressee"
+                      "value": "E-mailadres addressee"
                     }
                   ],
                   "name": [
                     {
                       "language-code": 1043,
-                      "value": "Geadresseerde Naam"
+                      "value": "Naam geadresseerde"
                     },
                     {
                       "language-code": 1044,
@@ -2483,7 +3080,7 @@
                     "label": [
                       {
                         "language-code": 1043,
-                        "value": "Geadresseerde emailadres"
+                        "value": "E-mailadres geadresseerde"
                       },
                       {
                         "language-code": 1044,
@@ -2492,14 +3089,14 @@
                     ],
                     "type": "string",
                     "autoform": {
-                      "copyfrom": ["dn_registrationowneremail"]
+                      "copyfrom": ["dn_driveremail"]
                     }
                   },
                   "name": {
                     "label": [
                       {
                         "language-code": 1043,
-                        "value": "Geadresseerde Naam"
+                        "value": "Naam geadresseerde"
                       },
                       {
                         "language-code": 1044,
@@ -2508,11 +3105,7 @@
                     ],
                     "type": "string",
                     "autoform": {
-                      "copyfrom": [
-                        "dn_registrationownerfirstname",
-                        "dn_registrationownermiddlename",
-                        "dn_registrationownerlastname"
-                      ]
+                      "copyfrom": ["dn_driverinitials", "dn_drivermiddlename", "dn_driverlastname"]
                     }
                   },
                   "transportConditions": {

@@ -24,7 +24,7 @@ Ook bevestigd: een volledige herinstallatie (nieuwe native build) behield de ses
 
 ## Slice 2: synchronisatie van referentiedata (mechanisme klaar)
 
-Gereed: domein `reference-data` — `client-sync/schema/{taal}` en `/{entiteit}/{taal}`, hervatbare batch (één "sinds"-datum, geen per-entiteit-datum: de oude app had die ook niet), taalcode per taal ([ADR 0013](decisions/0013-referentiedata-sync.md)). Bij het overnemen bleek de oude sync een blijvend-verlies-bug te hebben (de datum werd te vroeg vastgelegd); de nieuwe versie is er expliciet tegen getest. Een gewone (niet-beveiligde) device-opslag kwam erbij (`expo-sqlite/kv-store`, [ADR 0006](decisions/0006-opslag.md)). De container start een sync op de achtergrond zodra er een sessie is (inloggen of herstart bij app-start). Bij uitloggen blijft de syncdatum staan zodat de volgende login alleen wijzigingen vraagt; een half afgemaakte pending-batch wordt wel afgebroken.
+Gereed: domein `reference-data` — `client-sync/schema/{taal}` en `/{entiteit}/{taal}`, hervatbare batch (één "sinds"-datum, geen per-entiteit-datum: de oude app had die ook niet), taalcode per taal ([ADR 0013](decisions/0013-referentiedata-sync.md)). Bij het overnemen bleek de oude sync een blijvend-verlies-bug te hebben (de datum werd te vroeg vastgelegd); de nieuwe versie is er expliciet tegen getest. Een gewone (niet-beveiligde) device-opslag kwam erbij (`expo-sqlite/kv-store`, [ADR 0006](decisions/0006-opslag.md)). De container start een sync op de achtergrond zodra er een sessie is (inloggen of herstart bij app-start). Bij uitloggen wist `clearAll()` alle referentiedata (open vraag 12); de volgende login synchroniseert opnieuw volledig.
 
 Op een toestel bevestigd (iOS-simulator, 22 september 2026): na het herstarten van een bestaande sessie ging er een echte, geauthenticeerde aanvraag naar `/api/client-sync/schema/1033` op de tst-backend — het toestel stond op Engels, dus dat bevestigt ook dat de taalcode uit de systeemtaal komt. De inhoud van het antwoord (welke entiteiten, of ze succesvol opgeslagen zijn) is niet gecontroleerd: er is geen scherm dat dat op dit moment laat zien.
 
@@ -285,11 +285,12 @@ De vier ontbrekende knoppen uit de oude `NavigationBar` staan weer boven de opdr
 meldkamer bellen, wagen wisselen, meldingenbel); het tandwiel blijft in de header. GPS toont status
 en coordinaten; meldkamer belt het vaste nummer (zonder de oude `+0`-fout) en biedt interne
 bergers support; wagen wisselen gebruikt `decideReregister`/`decideChangeVehicle` en opent
-`/unit` (of `/unit?mode=extend` bij alleen een verlopen eindtijd); de bel bewaart pushberichten in
-een historie (max 100) en opent `/notifications`.
+`/unit` (huidige-eenheid-overzicht; of `/unit?mode=extend` bij alleen een verlopen eindtijd);
+de bel bewaart pushberichten in een historie (max 100) en opent `/notifications`.
 
-**Bewust anders:** bij een actieve opdracht geen stille navigatie naar registratie (backend `ACTIVE_INCIDENT`);
-geen aparte locatie-disclosure-route (open vraag 31).
+**Bewust anders:** bij een actieve opdracht wel het eenheid-overzicht, maar geen stille navigatie
+naar registratie vanaf de bewerk-acties daar (backend `ACTIVE_INCIDENT`); geen aparte
+locatie-disclosure-route (open vraag 31).
 
 - **Klaar als:** de vier knoppen werken op het opdrachtenscherm; een pushbericht verschijnt in de
   historie en verdwijnt bij uitloggen (container-test).

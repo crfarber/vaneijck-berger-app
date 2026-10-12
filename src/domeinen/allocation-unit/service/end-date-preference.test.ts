@@ -55,4 +55,17 @@ describe('createEndDatePreference', () => {
 
     expect(store.dump()[REMEMBERED_END_DATE_KEY]).toBe(plusHours(3).toISOString());
   });
+
+  it('clears the remembered end date on sign-out', async () => {
+    const store = createInMemoryStore();
+    const preference = createEndDatePreference(store);
+    await preference.remember(plusHours(3));
+
+    await preference.clear();
+
+    expect(store.dump()[REMEMBERED_END_DATE_KEY]).toBeUndefined();
+    expect(await preference.getProposedEndDate({ isOnboarding: false, now: NOW })).toEqual(
+      plusHours(8),
+    );
+  });
 });

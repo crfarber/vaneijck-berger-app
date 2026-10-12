@@ -50,7 +50,7 @@ export function InternalUnitQrScanScreen() {
 
   if (!permission.granted) {
     return (
-      <Screen backgroundColor={colors.background} contentStyle={styles.permissionContent}>
+      <Screen contentStyle={styles.permissionContent}>
         <Text accessibilityRole="header" style={styles.title}>
           {t('unit.scanTruckTitle')}
         </Text>
@@ -77,7 +77,7 @@ export function InternalUnitQrScanScreen() {
   }
 
   return (
-    <Screen backgroundColor={colors.background} contentStyle={styles.content}>
+    <Screen contentStyle={styles.content}>
       <View style={styles.header}>
         <Text accessibilityRole="header" style={styles.title}>
           {t('unit.scanTruckTitle')}
@@ -130,7 +130,6 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.background,
   },
   content: {
     justifyContent: 'center',
@@ -155,7 +154,7 @@ const styles = StyleSheet.create({
     aspectRatio: 1,
     borderRadius: radius.md,
     overflow: 'hidden',
-    backgroundColor: colors.brandDarker,
+    backgroundColor: colors.brandDark,
   },
   camera: {
     flex: 1,

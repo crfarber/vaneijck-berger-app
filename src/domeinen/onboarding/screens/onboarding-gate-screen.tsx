@@ -6,6 +6,7 @@ import { ExtendShiftScreen } from '@/domeinen/allocation-unit/ui';
 import { hasActiveAllocations } from '@/domeinen/allocations';
 import { AllocationsScreen, useAllocations } from '@/domeinen/allocations/ui';
 import { useSession } from '@/domeinen/auth/ui';
+import { usePermissionDisclosureGate } from '@/domeinen/settings/ui';
 import { colors } from '@/shared/ui/theme';
 import { AllocationsToolbar } from '../components/allocations-toolbar';
 import { clearNoValidUnitContinueNotice } from '../domain/no-valid-unit-continue-notice';
@@ -29,6 +30,7 @@ function useScreenTitle(title: string): void {
 export function OnboardingGateScreen() {
   const { t } = useTranslation();
   const { openWork } = useLocalSearchParams<{ openWork?: string }>();
+  const disclosure = usePermissionDisclosureGate();
   const gate = useOnboardingGate({ reportedOpenWork: openWork === '1' });
   const userType = useSession((state) => state.userType);
   const { sections } = useAllocations();
@@ -50,6 +52,10 @@ export function OnboardingGateScreen() {
       clearRegisterUnitNotice();
       return;
     }
+    // Wait for the permission wizard; otherwise a register-unit alert would fire under the redirect.
+    if (disclosure !== 'done') {
+      return;
+    }
     // Only clear when the gate is ready without a notice. While `checking`, notice is forced to
     // `'none'` and must not re-arm the alert, or a query-key flicker would show it again.
     if (gate.status === 'ready' && notice === 'none') {
@@ -66,14 +72,18 @@ export function OnboardingGateScreen() {
     if (notice === 'no-valid-unit-continue') {
       showNoValidUnitContinueAlert(noValidUnitContinueAlertTexts(t));
     }
-  }, [gate.status, notice, t, userType]);
+  }, [disclosure, gate.status, notice, t, userType]);
 
-  if (gate.status === 'checking') {
+  if (disclosure === 'checking' || gate.status === 'checking') {
     return (
       <View style={styles.center}>
         <ActivityIndicator color={colors.text} />
       </View>
     );
+  }
+
+  if (disclosure === 'needed') {
+    return <Redirect href="/permission-disclosure" />;
   }
 
   switch (gate.step) {

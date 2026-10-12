@@ -51,5 +51,25 @@ export function useServiceDefinition(serviceCode: number | undefined) {
         ? loaded.state
         : { status: 'loading' };
 
-  return { state, retry: () => setAttempt((current) => current + 1) };
+  const reloadBundledDefinition = async (): Promise<boolean> => {
+    if (serviceCode === undefined) {
+      return false;
+    }
+    try {
+      const definition = await service.reloadBundledDefinition(serviceCode);
+      if (!definition) {
+        return false;
+      }
+      setLoaded({ key, state: { status: 'ready', definition } });
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  return {
+    state,
+    retry: () => setAttempt((current) => current + 1),
+    reloadBundledDefinition,
+  };
 }

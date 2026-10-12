@@ -31,6 +31,11 @@ const KIND_BY_TYPE: Readonly<Record<string, FieldKind>> = {
   signature: FIELD_KIND.signature,
 };
 
+/** Required fields show a short asterisk; optional fields keep the label only. */
+export function formatServiceFormFieldLabel(label: string, optional: boolean): string {
+  return optional ? label : `${label} *`;
+}
+
 export function resolveFieldKind(field: ServiceFormField): FieldKind {
   if (isBooleanSelectField(field)) {
     return FIELD_KIND.booleanSelect;

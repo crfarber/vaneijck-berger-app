@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { groupSectionFields, normalizeFieldInput, resolveFieldKind } from './field-kind';
+import {
+  formatServiceFormFieldLabel,
+  groupSectionFields,
+  normalizeFieldInput,
+  resolveFieldKind,
+} from './field-kind';
 import type { ServiceFormField } from './types';
 
 const field = (overrides: Partial<ServiceFormField> = {}): ServiceFormField => ({
@@ -40,6 +45,13 @@ describe('resolveFieldKind', () => {
     expect(resolveFieldKind(field({ type: 'address' }))).toBe('address');
     expect(resolveFieldKind(field({ type: 'signature' }))).toBe('signature');
     expect(resolveFieldKind(field({ type: 'hologram' }))).toBe('unsupported');
+  });
+});
+
+describe('formatServiceFormFieldLabel', () => {
+  it('marks a required field with an asterisk and leaves an optional field unmarked', () => {
+    expect(formatServiceFormFieldLabel('Postcode', false)).toBe('Postcode *');
+    expect(formatServiceFormFieldLabel('Toevoeging', true)).toBe('Toevoeging');
   });
 });
 

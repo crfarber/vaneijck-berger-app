@@ -2,6 +2,14 @@ import type { Logger } from '@/shared/logging/logger';
 import type { Clock, KeyValueStore } from '@/shared/platform/ports';
 import type { ReferenceDataApi } from '../api/reference-data-api';
 import {
+  entityMetaFromRecord,
+  nextEditedEntityRecord,
+  nextEntityRecord,
+  parseStoredEntity,
+  serializeEntityRecord,
+  type EntityMeta,
+} from '../domain/entity-record';
+import {
   isSyncComplete,
   parseStoredPending,
   withoutEntity,
@@ -60,6 +68,13 @@ export type ReferenceDataService = {
   subscribeToSyncStatus(listener: (status: ReferenceDataSyncStatus) => void): () => void;
   /** The last synced value for an entity, or null when it has never synced. */
   getEntity(name: string): Promise<unknown[] | null>;
+  /** Replaces a locally stored entity payload without marking it as newly downloaded. */
+  replaceEntityData(name: string, data: unknown[]): Promise<void>;
+  /**
+   * When the entity was last downloaded and when its local payload last actually changed. Null when
+   * the entity has never synced; timestamps themselves may be null for legacy bare-array storage.
+   */
+  getEntityMeta(name: string): Promise<EntityMeta | null>;
   /**
    * Every entity that has synced at least once. Used when looking up data by content rather than by
    * a fixed name (e.g. form definitions with `dataDefinition`).
@@ -71,15 +86,20 @@ export type ReferenceDataService = {
    */
   refreshEntity(name: string): Promise<void>;
   /**
-   * Drops an unfinished batch so the next session does not resume another user's half-done sync.
-   * Keeps the committed since date: the next `sync()` only asks what changed. Call on sign-out.
+   * Drops an unfinished batch so it is not resumed. Keeps the committed since date and entity
+   * values. Prefer `clearAll` on sign-out.
    */
   abortPending(): Promise<void>;
   /**
    * Forgets the sync progress, so the next `sync()` asks the server for everything again. Used when
-   * a consumer needs a full refresh (e.g. a missing form definition) — not on ordinary sign-out.
+   * a consumer needs a full refresh (e.g. a missing form definition). Keeps entity values.
    */
   reset(): Promise<void>;
+  /**
+   * Removes since, pending, the entity list and every stored entity. Call on sign-out so the next
+   * login starts a full sync with no previous user's data.
+   */
+  clearAll(): Promise<void>;
 };
 
 export type ReferenceDataServiceDeps = {
@@ -132,6 +152,13 @@ export function createReferenceDataService(deps: ReferenceDataServiceDeps): Refe
     }
   }
 
+  async function writeEntity(name: string, data: unknown[]): Promise<void> {
+    const previous = parseStoredEntity(await store.getItem(entityKey(name)));
+    const record = nextEntityRecord(data, previous, new Date(clock.now()).toISOString());
+    await store.setItem(entityKey(name), serializeEntityRecord(record));
+    await rememberEntity(name);
+  }
+
   async function runBatch(initial: PendingSync): Promise<SyncResult> {
     const synced: string[] = [];
     const failed: string[] = [];
@@ -141,8 +168,7 @@ export function createReferenceDataService(deps: ReferenceDataServiceDeps): Refe
       setTopicPhase(name, 'syncing');
       try {
         const data = await api.fetchEntity(name, languageCode);
-        await store.setItem(entityKey(name), JSON.stringify(data));
-        await rememberEntity(name);
+        await writeEntity(name, data);
         remaining = withoutEntity(remaining, name);
         await savePending(remaining);
         synced.push(name);
@@ -215,15 +241,19 @@ export function createReferenceDataService(deps: ReferenceDataServiceDeps): Refe
     },
 
     async getEntity(name) {
-      const raw = await store.getItem(entityKey(name));
-      if (raw === null) {
-        return null;
-      }
-      try {
-        return JSON.parse(raw) as unknown[];
-      } catch {
-        return null;
-      }
+      return parseStoredEntity(await store.getItem(entityKey(name)))?.data ?? null;
+    },
+
+    async replaceEntityData(name, data) {
+      const previous = parseStoredEntity(await store.getItem(entityKey(name)));
+      const record = nextEditedEntityRecord(data, previous, new Date(clock.now()).toISOString());
+      await store.setItem(entityKey(name), serializeEntityRecord(record));
+      await rememberEntity(name);
+    },
+
+    async getEntityMeta(name) {
+      const record = parseStoredEntity(await store.getItem(entityKey(name)));
+      return record === null ? null : entityMetaFromRecord(record);
     },
 
     async listEntities() {
@@ -244,8 +274,7 @@ export function createReferenceDataService(deps: ReferenceDataServiceDeps): Refe
       });
       try {
         const data = await api.fetchEntity(name, languageCode);
-        await store.setItem(entityKey(name), JSON.stringify(data));
-        await rememberEntity(name);
+        await writeEntity(name, data);
         setSyncStatus({
           phase: 'succeeded',
           synced: [name],
@@ -275,6 +304,17 @@ export function createReferenceDataService(deps: ReferenceDataServiceDeps): Refe
     async reset() {
       await store.removeItem(SINCE_KEY);
       await store.removeItem(PENDING_KEY);
+    },
+
+    async clearAll() {
+      const names = parseEntityNames(await store.getItem(ENTITIES_KEY)) ?? [];
+      for (const name of names) {
+        await store.removeItem(entityKey(name));
+      }
+      await store.removeItem(ENTITIES_KEY);
+      await store.removeItem(SINCE_KEY);
+      await store.removeItem(PENDING_KEY);
+      setSyncStatus({ phase: 'idle', synced: [], failed: [], topics: [] });
     },
   };
 }

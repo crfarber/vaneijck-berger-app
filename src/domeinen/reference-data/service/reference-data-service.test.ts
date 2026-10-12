@@ -32,6 +32,22 @@ function setup(options: { fetchSchema?: ReferenceDataApi['fetchSchema'] } = {}) 
 }
 
 describe('sync', () => {
+  it('replaces a local entity payload without changing its last fetched timestamp', async () => {
+    const { service, entities, clock } = setup({ fetchSchema: vi.fn(async () => ['dn_example']) });
+    entities.set('dn_example', [{ id: 'server' }]);
+    await service.sync();
+    clock.advance(60_000);
+
+    await service.replaceEntityData('dn_example', [{ id: 'local' }]);
+
+    expect(await service.getEntity('dn_example')).toEqual([{ id: 'local' }]);
+    expect(await service.getEntityMeta('dn_example')).toEqual({
+      fetchedAt: new Date(NOW).toISOString(),
+      changedAt: new Date(NOW + 60_000).toISOString(),
+    });
+    expect(await service.listEntities()).toContain('dn_example');
+  });
+
   it('publishes progress and the failed entities for a settings status screen', async () => {
     const fetchSchema = vi.fn(async () => ['dn_synced', 'dn_failed']);
     const { service, entities } = setup({ fetchSchema });
@@ -175,6 +191,67 @@ describe('getEntity', () => {
     const { service } = setup();
 
     expect(await service.getEntity('dn_never_synced')).toBeNull();
+  });
+
+  it('still reads a legacy bare array written by an older app version', async () => {
+    const { service, store } = setup();
+    await store.setItem('referenceData.entity.dn_legacy', JSON.stringify([{ id: 'old' }]));
+
+    expect(await service.getEntity('dn_legacy')).toEqual([{ id: 'old' }]);
+  });
+});
+
+describe('getEntityMeta', () => {
+  it('is null when the entity has never synced', async () => {
+    const { service } = setup();
+
+    expect(await service.getEntityMeta('dn_never_synced')).toBeNull();
+  });
+
+  it('records fetchedAt and changedAt on the first sync', async () => {
+    const fetchSchema = vi.fn(async () => ['dn_a']);
+    const { service, entities } = setup({ fetchSchema });
+    entities.set('dn_a', [{ id: 1 }]);
+
+    await service.sync();
+
+    expect(await service.getEntityMeta('dn_a')).toEqual({
+      fetchedAt: new Date(NOW).toISOString(),
+      changedAt: new Date(NOW).toISOString(),
+    });
+  });
+
+  it('keeps changedAt when a refresh returns the same payload', async () => {
+    const fetchSchema = vi.fn(async () => ['dn_a']);
+    const { service, entities, clock } = setup({ fetchSchema });
+    entities.set('dn_a', [{ id: 1 }]);
+    await service.sync();
+    const first = await service.getEntityMeta('dn_a');
+    clock.advance(60_000);
+    entities.set('dn_a', [{ id: 1 }]);
+
+    await service.refreshEntity('dn_a');
+
+    expect(await service.getEntityMeta('dn_a')).toEqual({
+      fetchedAt: new Date(NOW + 60_000).toISOString(),
+      changedAt: first?.changedAt,
+    });
+  });
+
+  it('advances changedAt when a refresh returns different data', async () => {
+    const fetchSchema = vi.fn(async () => ['dn_a']);
+    const { service, entities, clock } = setup({ fetchSchema });
+    entities.set('dn_a', [{ id: 1 }]);
+    await service.sync();
+    clock.advance(60_000);
+    entities.set('dn_a', [{ id: 2 }]);
+
+    await service.refreshEntity('dn_a');
+
+    expect(await service.getEntityMeta('dn_a')).toEqual({
+      fetchedAt: new Date(NOW + 60_000).toISOString(),
+      changedAt: new Date(NOW + 60_000).toISOString(),
+    });
   });
 });
 
@@ -324,5 +401,35 @@ describe('reset', () => {
     await service.reset();
 
     expect(await service.getEntity('dn_a')).toEqual([{ id: 1 }]);
+  });
+});
+
+describe('clearAll', () => {
+  it('removes since, pending, entities and entity data so the next sync is a full refresh', async () => {
+    const fetchSchema = vi.fn(async () => ['dn_a']);
+    const { service, entities, store } = setup({ fetchSchema });
+    entities.set('dn_a', [{ id: 1 }]);
+    await service.sync();
+    await store.setItem(
+      'referenceData.pending',
+      JSON.stringify({ since: new Date(NOW).toISOString(), entities: ['dn_b'] }),
+    );
+
+    await service.clearAll();
+
+    expect(await store.getItem('referenceData.since')).toBeNull();
+    expect(await store.getItem('referenceData.pending')).toBeNull();
+    expect(await store.getItem('referenceData.entities')).toBeNull();
+    expect(await service.getEntity('dn_a')).toBeNull();
+    expect(await service.listEntities()).toEqual([]);
+    expect(service.getSyncStatus()).toEqual({
+      phase: 'idle',
+      synced: [],
+      failed: [],
+      topics: [],
+    });
+
+    await service.sync();
+    expect(fetchSchema).toHaveBeenLastCalledWith(1043, undefined);
   });
 });

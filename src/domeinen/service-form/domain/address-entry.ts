@@ -3,7 +3,7 @@ import {
   type AddressComponentMapping,
 } from './address-place-selection';
 import { groupSectionFields, type FieldGroup } from './field-kind';
-import type { ServiceFormAnswers, ServiceFormField } from './types';
+import type { ServiceFormAddressGroup, ServiceFormAnswers, ServiceFormField } from './types';
 
 export type AddressEntryConfig = {
   version: 1;
@@ -11,6 +11,8 @@ export type AddressEntryConfig = {
   addressSearch: boolean;
   manualEntry: boolean;
   hideResolvedFieldsInitially: boolean;
+  confirmAddress: boolean;
+  allowForeignManual: boolean;
 };
 
 export type AddressEntryGroup = {
@@ -18,6 +20,7 @@ export type AddressEntryGroup = {
   mapping: AddressComponentMapping;
   config: AddressEntryConfig;
   orderedFields: ServiceFormField[];
+  isCompactAddressGroup: boolean;
 };
 
 export type AddressEntryRenderItem =
@@ -50,7 +53,83 @@ const asRecord = (value: unknown): Record<string, unknown> | null =>
 const readBoolean = (value: unknown): boolean | null =>
   value === true || value === false ? value : null;
 
+const readString = (value: unknown): string | null =>
+  typeof value === 'string' && value.trim() !== '' ? value : null;
+
+const readAddressGroupMetadata = (raw: Record<string, unknown>): ServiceFormAddressGroup | null => {
+  const addressGroup = asRecord(raw.address_group);
+  const fields = asRecord(addressGroup?.fields);
+  if (!addressGroup || !fields) {
+    return null;
+  }
+
+  const id = readString(addressGroup.id);
+  const postalCode = readString(fields.postalCode);
+  const houseNumber = readString(fields.houseNumber);
+  const addition = readString(fields.addition) ?? undefined;
+  const street = readString(fields.street);
+  const city = readString(fields.city);
+  const country = readString(fields.country) ?? undefined;
+  const confirmAddress = readBoolean(addressGroup.confirmAddress);
+  const allowManual = readBoolean(addressGroup.allowManual);
+  const allowForeignManual = readBoolean(addressGroup.allowForeignManual);
+
+  if (
+    !id ||
+    !postalCode ||
+    !houseNumber ||
+    !street ||
+    !city ||
+    confirmAddress === null ||
+    allowManual === null ||
+    allowForeignManual === null
+  ) {
+    return null;
+  }
+
+  return {
+    id,
+    fields: { postalCode, houseNumber, addition, street, city, country },
+    confirmAddress,
+    allowManual,
+    allowForeignManual,
+  };
+};
+
+const readAddressGroupConfig = (
+  raw: Record<string, unknown>,
+): { config: AddressEntryConfig; mapping: AddressComponentMapping } | null => {
+  const metadata = readAddressGroupMetadata(raw);
+  if (!metadata) {
+    return null;
+  }
+
+  return {
+    config: {
+      version: 1,
+      postcodeHouseNumberLookup: true,
+      addressSearch: false,
+      manualEntry: metadata.allowManual,
+      hideResolvedFieldsInitially: true,
+      confirmAddress: metadata.confirmAddress,
+      allowForeignManual: metadata.allowForeignManual,
+    },
+    mapping: {
+      postalcode: metadata.fields.postalCode,
+      houseno: metadata.fields.houseNumber,
+      housenoadd: metadata.fields.addition,
+      street: metadata.fields.street,
+      city: metadata.fields.city,
+      country: metadata.fields.country,
+    },
+  };
+};
+
 export function readAddressEntryConfig(raw: Record<string, unknown>): AddressEntryConfig | null {
+  const addressGroup = readAddressGroupConfig(raw);
+  if (addressGroup) {
+    return addressGroup.config;
+  }
   const extensions = asRecord(raw.ui_extensions);
   const addressEntry = asRecord(extensions?.address_entry);
   if (addressEntry?.version !== 1) {
@@ -76,6 +155,8 @@ export function readAddressEntryConfig(raw: Record<string, unknown>): AddressEnt
     addressSearch,
     manualEntry,
     hideResolvedFieldsInitially,
+    confirmAddress: false,
+    allowForeignManual: false,
   };
 }
 
@@ -83,11 +164,12 @@ const buildGroup = (
   anchor: ServiceFormField,
   fieldByKey: ReadonlyMap<string, ServiceFormField>,
 ): AddressEntryGroup | null => {
-  if (anchor.type.toLowerCase() !== 'address') {
+  const addressGroup = readAddressGroupConfig(anchor.raw);
+  if (!addressGroup && anchor.type.toLowerCase() !== 'address') {
     return null;
   }
-  const config = readAddressEntryConfig(anchor.raw);
-  const mapping = readAddressComponentMapping(anchor.raw);
+  const config = addressGroup?.config ?? readAddressEntryConfig(anchor.raw);
+  const mapping = addressGroup?.mapping ?? readAddressComponentMapping(anchor.raw);
   if (!config || !mapping) {
     return null;
   }
@@ -95,17 +177,22 @@ const buildGroup = (
     return null;
   }
 
+  const seenFieldKeys = new Set<string>();
   const orderedFields = COMPONENT_ORDER.flatMap((component) => {
     const fieldKey = mapping[component];
     const field = fieldKey ? fieldByKey.get(fieldKey) : undefined;
-    return field ? [field] : [];
+    if (!field || seenFieldKeys.has(field.key)) {
+      return [];
+    }
+    seenFieldKeys.add(field.key);
+    return [field];
   });
   const availableKeys = new Set(orderedFields.map((field) => field.key));
   if (REQUIRED_COMPONENTS.some((component) => !availableKeys.has(mapping[component] ?? ''))) {
     return null;
   }
 
-  return { anchor, mapping, config, orderedFields };
+  return { anchor, mapping, config, orderedFields, isCompactAddressGroup: Boolean(addressGroup) };
 };
 
 export function buildAddressEntryRenderItems(fields: ServiceFormField[]): AddressEntryRenderItem[] {
@@ -186,8 +273,18 @@ const hasAnswer = (answers: ServiceFormAnswers, fieldKey: string): boolean => {
 export function shouldShowResolvedAddressFields(
   group: AddressEntryGroup,
   answers: ServiceFormAnswers,
-  state: { manualEntryActive: boolean; lookupFailed: boolean },
+  state: {
+    manualEntryActive: boolean;
+    lookupFailed: boolean;
+    lookupReady?: boolean;
+    lookupApplied?: boolean;
+    foreignLocationActive?: boolean;
+  },
 ): boolean {
+  if (group.isCompactAddressGroup) {
+    // Input fields stay hidden; applied addresses are shown as a summary instead.
+    return state.foreignLocationActive === true;
+  }
   if (
     !group.config.hideResolvedFieldsInitially ||
     (group.config.manualEntry && (state.manualEntryActive || state.lookupFailed))
@@ -199,12 +296,124 @@ export function shouldShowResolvedAddressFields(
   );
 }
 
+const answerDisplay = (answers: ServiceFormAnswers, fieldKey: string | undefined): string => {
+  if (!fieldKey) {
+    return '';
+  }
+  const answer = answers[fieldKey];
+  return String(answer?.displayValue ?? answer?.value ?? '').trim();
+};
+
+/** Compact Dutch-style one-liner for a looked-up address (not shown as input fields). */
+export function buildCompactAddressSummary(
+  group: AddressEntryGroup,
+  answers: ServiceFormAnswers,
+): string | null {
+  const street = answerDisplay(answers, group.mapping.street);
+  const city = answerDisplay(answers, group.mapping.city);
+  if (street === '' && city === '') {
+    return null;
+  }
+
+  const houseNumber = answerDisplay(answers, group.mapping.houseno);
+  const houseNumberAddition = answerDisplay(answers, group.mapping.housenoadd);
+  const postalCode = answerDisplay(answers, group.mapping.postalcode);
+  const country = answerDisplay(answers, group.mapping.country);
+  const housePart = `${houseNumber}${houseNumberAddition}`.trim();
+  const streetLine = [street, housePart].filter((part) => part !== '').join(' ');
+  const cityLine = [postalCode, city].filter((part) => part !== '').join(' ');
+  const parts = [streetLine, cityLine, country].filter((part) => part !== '');
+  return parts.length > 0 ? parts.join(', ') : null;
+}
+
 export function buildClearedAddressEntryAnswers(group: AddressEntryGroup): ServiceFormAnswers {
-  const cleared: ServiceFormAnswers = {
-    [group.anchor.key]: { value: '', displayValue: '' },
-  };
+  const cleared: ServiceFormAnswers = group.isCompactAddressGroup
+    ? {}
+    : { [group.anchor.key]: { value: '', displayValue: '' } };
   for (const field of getAddressEntryResolvedFields(group)) {
     cleared[field.key] = { value: '', displayValue: '' };
   }
   return cleared;
+}
+
+export function hasResolvedAddressComponentAnswers(
+  group: AddressEntryGroup,
+  answers: ServiceFormAnswers,
+): boolean {
+  return [group.mapping.street, group.mapping.city].some((fieldKey) =>
+    fieldKey ? hasAnswer(answers, fieldKey) : false,
+  );
+}
+
+/** Compact groups wait for an explicit Find-address press (`requestedLookupKey`). */
+export function isPostalAddressLookupQueryEnabled(input: {
+  readOnly: boolean;
+  foreignLocationActive: boolean;
+  postcodeHouseNumberLookup: boolean;
+  hasLookupCapability: boolean;
+  lookupReady: boolean;
+  isCompactAddressGroup: boolean;
+  requestedLookupKey: string | null;
+  lookupKey: string;
+  hasResolvedAnswers: boolean;
+  manualEntryActive: boolean;
+}): boolean {
+  return Boolean(
+    !input.readOnly &&
+    !input.foreignLocationActive &&
+    input.postcodeHouseNumberLookup &&
+    input.hasLookupCapability &&
+    input.lookupReady &&
+    (!input.isCompactAddressGroup || input.requestedLookupKey === input.lookupKey) &&
+    !input.hasResolvedAnswers &&
+    !input.manualEntryActive,
+  );
+}
+
+export function shouldOfferForeignLocationEntry(
+  group: AddressEntryGroup,
+  foreignLocationActive: boolean,
+): boolean {
+  return (
+    group.isCompactAddressGroup && group.config.postcodeHouseNumberLookup && !foreignLocationActive
+  );
+}
+
+export function shouldOfferNonCompactManualEntry(group: AddressEntryGroup): boolean {
+  return !group.isCompactAddressGroup && group.config.manualEntry;
+}
+
+export function resolveCompactAddressSummaryDisplay(
+  group: AddressEntryGroup,
+  answers: ServiceFormAnswers,
+  state: { foreignLocationActive: boolean; appliedAddressSummary: string | null },
+): string | null {
+  if (!group.isCompactAddressGroup || state.foreignLocationActive) {
+    return null;
+  }
+  return state.appliedAddressSummary ?? buildCompactAddressSummary(group, answers);
+}
+
+/** Hide Find address once a looked-up address is applied; show reset instead. */
+export function shouldShowCompactLookupAction(input: {
+  hasResolvedAnswers: boolean;
+  appliedAddressSummary: string | null;
+}): boolean {
+  return !input.hasResolvedAnswers && input.appliedAddressSummary === null;
+}
+
+export function isCompactLookupActionDisabled(input: {
+  lookupReady: boolean;
+  hasLookupCapability: boolean;
+  isFetching: boolean;
+}): boolean {
+  return !input.lookupReady || !input.hasLookupCapability || input.isFetching;
+}
+
+/** Fields shown as inputs: all when foreign, otherwise only postal lookup fields. */
+export function visibleCompactAddressFields(
+  group: AddressEntryGroup,
+  foreignLocationActive: boolean,
+): ServiceFormField[] {
+  return foreignLocationActive ? group.orderedFields : getAddressEntryLookupFields(group);
 }

@@ -1,0 +1,653 @@
+[
+  {
+    "servicecode": 1002,
+    "servicename": [
+      {
+        "language-code": 1043,
+        "value": "Assistance"
+      },
+      {
+        "language-code": 1044,
+        "value": "Assistance"
+      }
+    ],
+    "definition": [
+      {
+        "phase": 1,
+        "phase-name": [
+          {
+            "language-code": 1043,
+            "value": "Start"
+          },
+          {
+            "language-code": 1044,
+            "value": "Aanvang"
+          }
+        ],
+        "photosMandatory": [],
+        "tabs": [
+          {
+            "header": [
+              {
+                "language-code": 1043,
+                "value": "Dossiergegevens"
+              },
+              {
+                "language-code": 1044,
+                "value": "File information"
+              }
+            ],
+            "fields": [
+              {
+                "name": "dn_servicetypecode",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Type dienst"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Service type"
+                  }
+                ],
+                "type": "string",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "dn_servicetypecode@OData.Community.Display.V1.FormattedValue"
+                }
+              },
+              {
+                "name": "dn_servicelocationdescription",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Locatie-details"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Location-details"
+                  }
+                ],
+                "type": "textarea",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "dn_servicelocationdescription"
+                }
+              },
+              {
+                "name": "_dn_assignementtoid_value",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Opdracht aan"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Assignment to"
+                  }
+                ],
+                "type": "string",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "_dn_assignementtoid_value@OData.Community.Display.V1.FormattedValue"
+                }
+              },
+              {
+                "name": "dn_purchaseorderno",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Opdrachtnr."
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Order number"
+                  }
+                ],
+                "type": "string",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "dn_purchaseorderno"
+                }
+              },
+              {
+                "name": "dn_situationdescription",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Situatie omschrijving"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Situation description"
+                  }
+                ],
+                "type": "textarea",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "dn_situationdescription"
+                }
+              },
+              {
+                "name": "dn_IncidentId.dn_description",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Incident opmerkingen"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Incident remarks"
+                  }
+                ],
+                "type": "textarea",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "dn_IncidentId.dn_description"
+                }
+              },
+              {
+                "name": "dn_internalremarks",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "ATTENTIE!"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "ATTENTION!"
+                  }
+                ],
+                "type": "textarea",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "dn_internalremarks"
+                }
+              },
+              {
+                "name": "_dn_clientid_value",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Opdrachtgever"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Client"
+                  }
+                ],
+                "type": "string",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "_dn_clientid_value@OData.Community.Display.V1.FormattedValue"
+                }
+              },
+              {
+                "name": "_dn_debtorid_value",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Debiteur"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Debtor"
+                  }
+                ],
+                "type": "string",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "_dn_debtorid_value@OData.Community.Display.V1.FormattedValue"
+                }
+              },
+              {
+                "name": "dn_informationaboutclient",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Info over opdrachtgever"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Info on client"
+                  }
+                ],
+                "type": "textarea",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "dn_informationaboutclient"
+                }
+              }
+            ]
+          },
+          {
+            "header": [
+              {
+                "language-code": 1043,
+                "value": "Afhandeling"
+              },
+              {
+                "language-code": 1044,
+                "value": "Handling"
+              }
+            ],
+            "fields": [
+              {
+                "name": "dn_assistancetypecode",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Soort Dienstverlening"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Assistance variant"
+                  }
+                ],
+                "type": "select",
+                "table": "dn_assistancetypecode",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "autocomplete": true,
+                  "value": "dn_assistancetypecode@OData.Community.Display.V1.FormattedValue"
+                }
+              },
+              {
+                "name": "dn_restrictionsonsite",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Opmerkingen"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Remarks"
+                  }
+                ],
+                "type": "textarea",
+                "autoform": {
+                  "readonly": false,
+                  "optional": true,
+                  "value": "dn_restrictionsonsite"
+                }
+              },
+              {
+                "name": "dn_assisistancetypeofbreakdowncode",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Aangetroffen"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Discovered"
+                  }
+                ],
+                "type": "select",
+                "table": "dn_assisistancetypeofbreakdowncode",
+                "autoform": {
+                  "readonly": false,
+                  "optional": false,
+                  "autocomplete": true,
+                  "value": "dn_assisistancetypeofbreakdowncode@OData.Community.Display.V1.FormattedValue"
+                }
+              },
+              {
+                "name": "dn_vehicleregistrationno",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Kenteken"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Licenseplate"
+                  }
+                ],
+                "type": "string",
+                "autoform": {
+                  "readonly": false,
+                  "optional": false,
+                  "value": "dn_vehicleregistrationno"
+                },
+                "requiredvisibility": {
+                  "property": "dn_assisistancetypeofbreakdowncode",
+                  "value": [875920000, 875920001, 875920002, 875920003, 875920012]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "phase": 2,
+        "phase-name": [
+          {
+            "language-code": 1043,
+            "value": "Start"
+          },
+          {
+            "language-code": 1044,
+            "value": "Aanvang"
+          }
+        ],
+        "photosMandatory": [],
+        "tabs": [
+          {
+            "header": [
+              {
+                "language-code": 1043,
+                "value": "Dossiergegevens"
+              },
+              {
+                "language-code": 1044,
+                "value": "File information"
+              }
+            ],
+            "fields": [
+              {
+                "name": "dn_servicetypecode",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Type dienst"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Service type"
+                  }
+                ],
+                "type": "string",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "dn_servicetypecode@OData.Community.Display.V1.FormattedValue"
+                }
+              },
+              {
+                "name": "dn_servicelocationdescription",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Locatie-details"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Location-details"
+                  }
+                ],
+                "type": "textarea",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "dn_servicelocationdescription"
+                }
+              },
+              {
+                "name": "_dn_assignementtoid_value",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Opdracht aan"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Assignment to"
+                  }
+                ],
+                "type": "string",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "_dn_assignementtoid_value@OData.Community.Display.V1.FormattedValue"
+                }
+              },
+              {
+                "name": "dn_purchaseorderno",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Opdrachtnr."
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Order number"
+                  }
+                ],
+                "type": "string",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "dn_purchaseorderno"
+                }
+              },
+              {
+                "name": "dn_situationdescription",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Situatie omschrijving"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Situation description"
+                  }
+                ],
+                "type": "textarea",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "dn_situationdescription"
+                }
+              },
+              {
+                "name": "dn_IncidentId.dn_description",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Incident opmerkingen"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Incident remarks"
+                  }
+                ],
+                "type": "textarea",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "dn_IncidentId.dn_description"
+                }
+              },
+              {
+                "name": "dn_internalremarks",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "ATTENTIE!"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "ATTENTION!"
+                  }
+                ],
+                "type": "textarea",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "dn_internalremarks"
+                }
+              },
+              {
+                "name": "_dn_clientid_value",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Opdrachtgever"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Client"
+                  }
+                ],
+                "type": "string",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "_dn_clientid_value@OData.Community.Display.V1.FormattedValue"
+                }
+              },
+              {
+                "name": "_dn_debtorid_value",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Debiteur"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Debtor"
+                  }
+                ],
+                "type": "string",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "_dn_debtorid_value@OData.Community.Display.V1.FormattedValue"
+                }
+              },
+              {
+                "name": "dn_informationaboutclient",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Info over opdrachtgever"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Info on client"
+                  }
+                ],
+                "type": "textarea",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "dn_informationaboutclient"
+                }
+              }
+            ]
+          },
+          {
+            "header": [
+              {
+                "language-code": 1043,
+                "value": "Afhandeling"
+              },
+              {
+                "language-code": 1044,
+                "value": "Handling"
+              }
+            ],
+            "fields": [
+              {
+                "name": "dn_assistancetypecode",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Soort Dienstverlening"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Assistance variant"
+                  }
+                ],
+                "type": "select",
+                "table": "dn_assistancetypecode",
+                "autoform": {
+                  "readonly": false,
+                  "optional": false,
+                  "autocomplete": true,
+                  "value": "dn_assistancetypecode@OData.Community.Display.V1.FormattedValue"
+                }
+              },
+              {
+                "name": "dn_restrictionsonsite",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Opmerkingen"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Remarks"
+                  }
+                ],
+                "type": "textarea",
+                "autoform": {
+                  "readonly": false,
+                  "optional": true,
+                  "value": "dn_restrictionsonsite"
+                }
+              },
+              {
+                "name": "dn_assisistancetypeofbreakdowncode",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Aangetroffen"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Discovered"
+                  }
+                ],
+                "type": "select",
+                "table": "dn_assisistancetypeofbreakdowncode",
+                "autoform": {
+                  "readonly": false,
+                  "optional": false,
+                  "autocomplete": true,
+                  "value": "dn_assisistancetypeofbreakdowncode@OData.Community.Display.V1.FormattedValue"
+                }
+              },
+              {
+                "name": "dn_vehicleregistrationno",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Kenteken"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Licenseplate"
+                  }
+                ],
+                "type": "string",
+                "autoform": {
+                  "readonly": false,
+                  "optional": false,
+                  "value": "dn_vehicleregistrationno"
+                },
+                "requiredvisibility": {
+                  "property": "dn_assisistancetypeofbreakdowncode",
+                  "value": [875920000, 875920001, 875920002, 875920003, 875920012]
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]

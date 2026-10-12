@@ -24,6 +24,7 @@
             "value": "Aanvang"
           }
         ],
+        "photosMandatory": ["links-voor", "rechts-achter"],
         "tabs": [
           {
             "header": [
@@ -54,25 +55,6 @@
                   "readonly": true,
                   "optional": true,
                   "value": "dn_servicelocationdescription"
-                }
-              },
-              {
-                "name": "dn_aisamenvatting",
-                "label": [
-                  {
-                    "language-code": 1043,
-                    "value": "Samenvatting"
-                  },
-                  {
-                    "language-code": 1044,
-                    "value": "Sit-rap"
-                  }
-                ],
-                "type": "textarea",
-                "autoform": {
-                  "readonly": true,
-                  "optional": true,
-                  "value": "dn_aisamenvatting"
                 }
               },
               {
@@ -245,25 +227,6 @@
                   "optional": true,
                   "value": "dn_informationaboutclient"
                 }
-              },
-              {
-                "name": "dn_custom_field_1780669275272_11",
-                "label": [
-                  {
-                    "language-code": 1043,
-                    "value": "Nieuw veld"
-                  },
-                  {
-                    "language-code": 1044,
-                    "value": "New field"
-                  }
-                ],
-                "type": "string",
-                "autoform": {
-                  "readonly": false,
-                  "optional": true,
-                  "value": "dn_custom_field_1780669275272_11"
-                }
               }
             ]
           },
@@ -278,7 +241,6 @@
                 "value": "Demands and Instructions"
               }
             ],
-            "fields": [],
             "contractRights": [
               {
                 "name": "dn_rightsrentalcar",
@@ -319,7 +281,8 @@
                   }
                 ]
               }
-            ]
+            ],
+            "fields": []
           },
           {
             "header": [
@@ -402,8 +365,8 @@
                 "autoform": {
                   "readonly": false,
                   "optional": false,
-                  "value": "dn_typeofbreakdowncode",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "dn_typeofbreakdowncode"
                 }
               },
               {
@@ -423,8 +386,8 @@
                 "autoform": {
                   "readonly": false,
                   "optional": false,
-                  "value": "dn_repairstatuscode",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "dn_repairstatuscode"
                 }
               },
               {
@@ -444,8 +407,8 @@
                 "autoform": {
                   "readonly": false,
                   "optional": false,
-                  "value": "dn_breakdownsettlementcode",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "dn_breakdownsettlementcode"
                 }
               },
               {
@@ -465,8 +428,8 @@
                 "autoform": {
                   "readonly": false,
                   "optional": false,
-                  "value": "dn_breakdownreasoncode",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "dn_breakdownreasoncode"
                 }
               },
               {
@@ -483,10 +446,6 @@
                 ],
                 "type": "select",
                 "table": "dn_locations",
-                "requiredvisibility": {
-                  "property": "dn_breakdownsettlementcode",
-                  "value": 1005
-                },
                 "sortoptions": {
                   "orderby": "distance",
                   "direction": "ascending"
@@ -494,8 +453,12 @@
                 "autoform": {
                   "readonly": false,
                   "optional": false,
-                  "value": "_dn_locationid_value",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "_dn_locationid_value"
+                },
+                "requiredvisibility": {
+                  "property": "dn_breakdownsettlementcode",
+                  "value": 1005
                 }
               },
               {
@@ -512,15 +475,15 @@
                 ],
                 "type": "select",
                 "table": "dn_truefalse",
-                "requiredvisibility": {
-                  "property": "dn_breakdownsettlementcode",
-                  "value": [1004, 1005]
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
-                  "value": "dn_deliveryaddressavailablecode",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "dn_deliveryaddressavailablecode"
+                },
+                "requiredvisibility": {
+                  "property": "dn_breakdownsettlementcode",
+                  "value": [1004, 1005]
                 }
               },
               {
@@ -536,10 +499,6 @@
                   }
                 ],
                 "type": "string",
-                "requiredvisibility": {
-                  "property": "dn_deliveryaddressavailablecode",
-                  "value": 1
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
@@ -550,6 +509,10 @@
                       "value": 100
                     }
                   ]
+                },
+                "requiredvisibility": {
+                  "property": "dn_deliveryaddressavailablecode",
+                  "value": 1
                 }
               },
               {
@@ -565,14 +528,24 @@
                   }
                 ],
                 "type": "address",
-                "requiredvisibility": {
-                  "property": "dn_deliveryaddressavailablecode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": true,
                   "value": "dn_deliveryadressbar"
+                },
+                "requiredvisibility": {
+                  "property": "dn_deliveryaddressavailablecode",
+                  "value": true
+                },
+                "address_components": {
+                  "name": "dn_deliveryname",
+                  "country": "_dn_deliverycountryid_value",
+                  "postalcode": "dn_deliverypostalcode",
+                  "houseno": "dn_deliveryhouseno",
+                  "housenoadd": "dn_deliveryhousenoaddition",
+                  "street": "dn_deliverystreet",
+                  "city": "dn_deliverycity",
+                  "province": ""
                 }
               },
               {
@@ -589,15 +562,15 @@
                 ],
                 "type": "select",
                 "table": "dn_country",
-                "requiredvisibility": {
-                  "property": "dn_deliveryaddressavailablecode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
-                  "value": "_dn_deliverycountryid_value",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "_dn_deliverycountryid_value"
+                },
+                "requiredvisibility": {
+                  "property": "dn_deliveryaddressavailablecode",
+                  "value": true
                 }
               },
               {
@@ -613,14 +586,20 @@
                   }
                 ],
                 "type": "string",
-                "requiredvisibility": {
-                  "property": "dn_deliveryaddressavailablecode",
-                  "value": 1
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
                   "value": "dn_deliverypostalcode"
+                },
+                "requiredvisibility": {
+                  "property": "dn_deliveryaddressavailablecode",
+                  "value": 1
+                },
+                "zipcode_components": {
+                  "postalcode": "dn_deliverypostalcode",
+                  "houseno": "dn_deliveryhouseno",
+                  "city": "dn_deliverycity",
+                  "street": "dn_deliverystreet"
                 }
               },
               {
@@ -636,14 +615,20 @@
                   }
                 ],
                 "type": "number",
-                "requiredvisibility": {
-                  "property": "dn_deliveryaddressavailablecode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
                   "value": "dn_deliveryhouseno"
+                },
+                "requiredvisibility": {
+                  "property": "dn_deliveryaddressavailablecode",
+                  "value": true
+                },
+                "zipcode_components": {
+                  "postalcode": "dn_deliverypostalcode",
+                  "houseno": "dn_deliveryhouseno",
+                  "city": "dn_deliverycity",
+                  "street": "dn_deliverystreet"
                 }
               },
               {
@@ -659,14 +644,14 @@
                   }
                 ],
                 "type": "string",
-                "requiredvisibility": {
-                  "property": "dn_deliveryaddressavailablecode",
-                  "value": 1
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": true,
                   "value": "dn_deliveryhousenoaddition"
+                },
+                "requiredvisibility": {
+                  "property": "dn_deliveryaddressavailablecode",
+                  "value": 1
                 }
               },
               {
@@ -682,14 +667,14 @@
                   }
                 ],
                 "type": "string",
-                "requiredvisibility": {
-                  "property": "dn_deliveryaddressavailablecode",
-                  "value": 1
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
                   "value": "dn_deliverystreet"
+                },
+                "requiredvisibility": {
+                  "property": "dn_deliveryaddressavailablecode",
+                  "value": 1
                 }
               },
               {
@@ -705,14 +690,14 @@
                   }
                 ],
                 "type": "string",
-                "requiredvisibility": {
-                  "property": "dn_deliveryaddressavailablecode",
-                  "value": 1
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
                   "value": "dn_deliverycity"
+                },
+                "requiredvisibility": {
+                  "property": "dn_deliveryaddressavailablecode",
+                  "value": 1
                 }
               },
               {
@@ -728,14 +713,14 @@
                   }
                 ],
                 "type": "number",
-                "requiredvisibility": {
-                  "property": "dn_deliveryaddressavailablecode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": true,
                   "optional": true,
                   "value": "dn_deliverydistance"
+                },
+                "requiredvisibility": {
+                  "property": "dn_deliveryaddressavailablecode",
+                  "value": true
                 }
               },
               {
@@ -754,8 +739,8 @@
                 "autoform": {
                   "readonly": false,
                   "optional": true,
-                  "value": "dn_remarksforclient",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "dn_remarksforclient"
                 }
               },
               {
@@ -772,15 +757,15 @@
                 ],
                 "type": "select",
                 "table": "dn_storageblockcolorcode",
-                "requiredvisibility": {
-                  "property": "dn_breakdownsettlementcode",
-                  "value": 1005
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": true,
-                  "value": "dn_storageblockcolorcode",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "dn_storageblockcolorcode"
+                },
+                "requiredvisibility": {
+                  "property": "dn_breakdownsettlementcode",
+                  "value": 1005
                 }
               },
               {
@@ -796,15 +781,15 @@
                   }
                 ],
                 "type": "number",
-                "requiredvisibility": {
-                  "property": "dn_breakdownsettlementcode",
-                  "value": 1005
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": true,
-                  "value": "dn_storageblocknumber",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "dn_storageblocknumber"
+                },
+                "requiredvisibility": {
+                  "property": "dn_breakdownsettlementcode",
+                  "value": 1005
                 }
               },
               {
@@ -823,8 +808,8 @@
                 "autoform": {
                   "readonly": false,
                   "optional": true,
-                  "value": "dn_damagedescription",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "dn_damagedescription"
                 }
               },
               {
@@ -841,15 +826,15 @@
                 ],
                 "type": "select",
                 "table": "dn_optionalyesno",
-                "requiredvisibility": {
-                  "property": "dn_breakdownsettlementcode",
-                  "value": [1004, 1005]
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
-                  "value": "dn_keyavailablecode",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "dn_keyavailablecode"
+                },
+                "requiredvisibility": {
+                  "property": "dn_breakdownsettlementcode",
+                  "value": [1004, 1005]
                 }
               },
               {
@@ -866,15 +851,15 @@
                 ],
                 "type": "select",
                 "table": "dn_optionalyesno",
-                "requiredvisibility": {
-                  "property": "dn_breakdownsettlementcode",
-                  "value": [1004, 1005]
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
-                  "value": "dn_vehicledrivablecode",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "dn_vehicledrivablecode"
+                },
+                "requiredvisibility": {
+                  "property": "dn_breakdownsettlementcode",
+                  "value": [1004, 1005]
                 }
               },
               {
@@ -891,15 +876,15 @@
                 ],
                 "type": "select",
                 "table": "dn_optionalyesno",
-                "requiredvisibility": {
-                  "property": "dn_breakdownsettlementcode",
-                  "value": [1004, 1005]
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
-                  "value": "dn_vehiclerollablecode",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "dn_vehiclerollablecode"
+                },
+                "requiredvisibility": {
+                  "property": "dn_breakdownsettlementcode",
+                  "value": [1004, 1005]
                 }
               },
               {
@@ -916,15 +901,15 @@
                 ],
                 "type": "select",
                 "table": "dn_roofboxcode",
-                "requiredvisibility": {
-                  "property": "dn_breakdownsettlementcode",
-                  "value": [1004, 1005]
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
-                  "value": "dn_roofboxcode",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "dn_roofboxcode"
+                },
+                "requiredvisibility": {
+                  "property": "dn_breakdownsettlementcode",
+                  "value": [1004, 1005]
                 }
               },
               {
@@ -941,15 +926,15 @@
                 ],
                 "type": "select",
                 "table": "dn_bicyclecarriercode",
-                "requiredvisibility": {
-                  "property": "dn_breakdownsettlementcode",
-                  "value": [1004, 1005]
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
-                  "value": "dn_bicyclecarriercode",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "dn_bicyclecarriercode"
+                },
+                "requiredvisibility": {
+                  "property": "dn_breakdownsettlementcode",
+                  "value": [1004, 1005]
                 }
               },
               {
@@ -966,15 +951,15 @@
                 ],
                 "type": "select",
                 "table": "dn_damagecategorycode",
-                "requiredvisibility": {
-                  "property": "dn_breakdownsettlementcode",
-                  "value": [1004, 1005]
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
-                  "value": "dn_damagecategorycode",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "dn_damagecategorycode"
+                },
+                "requiredvisibility": {
+                  "property": "dn_breakdownsettlementcode",
+                  "value": [1004, 1005]
                 }
               }
             ]
@@ -1008,8 +993,8 @@
                 "autoform": {
                   "readonly": false,
                   "optional": false,
-                  "value": "_dn_vehiclecountryoforiginid_value",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "_dn_vehiclecountryoforiginid_value"
                 }
               },
               {
@@ -1124,8 +1109,8 @@
                 "autoform": {
                   "readonly": false,
                   "optional": false,
-                  "value": "_dn_vehiclebrandid_value",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "_dn_vehiclebrandid_value"
                 }
               },
               {
@@ -1142,15 +1127,15 @@
                 ],
                 "type": "select",
                 "table": "dn_vehicletypes",
-                "dependencies": {
-                  "required": "_dn_vehiclebrandid_value",
-                  "value": "ABCDEFGHI"
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": true,
-                  "value": "_dn_vehicletypeid_value",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "_dn_vehicletypeid_value"
+                },
+                "dependencies": {
+                  "required": "_dn_vehiclebrandid_value",
+                  "value": "ABCDEFGHI"
                 }
               },
               {
@@ -1177,7 +1162,7 @@
                     },
                     {
                       "validation_type": "min-int",
-                      "value": 1
+                      "value": 0
                     }
                   ]
                 }
@@ -1232,8 +1217,8 @@
                 "autoform": {
                   "readonly": false,
                   "optional": false,
-                  "value": "dn_driverstatecode",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "dn_driverstatecode"
                 }
               },
               {
@@ -1253,8 +1238,8 @@
                 "autoform": {
                   "readonly": false,
                   "optional": false,
-                  "value": "dn_driverstatuscode",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "dn_driverstatuscode"
                 }
               },
               {
@@ -1271,15 +1256,15 @@
                 ],
                 "type": "select",
                 "table": "dn_salutation",
-                "requiredvisibility": {
-                  "property": "dn_driverstatecode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
-                  "value": "dn_driversalutationcode",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "dn_driversalutationcode"
+                },
+                "requiredvisibility": {
+                  "property": "dn_driverstatecode",
+                  "value": true
                 }
               },
               {
@@ -1295,14 +1280,14 @@
                   }
                 ],
                 "type": "string",
-                "requiredvisibility": {
-                  "property": "dn_driverstatecode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": true,
                   "value": "dn_drivermiddlename"
+                },
+                "requiredvisibility": {
+                  "property": "dn_driverstatecode",
+                  "value": true
                 }
               },
               {
@@ -1318,14 +1303,14 @@
                   }
                 ],
                 "type": "string",
-                "requiredvisibility": {
-                  "property": "dn_driverstatecode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": true,
                   "value": "dn_driverlastname"
+                },
+                "requiredvisibility": {
+                  "property": "dn_driverstatecode",
+                  "value": true
                 }
               },
               {
@@ -1341,14 +1326,14 @@
                   }
                 ],
                 "type": "string",
-                "requiredvisibility": {
-                  "property": "dn_driverstatecode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": true,
                   "value": "dn_driverinitials"
+                },
+                "requiredvisibility": {
+                  "property": "dn_driverstatecode",
+                  "value": true
                 }
               },
               {
@@ -1364,14 +1349,23 @@
                   }
                 ],
                 "type": "address",
-                "requiredvisibility": {
-                  "property": "dn_driverstatecode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": true,
                   "value": "dn_driveradresbar"
+                },
+                "requiredvisibility": {
+                  "property": "dn_driverstatecode",
+                  "value": true
+                },
+                "address_components": {
+                  "country": "_dn_drivercountryid_value",
+                  "postalcode": "dn_driverpostalcode",
+                  "houseno": "dn_driverhouseno",
+                  "housenoadd": "dn_driverhousenoaddition",
+                  "street": "dn_driverstreet",
+                  "city": "dn_drivercity",
+                  "province": ""
                 }
               },
               {
@@ -1388,15 +1382,15 @@
                 ],
                 "type": "select",
                 "table": "dn_country",
-                "requiredvisibility": {
-                  "property": "dn_driverstatecode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": true,
-                  "value": "_dn_drivercountryid_value",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "_dn_drivercountryid_value"
+                },
+                "requiredvisibility": {
+                  "property": "dn_driverstatecode",
+                  "value": true
                 }
               },
               {
@@ -1412,14 +1406,20 @@
                   }
                 ],
                 "type": "string",
-                "requiredvisibility": {
-                  "property": "dn_driverstatecode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": true,
                   "value": "dn_driverpostalcode"
+                },
+                "requiredvisibility": {
+                  "property": "dn_driverstatecode",
+                  "value": true
+                },
+                "zipcode_components": {
+                  "postalcode": "dn_driverpostalcode",
+                  "houseno": "dn_driverhouseno",
+                  "city": "dn_drivercity",
+                  "street": "dn_driverstreet"
                 }
               },
               {
@@ -1435,14 +1435,20 @@
                   }
                 ],
                 "type": "number",
-                "requiredvisibility": {
-                  "property": "dn_driverstatecode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": true,
                   "value": "dn_driverhouseno"
+                },
+                "requiredvisibility": {
+                  "property": "dn_driverstatecode",
+                  "value": true
+                },
+                "zipcode_components": {
+                  "postalcode": "dn_driverpostalcode",
+                  "houseno": "dn_driverhouseno",
+                  "city": "dn_drivercity",
+                  "street": "dn_driverstreet"
                 }
               },
               {
@@ -1458,14 +1464,14 @@
                   }
                 ],
                 "type": "string",
-                "requiredvisibility": {
-                  "property": "dn_driverstatecode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": true,
                   "value": "dn_driverhousenoaddition"
+                },
+                "requiredvisibility": {
+                  "property": "dn_driverstatecode",
+                  "value": true
                 }
               },
               {
@@ -1481,14 +1487,14 @@
                   }
                 ],
                 "type": "string",
-                "requiredvisibility": {
-                  "property": "dn_driverstatecode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": true,
                   "value": "dn_driverstreet"
+                },
+                "requiredvisibility": {
+                  "property": "dn_driverstatecode",
+                  "value": true
                 }
               },
               {
@@ -1504,14 +1510,14 @@
                   }
                 ],
                 "type": "string",
-                "requiredvisibility": {
-                  "property": "dn_driverstatecode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": true,
                   "value": "dn_drivercity"
+                },
+                "requiredvisibility": {
+                  "property": "dn_driverstatecode",
+                  "value": true
                 }
               },
               {
@@ -1527,14 +1533,14 @@
                   }
                 ],
                 "type": "phonenumber",
-                "requiredvisibility": {
-                  "property": "dn_driverstatecode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
                   "value": "dn_drivertelephonenumber1"
+                },
+                "requiredvisibility": {
+                  "property": "dn_driverstatecode",
+                  "value": true
                 }
               },
               {
@@ -1550,14 +1556,14 @@
                   }
                 ],
                 "type": "phonenumber",
-                "requiredvisibility": {
-                  "property": "dn_driverstatecode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": true,
                   "value": "dn_drivertelephonenumber2"
+                },
+                "requiredvisibility": {
+                  "property": "dn_driverstatecode",
+                  "value": true
                 }
               },
               {
@@ -1573,14 +1579,14 @@
                   }
                 ],
                 "type": "string",
-                "requiredvisibility": {
-                  "property": "dn_driverstatecode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": true,
                   "value": "dn_driveremail"
+                },
+                "requiredvisibility": {
+                  "property": "dn_driverstatecode",
+                  "value": true
                 }
               },
               {
@@ -1600,8 +1606,8 @@
                 "autoform": {
                   "readonly": false,
                   "optional": true,
-                  "value": "dn_alternativeregistrationownercode",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "dn_alternativeregistrationownercode"
                 }
               },
               {
@@ -1618,15 +1624,15 @@
                 ],
                 "type": "select",
                 "table": "leasecompany",
-                "requiredvisibility": {
-                  "property": "dn_alternativeregistrationownercode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
-                  "value": "_dn_registrationowneraccountid_value",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "_dn_registrationowneraccountid_value"
+                },
+                "requiredvisibility": {
+                  "property": "dn_alternativeregistrationownercode",
+                  "value": true
                 }
               },
               {
@@ -1643,15 +1649,15 @@
                 ],
                 "type": "select",
                 "table": "dn_salutation",
-                "requiredvisibility": {
-                  "property": "dn_alternativeregistrationownercode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": true,
-                  "value": "dn_registrationownersalutationcode",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "dn_registrationownersalutationcode"
+                },
+                "requiredvisibility": {
+                  "property": "dn_alternativeregistrationownercode",
+                  "value": true
                 }
               },
               {
@@ -1667,14 +1673,14 @@
                   }
                 ],
                 "type": "string",
-                "requiredvisibility": {
-                  "property": "dn_alternativeregistrationownercode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": true,
                   "value": "dn_registrationownermiddlename"
+                },
+                "requiredvisibility": {
+                  "property": "dn_alternativeregistrationownercode",
+                  "value": true
                 }
               },
               {
@@ -1690,14 +1696,14 @@
                   }
                 ],
                 "type": "string",
-                "requiredvisibility": {
-                  "property": "dn_alternativeregistrationownercode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
                   "value": "dn_registrationownerlastname"
+                },
+                "requiredvisibility": {
+                  "property": "dn_alternativeregistrationownercode",
+                  "value": true
                 }
               },
               {
@@ -1713,14 +1719,14 @@
                   }
                 ],
                 "type": "string",
-                "requiredvisibility": {
-                  "property": "dn_alternativeregistrationownercode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": true,
                   "value": "dn_registrationownerinitials"
+                },
+                "requiredvisibility": {
+                  "property": "dn_alternativeregistrationownercode",
+                  "value": true
                 }
               },
               {
@@ -1736,14 +1742,23 @@
                   }
                 ],
                 "type": "address",
-                "requiredvisibility": {
-                  "property": "dn_alternativeregistrationownercode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": true,
                   "value": "dn_registrationowneradresbar"
+                },
+                "requiredvisibility": {
+                  "property": "dn_alternativeregistrationownercode",
+                  "value": true
+                },
+                "address_components": {
+                  "country": "_dn_registrationownercountryid_value",
+                  "postalcode": "dn_registrationownerpostalcode",
+                  "houseno": "dn_registrationownerhouseno",
+                  "housenoadd": "dn_registrationownerhousenoaddition",
+                  "street": "dn_registrationownerstreet",
+                  "city": "dn_registrationownercity",
+                  "province": ""
                 }
               },
               {
@@ -1760,15 +1775,15 @@
                 ],
                 "type": "select",
                 "table": "dn_country",
-                "requiredvisibility": {
-                  "property": "dn_alternativeregistrationownercode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
-                  "value": "_dn_registrationownercountryid_value",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "_dn_registrationownercountryid_value"
+                },
+                "requiredvisibility": {
+                  "property": "dn_alternativeregistrationownercode",
+                  "value": true
                 }
               },
               {
@@ -1784,14 +1799,20 @@
                   }
                 ],
                 "type": "string",
-                "requiredvisibility": {
-                  "property": "dn_alternativeregistrationownercode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
                   "value": "dn_registrationownerpostalcode"
+                },
+                "requiredvisibility": {
+                  "property": "dn_alternativeregistrationownercode",
+                  "value": true
+                },
+                "zipcode_components": {
+                  "postalcode": "dn_registrationownerpostalcode",
+                  "houseno": "dn_registrationownerhouseno",
+                  "city": "dn_registrationownercity",
+                  "street": "dn_registrationownerstreet"
                 }
               },
               {
@@ -1807,14 +1828,20 @@
                   }
                 ],
                 "type": "number",
-                "requiredvisibility": {
-                  "property": "dn_alternativeregistrationownercode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
                   "value": "dn_registrationownerhouseno"
+                },
+                "requiredvisibility": {
+                  "property": "dn_alternativeregistrationownercode",
+                  "value": true
+                },
+                "zipcode_components": {
+                  "postalcode": "dn_registrationownerpostalcode",
+                  "houseno": "dn_registrationownerhouseno",
+                  "city": "dn_registrationownercity",
+                  "street": "dn_registrationownerstreet"
                 }
               },
               {
@@ -1830,14 +1857,14 @@
                   }
                 ],
                 "type": "string",
-                "requiredvisibility": {
-                  "property": "dn_alternativeregistrationownercode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": true,
                   "value": "dn_registrationownerhousenoaddition"
+                },
+                "requiredvisibility": {
+                  "property": "dn_alternativeregistrationownercode",
+                  "value": true
                 }
               },
               {
@@ -1853,14 +1880,14 @@
                   }
                 ],
                 "type": "string",
-                "requiredvisibility": {
-                  "property": "dn_alternativeregistrationownercode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
                   "value": "dn_registrationownerstreet"
+                },
+                "requiredvisibility": {
+                  "property": "dn_alternativeregistrationownercode",
+                  "value": true
                 }
               },
               {
@@ -1876,14 +1903,14 @@
                   }
                 ],
                 "type": "string",
-                "requiredvisibility": {
-                  "property": "dn_alternativeregistrationownercode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
                   "value": "dn_registrationownercity"
+                },
+                "requiredvisibility": {
+                  "property": "dn_alternativeregistrationownercode",
+                  "value": true
                 }
               },
               {
@@ -1899,14 +1926,14 @@
                   }
                 ],
                 "type": "phonenumber",
-                "requiredvisibility": {
-                  "property": "dn_alternativeregistrationownercode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
                   "value": "dn_registrationownertelephonenumber1"
+                },
+                "requiredvisibility": {
+                  "property": "dn_alternativeregistrationownercode",
+                  "value": true
                 }
               },
               {
@@ -1922,14 +1949,14 @@
                   }
                 ],
                 "type": "phonenumber",
-                "requiredvisibility": {
-                  "property": "dn_alternativeregistrationownercode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": true,
                   "value": "dn_registrationownertelephonenumber2"
+                },
+                "requiredvisibility": {
+                  "property": "dn_alternativeregistrationownercode",
+                  "value": true
                 }
               },
               {
@@ -1945,14 +1972,14 @@
                   }
                 ],
                 "type": "string",
-                "requiredvisibility": {
-                  "property": "dn_alternativeregistrationownercode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": true,
                   "value": "dn_registrationowneremail"
+                },
+                "requiredvisibility": {
+                  "property": "dn_alternativeregistrationownercode",
+                  "value": true
                 }
               },
               {
@@ -1972,8 +1999,8 @@
                 "autoform": {
                   "readonly": false,
                   "optional": true,
-                  "value": "dn_alternativeinsurercode",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "dn_alternativeinsurercode"
                 }
               },
               {
@@ -1993,8 +2020,8 @@
                 "autoform": {
                   "readonly": false,
                   "optional": true,
-                  "value": "_dn_insureraccountid_value",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "_dn_insureraccountid_value"
                 }
               },
               {
@@ -2011,15 +2038,15 @@
                 ],
                 "type": "select",
                 "table": "dn_salutation",
-                "requiredvisibility": {
-                  "property": "dn_alternativeinsurercode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": true,
-                  "value": "dn_insurersalutationcode",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "dn_insurersalutationcode"
+                },
+                "requiredvisibility": {
+                  "property": "dn_alternativeinsurercode",
+                  "value": true
                 }
               },
               {
@@ -2035,14 +2062,14 @@
                   }
                 ],
                 "type": "string",
-                "requiredvisibility": {
-                  "property": "dn_alternativeinsurercode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": true,
                   "value": "dn_insurermiddlename"
+                },
+                "requiredvisibility": {
+                  "property": "dn_alternativeinsurercode",
+                  "value": true
                 }
               },
               {
@@ -2058,14 +2085,14 @@
                   }
                 ],
                 "type": "string",
-                "requiredvisibility": {
-                  "property": "dn_alternativeinsurercode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
                   "value": "dn_insurerlastname"
+                },
+                "requiredvisibility": {
+                  "property": "dn_alternativeinsurercode",
+                  "value": true
                 }
               },
               {
@@ -2081,14 +2108,14 @@
                   }
                 ],
                 "type": "string",
-                "requiredvisibility": {
-                  "property": "dn_alternativeinsurercode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": true,
                   "value": "dn_insurerinitials"
+                },
+                "requiredvisibility": {
+                  "property": "dn_alternativeinsurercode",
+                  "value": true
                 }
               },
               {
@@ -2104,14 +2131,23 @@
                   }
                 ],
                 "type": "address",
-                "requiredvisibility": {
-                  "property": "dn_alternativeinsurercode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": true,
                   "value": "dn_insureradresbar"
+                },
+                "requiredvisibility": {
+                  "property": "dn_alternativeinsurercode",
+                  "value": true
+                },
+                "address_components": {
+                  "country": "_dn_licenseholdercountryid_value",
+                  "postalcode": "dn_licenseholderpostalcode",
+                  "houseno": "dn_licenseholderhouseno",
+                  "housenoadd": "dn_licenseholderhousenoaddition",
+                  "street": "dn_licenseholderstreet",
+                  "city": "dn_licenseholdercity",
+                  "province": ""
                 }
               },
               {
@@ -2128,15 +2164,15 @@
                 ],
                 "type": "select",
                 "table": "dn_country",
-                "requiredvisibility": {
-                  "property": "dn_alternativeinsurercode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
-                  "value": "_dn_insurercountryid_value",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "_dn_insurercountryid_value"
+                },
+                "requiredvisibility": {
+                  "property": "dn_alternativeinsurercode",
+                  "value": true
                 }
               },
               {
@@ -2152,14 +2188,20 @@
                   }
                 ],
                 "type": "string",
-                "requiredvisibility": {
-                  "property": "dn_alternativeinsurercode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
                   "value": "dn_insurerpostalcode"
+                },
+                "requiredvisibility": {
+                  "property": "dn_alternativeinsurercode",
+                  "value": true
+                },
+                "zipcode_components": {
+                  "postalcode": "dn_licenseholderpostalcode",
+                  "houseno": "dn_licenseholderhouseno",
+                  "city": "dn_licenseholdercity",
+                  "street": "dn_licenseholderstreet"
                 }
               },
               {
@@ -2175,14 +2217,20 @@
                   }
                 ],
                 "type": "number",
-                "requiredvisibility": {
-                  "property": "dn_alternativeinsurercode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
                   "value": "dn_insurerhouseno"
+                },
+                "requiredvisibility": {
+                  "property": "dn_alternativeinsurercode",
+                  "value": true
+                },
+                "zipcode_components": {
+                  "postalcode": "dn_licenseholderpostalcode",
+                  "houseno": "dn_licenseholderhouseno",
+                  "city": "dn_licenseholdercity",
+                  "street": "dn_licenseholderstreet"
                 }
               },
               {
@@ -2198,14 +2246,14 @@
                   }
                 ],
                 "type": "string",
-                "requiredvisibility": {
-                  "property": "dn_alternativeinsurercode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": true,
                   "value": "dn_insurerhousenoaddition"
+                },
+                "requiredvisibility": {
+                  "property": "dn_alternativeinsurercode",
+                  "value": true
                 }
               },
               {
@@ -2221,14 +2269,14 @@
                   }
                 ],
                 "type": "string",
-                "requiredvisibility": {
-                  "property": "dn_alternativeinsurercode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
                   "value": "dn_insurerstreet"
+                },
+                "requiredvisibility": {
+                  "property": "dn_alternativeinsurercode",
+                  "value": true
                 }
               },
               {
@@ -2244,14 +2292,14 @@
                   }
                 ],
                 "type": "string",
-                "requiredvisibility": {
-                  "property": "dn_alternativeinsurercode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
                   "value": "dn_insurercity"
+                },
+                "requiredvisibility": {
+                  "property": "dn_alternativeinsurercode",
+                  "value": true
                 }
               },
               {
@@ -2267,14 +2315,14 @@
                   }
                 ],
                 "type": "phonenumber",
-                "requiredvisibility": {
-                  "property": "dn_alternativeinsurercode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
                   "value": "dn_insurertelephonenumber1"
+                },
+                "requiredvisibility": {
+                  "property": "dn_alternativeinsurercode",
+                  "value": true
                 }
               },
               {
@@ -2290,14 +2338,14 @@
                   }
                 ],
                 "type": "phonenumber",
-                "requiredvisibility": {
-                  "property": "dn_alternativeinsurercode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": true,
                   "value": "dn_insurertelephonenumber2"
+                },
+                "requiredvisibility": {
+                  "property": "dn_alternativeinsurercode",
+                  "value": true
                 }
               },
               {
@@ -2313,14 +2361,14 @@
                   }
                 ],
                 "type": "string",
-                "requiredvisibility": {
-                  "property": "dn_alternativeinsurercode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": true,
                   "value": "dn_insureremail"
+                },
+                "requiredvisibility": {
+                  "property": "dn_alternativeinsurercode",
+                  "value": true
                 }
               }
             ]
@@ -2354,8 +2402,8 @@
                 "autoform": {
                   "readonly": false,
                   "optional": false,
-                  "value": "dn_requesttaxi",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "dn_requesttaxi"
                 }
               },
               {
@@ -2371,14 +2419,14 @@
                   }
                 ],
                 "type": "number",
-                "requiredvisibility": {
-                  "property": "dn_requesttaxi",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
                   "value": "dn_requesttaxinumberofpersons"
+                },
+                "requiredvisibility": {
+                  "property": "dn_requesttaxi",
+                  "value": true
                 }
               },
               {
@@ -2394,14 +2442,14 @@
                   }
                 ],
                 "type": "string",
-                "requiredvisibility": {
-                  "property": "dn_requesttaxi",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
                   "value": "dn_requesttaxizipcodefrom"
+                },
+                "requiredvisibility": {
+                  "property": "dn_requesttaxi",
+                  "value": true
                 }
               },
               {
@@ -2417,14 +2465,14 @@
                   }
                 ],
                 "type": "number",
-                "requiredvisibility": {
-                  "property": "dn_requesttaxi",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
                   "value": "dn_requesttaxihousenofrom"
+                },
+                "requiredvisibility": {
+                  "property": "dn_requesttaxi",
+                  "value": true
                 }
               },
               {
@@ -2440,14 +2488,14 @@
                   }
                 ],
                 "type": "string",
-                "requiredvisibility": {
-                  "property": "dn_requesttaxi",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
                   "value": "dn_requesttaxizipcodeto"
+                },
+                "requiredvisibility": {
+                  "property": "dn_requesttaxi",
+                  "value": true
                 }
               },
               {
@@ -2463,14 +2511,14 @@
                   }
                 ],
                 "type": "number",
-                "requiredvisibility": {
-                  "property": "dn_requesttaxi",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
                   "value": "dn_requesttaxihousenoto"
+                },
+                "requiredvisibility": {
+                  "property": "dn_requesttaxi",
+                  "value": true
                 }
               },
               {
@@ -2486,14 +2534,14 @@
                   }
                 ],
                 "type": "string",
-                "requiredvisibility": {
-                  "property": "dn_requesttaxi",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": true,
                   "value": "dn_requesttaxidetails"
+                },
+                "requiredvisibility": {
+                  "property": "dn_requesttaxi",
+                  "value": true
                 }
               },
               {
@@ -2513,8 +2561,8 @@
                 "autoform": {
                   "readonly": false,
                   "optional": false,
-                  "value": "dn_requestreplacementtransport",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "dn_requestreplacementtransport"
                 }
               },
               {
@@ -2531,15 +2579,15 @@
                 ],
                 "type": "select",
                 "table": "dn_optionalyesno",
-                "requiredvisibility": {
-                  "property": "dn_requestreplacementtransport",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
-                  "value": "dn_driverslicenseavailablecode",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "dn_driverslicenseavailablecode"
+                },
+                "requiredvisibility": {
+                  "property": "dn_requestreplacementtransport",
+                  "value": true
                 }
               },
               {
@@ -2556,15 +2604,15 @@
                 ],
                 "type": "select",
                 "table": "dn_truefalse",
-                "requiredvisibility": {
-                  "property": "dn_replacementtransport",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
-                  "value": "dn_bankcardavailable",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "dn_bankcardavailable"
+                },
+                "requiredvisibility": {
+                  "property": "dn_replacementtransport",
+                  "value": true
                 }
               },
               {
@@ -2581,15 +2629,15 @@
                 ],
                 "type": "select",
                 "table": "dn_truefalse",
-                "requiredvisibility": {
-                  "property": "dn_requestreplacementtransport",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
-                  "value": "dn_requestreplacementtransportautomatic",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "dn_requestreplacementtransportautomatic"
+                },
+                "requiredvisibility": {
+                  "property": "dn_requestreplacementtransport",
+                  "value": true
                 }
               },
               {
@@ -2605,15 +2653,15 @@
                   }
                 ],
                 "type": "string",
-                "requiredvisibility": {
-                  "property": "dn_requestreplacementtransport",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": true,
-                  "value": "dn_requestreplacementtransportdetails",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "dn_requestreplacementtransportdetails"
+                },
+                "requiredvisibility": {
+                  "property": "dn_requestreplacementtransport",
+                  "value": true
                 }
               }
             ]
@@ -2632,17 +2680,6 @@
             "fields": [
               {
                 "name": "signature_sender",
-                "label": [
-                  {
-                    "language-code": 1043,
-                    "value": "Handtekening afzender"
-                  },
-                  {
-                    "language-code": 1044,
-                    "value": "Signature sender"
-                  }
-                ],
-                "type": "signature",
                 "extrafields": {
                   "email": [
                     {
@@ -2664,14 +2701,6 @@
                       "value": "Sender name"
                     }
                   ]
-                },
-                "autoform": {
-                  "readonly": false,
-                  "optional": false,
-                  "requiredwhen": {
-                    "field": "dn_driverstatecode",
-                    "value": true
-                  }
                 },
                 "subFields": {
                   "email": {
@@ -2720,12 +2749,30 @@
                     "type": "conditions",
                     "url": "https://berging-mobiliteit.nl/disclaimer/20200526_abvv_vbm_rev2-0/"
                   }
+                },
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Handtekening afzender"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Signature sender"
+                  }
+                ],
+                "type": "signature",
+                "autoform": {
+                  "readonly": false,
+                  "optional": false,
+                  "requiredwhen": {
+                    "field": "dn_driverstatecode",
+                    "value": true
+                  }
                 }
               }
             ]
           }
-        ],
-        "photosMandatory": ["links-voor", "rechts-achter"]
+        ]
       },
       {
         "phase": 2,
@@ -2739,6 +2786,7 @@
             "value": "Delivery"
           }
         ],
+        "photosMandatory": ["links-voor", "rechts-achter"],
         "tabs": [
           {
             "header": [
@@ -2769,25 +2817,6 @@
                   "readonly": true,
                   "optional": true,
                   "value": "dn_servicelocationdescription"
-                }
-              },
-              {
-                "name": "dn_aisamenvatting",
-                "label": [
-                  {
-                    "language-code": 1043,
-                    "value": "Samenvatting"
-                  },
-                  {
-                    "language-code": 1044,
-                    "value": "Sit-rap"
-                  }
-                ],
-                "type": "textarea",
-                "autoform": {
-                  "readonly": true,
-                  "optional": true,
-                  "value": "dn_aisamenvatting"
                 }
               },
               {
@@ -2974,7 +3003,6 @@
                 "value": "Demands and Instructions"
               }
             ],
-            "fields": [],
             "contractRights": [
               {
                 "name": "dn_rightsrentalcar",
@@ -3015,7 +3043,8 @@
                   }
                 ]
               }
-            ]
+            ],
+            "fields": []
           },
           {
             "header": [
@@ -3098,8 +3127,8 @@
                 "autoform": {
                   "readonly": true,
                   "optional": false,
-                  "value": "dn_typeofbreakdowncode",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "dn_typeofbreakdowncode"
                 }
               },
               {
@@ -3119,8 +3148,8 @@
                 "autoform": {
                   "readonly": false,
                   "optional": false,
-                  "value": "dn_repairstatuscode",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "dn_repairstatuscode"
                 }
               },
               {
@@ -3140,8 +3169,8 @@
                 "autoform": {
                   "readonly": false,
                   "optional": false,
-                  "value": "dn_breakdownsettlementcode",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "dn_breakdownsettlementcode"
                 }
               },
               {
@@ -3161,8 +3190,8 @@
                 "autoform": {
                   "readonly": false,
                   "optional": false,
-                  "value": "dn_breakdownreasoncode",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "dn_breakdownreasoncode"
                 }
               },
               {
@@ -3179,10 +3208,6 @@
                 ],
                 "type": "select",
                 "table": "dn_locations",
-                "requiredvisibility": {
-                  "property": "dn_breakdownsettlementcode",
-                  "value": 1005
-                },
                 "sortoptions": {
                   "orderby": "distance",
                   "direction": "ascending"
@@ -3190,8 +3215,12 @@
                 "autoform": {
                   "readonly": false,
                   "optional": false,
-                  "value": "_dn_locationid_value",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "_dn_locationid_value"
+                },
+                "requiredvisibility": {
+                  "property": "dn_breakdownsettlementcode",
+                  "value": 1005
                 }
               },
               {
@@ -3208,15 +3237,15 @@
                 ],
                 "type": "select",
                 "table": "dn_truefalse",
-                "requiredvisibility": {
-                  "property": "dn_breakdownsettlementcode",
-                  "value": [1004, 1005]
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
-                  "value": "dn_deliveryaddressavailablecode",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "dn_deliveryaddressavailablecode"
+                },
+                "requiredvisibility": {
+                  "property": "dn_breakdownsettlementcode",
+                  "value": [1004, 1005]
                 }
               },
               {
@@ -3232,10 +3261,6 @@
                   }
                 ],
                 "type": "string",
-                "requiredvisibility": {
-                  "property": "dn_deliveryaddressavailablecode",
-                  "value": 1
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
@@ -3246,6 +3271,10 @@
                       "value": 100
                     }
                   ]
+                },
+                "requiredvisibility": {
+                  "property": "dn_deliveryaddressavailablecode",
+                  "value": 1
                 }
               },
               {
@@ -3261,14 +3290,24 @@
                   }
                 ],
                 "type": "address",
-                "requiredvisibility": {
-                  "property": "dn_deliveryaddressavailablecode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": true,
                   "value": "dn_deliveryadressbar"
+                },
+                "requiredvisibility": {
+                  "property": "dn_deliveryaddressavailablecode",
+                  "value": true
+                },
+                "address_components": {
+                  "name": "dn_deliveryname",
+                  "country": "_dn_deliverycountryid_value",
+                  "postalcode": "dn_deliverypostalcode",
+                  "houseno": "dn_deliveryhouseno",
+                  "housenoadd": "dn_deliveryhousenoaddition",
+                  "street": "dn_deliverystreet",
+                  "city": "dn_deliverycity",
+                  "province": ""
                 }
               },
               {
@@ -3285,15 +3324,15 @@
                 ],
                 "type": "select",
                 "table": "dn_country",
-                "requiredvisibility": {
-                  "property": "dn_deliveryaddressavailablecode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
-                  "value": "_dn_deliverycountryid_value",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "_dn_deliverycountryid_value"
+                },
+                "requiredvisibility": {
+                  "property": "dn_deliveryaddressavailablecode",
+                  "value": true
                 }
               },
               {
@@ -3309,14 +3348,20 @@
                   }
                 ],
                 "type": "string",
-                "requiredvisibility": {
-                  "property": "dn_deliveryaddressavailablecode",
-                  "value": 1
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
                   "value": "dn_deliverypostalcode"
+                },
+                "requiredvisibility": {
+                  "property": "dn_deliveryaddressavailablecode",
+                  "value": 1
+                },
+                "zipcode_components": {
+                  "postalcode": "dn_deliverypostalcode",
+                  "houseno": "dn_deliveryhouseno",
+                  "city": "dn_deliverycity",
+                  "street": "dn_deliverystreet"
                 }
               },
               {
@@ -3332,14 +3377,20 @@
                   }
                 ],
                 "type": "number",
-                "requiredvisibility": {
-                  "property": "dn_deliveryaddressavailablecode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
                   "value": "dn_deliveryhouseno"
+                },
+                "requiredvisibility": {
+                  "property": "dn_deliveryaddressavailablecode",
+                  "value": true
+                },
+                "zipcode_components": {
+                  "postalcode": "dn_deliverypostalcode",
+                  "houseno": "dn_deliveryhouseno",
+                  "city": "dn_deliverycity",
+                  "street": "dn_deliverystreet"
                 }
               },
               {
@@ -3355,14 +3406,14 @@
                   }
                 ],
                 "type": "string",
-                "requiredvisibility": {
-                  "property": "dn_deliveryaddressavailablecode",
-                  "value": 1
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": true,
                   "value": "dn_deliveryhousenoaddition"
+                },
+                "requiredvisibility": {
+                  "property": "dn_deliveryaddressavailablecode",
+                  "value": 1
                 }
               },
               {
@@ -3378,14 +3429,14 @@
                   }
                 ],
                 "type": "string",
-                "requiredvisibility": {
-                  "property": "dn_deliveryaddressavailablecode",
-                  "value": 1
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
                   "value": "dn_deliverystreet"
+                },
+                "requiredvisibility": {
+                  "property": "dn_deliveryaddressavailablecode",
+                  "value": 1
                 }
               },
               {
@@ -3401,14 +3452,14 @@
                   }
                 ],
                 "type": "string",
-                "requiredvisibility": {
-                  "property": "dn_deliveryaddressavailablecode",
-                  "value": 1
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
                   "value": "dn_deliverycity"
+                },
+                "requiredvisibility": {
+                  "property": "dn_deliveryaddressavailablecode",
+                  "value": 1
                 }
               },
               {
@@ -3424,14 +3475,14 @@
                   }
                 ],
                 "type": "number",
-                "requiredvisibility": {
-                  "property": "dn_deliveryaddressavailablecode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": true,
                   "optional": true,
                   "value": "dn_deliverydistance"
+                },
+                "requiredvisibility": {
+                  "property": "dn_deliveryaddressavailablecode",
+                  "value": true
                 }
               },
               {
@@ -3450,8 +3501,8 @@
                 "autoform": {
                   "readonly": false,
                   "optional": true,
-                  "value": "dn_remarksforclient",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "dn_remarksforclient"
                 }
               },
               {
@@ -3468,15 +3519,15 @@
                 ],
                 "type": "select",
                 "table": "dn_storageblockcolorcode",
-                "requiredvisibility": {
-                  "property": "dn_breakdownsettlementcode",
-                  "value": 1005
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": true,
-                  "value": "dn_storageblockcolorcode",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "dn_storageblockcolorcode"
+                },
+                "requiredvisibility": {
+                  "property": "dn_breakdownsettlementcode",
+                  "value": 1005
                 }
               },
               {
@@ -3492,15 +3543,15 @@
                   }
                 ],
                 "type": "number",
-                "requiredvisibility": {
-                  "property": "dn_breakdownsettlementcode",
-                  "value": 1005
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": true,
-                  "value": "dn_storageblocknumber",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "dn_storageblocknumber"
+                },
+                "requiredvisibility": {
+                  "property": "dn_breakdownsettlementcode",
+                  "value": 1005
                 }
               },
               {
@@ -3519,8 +3570,8 @@
                 "autoform": {
                   "readonly": false,
                   "optional": true,
-                  "value": "dn_damagedescription",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "dn_damagedescription"
                 }
               },
               {
@@ -3537,15 +3588,15 @@
                 ],
                 "type": "select",
                 "table": "dn_optionalyesno",
-                "requiredvisibility": {
-                  "property": "dn_breakdownsettlementcode",
-                  "value": [1004, 1005]
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
-                  "value": "dn_keyavailablecode",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "dn_keyavailablecode"
+                },
+                "requiredvisibility": {
+                  "property": "dn_breakdownsettlementcode",
+                  "value": [1004, 1005]
                 }
               },
               {
@@ -3562,15 +3613,15 @@
                 ],
                 "type": "select",
                 "table": "dn_optionalyesno",
-                "requiredvisibility": {
-                  "property": "dn_breakdownsettlementcode",
-                  "value": [1004, 1005]
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
-                  "value": "dn_vehicledrivablecode",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "dn_vehicledrivablecode"
+                },
+                "requiredvisibility": {
+                  "property": "dn_breakdownsettlementcode",
+                  "value": [1004, 1005]
                 }
               },
               {
@@ -3587,15 +3638,15 @@
                 ],
                 "type": "select",
                 "table": "dn_optionalyesno",
-                "requiredvisibility": {
-                  "property": "dn_breakdownsettlementcode",
-                  "value": [1004, 1005]
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
-                  "value": "dn_vehiclerollablecode",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "dn_vehiclerollablecode"
+                },
+                "requiredvisibility": {
+                  "property": "dn_breakdownsettlementcode",
+                  "value": [1004, 1005]
                 }
               },
               {
@@ -3612,15 +3663,15 @@
                 ],
                 "type": "select",
                 "table": "dn_roofboxcode",
-                "requiredvisibility": {
-                  "property": "dn_breakdownsettlementcode",
-                  "value": [1004, 1005]
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
-                  "value": "dn_roofboxcode",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "dn_roofboxcode"
+                },
+                "requiredvisibility": {
+                  "property": "dn_breakdownsettlementcode",
+                  "value": [1004, 1005]
                 }
               },
               {
@@ -3637,15 +3688,15 @@
                 ],
                 "type": "select",
                 "table": "dn_bicyclecarriercode",
-                "requiredvisibility": {
-                  "property": "dn_breakdownsettlementcode",
-                  "value": [1004, 1005]
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
-                  "value": "dn_bicyclecarriercode",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "dn_bicyclecarriercode"
+                },
+                "requiredvisibility": {
+                  "property": "dn_breakdownsettlementcode",
+                  "value": [1004, 1005]
                 }
               },
               {
@@ -3662,15 +3713,15 @@
                 ],
                 "type": "select",
                 "table": "dn_damagecategorycode",
-                "requiredvisibility": {
-                  "property": "dn_breakdownsettlementcode",
-                  "value": [1004, 1005]
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
-                  "value": "dn_damagecategorycode",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "dn_damagecategorycode"
+                },
+                "requiredvisibility": {
+                  "property": "dn_breakdownsettlementcode",
+                  "value": [1004, 1005]
                 }
               }
             ]
@@ -3704,8 +3755,8 @@
                 "autoform": {
                   "readonly": false,
                   "optional": false,
-                  "value": "_dn_vehiclecountryoforiginid_value",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "_dn_vehiclecountryoforiginid_value"
                 }
               },
               {
@@ -3820,8 +3871,8 @@
                 "autoform": {
                   "readonly": false,
                   "optional": false,
-                  "value": "_dn_vehiclebrandid_value",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "_dn_vehiclebrandid_value"
                 }
               },
               {
@@ -3838,15 +3889,15 @@
                 ],
                 "type": "select",
                 "table": "dn_vehicletypes",
-                "dependencies": {
-                  "required": "_dn_vehiclebrandid_value",
-                  "value": "ABCDEFGHI"
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": true,
-                  "value": "_dn_vehicletypeid_value",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "_dn_vehicletypeid_value"
+                },
+                "dependencies": {
+                  "required": "_dn_vehiclebrandid_value",
+                  "value": "ABCDEFGHI"
                 }
               },
               {
@@ -3873,7 +3924,7 @@
                     },
                     {
                       "validation_type": "min-int",
-                      "value": 1
+                      "value": 0
                     }
                   ]
                 }
@@ -3928,8 +3979,8 @@
                 "autoform": {
                   "readonly": false,
                   "optional": false,
-                  "value": "dn_driverstatecode",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "dn_driverstatecode"
                 }
               },
               {
@@ -3949,8 +4000,8 @@
                 "autoform": {
                   "readonly": false,
                   "optional": false,
-                  "value": "dn_driverstatuscode",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "dn_driverstatuscode"
                 }
               },
               {
@@ -3967,15 +4018,15 @@
                 ],
                 "type": "select",
                 "table": "dn_salutation",
-                "requiredvisibility": {
-                  "property": "dn_driverstatecode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
-                  "value": "dn_driversalutationcode",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "dn_driversalutationcode"
+                },
+                "requiredvisibility": {
+                  "property": "dn_driverstatecode",
+                  "value": true
                 }
               },
               {
@@ -3991,14 +4042,14 @@
                   }
                 ],
                 "type": "string",
-                "requiredvisibility": {
-                  "property": "dn_driverstatecode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": true,
                   "value": "dn_drivermiddlename"
+                },
+                "requiredvisibility": {
+                  "property": "dn_driverstatecode",
+                  "value": true
                 }
               },
               {
@@ -4014,14 +4065,14 @@
                   }
                 ],
                 "type": "string",
-                "requiredvisibility": {
-                  "property": "dn_driverstatecode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": true,
                   "value": "dn_driverlastname"
+                },
+                "requiredvisibility": {
+                  "property": "dn_driverstatecode",
+                  "value": true
                 }
               },
               {
@@ -4037,14 +4088,14 @@
                   }
                 ],
                 "type": "string",
-                "requiredvisibility": {
-                  "property": "dn_driverstatecode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": true,
                   "value": "dn_driverinitials"
+                },
+                "requiredvisibility": {
+                  "property": "dn_driverstatecode",
+                  "value": true
                 }
               },
               {
@@ -4060,14 +4111,23 @@
                   }
                 ],
                 "type": "address",
-                "requiredvisibility": {
-                  "property": "dn_driverstatecode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": true,
                   "value": "dn_driveradresbar"
+                },
+                "requiredvisibility": {
+                  "property": "dn_driverstatecode",
+                  "value": true
+                },
+                "address_components": {
+                  "country": "_dn_drivercountryid_value",
+                  "postalcode": "dn_driverpostalcode",
+                  "houseno": "dn_driverhouseno",
+                  "housenoadd": "dn_driverhousenoaddition",
+                  "street": "dn_driverstreet",
+                  "city": "dn_drivercity",
+                  "province": ""
                 }
               },
               {
@@ -4084,15 +4144,15 @@
                 ],
                 "type": "select",
                 "table": "dn_country",
-                "requiredvisibility": {
-                  "property": "dn_driverstatecode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": true,
-                  "value": "_dn_drivercountryid_value",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "_dn_drivercountryid_value"
+                },
+                "requiredvisibility": {
+                  "property": "dn_driverstatecode",
+                  "value": true
                 }
               },
               {
@@ -4108,14 +4168,20 @@
                   }
                 ],
                 "type": "string",
-                "requiredvisibility": {
-                  "property": "dn_driverstatecode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": true,
                   "value": "dn_driverpostalcode"
+                },
+                "requiredvisibility": {
+                  "property": "dn_driverstatecode",
+                  "value": true
+                },
+                "zipcode_components": {
+                  "postalcode": "dn_driverpostalcode",
+                  "houseno": "dn_driverhouseno",
+                  "city": "dn_drivercity",
+                  "street": "dn_driverstreet"
                 }
               },
               {
@@ -4131,14 +4197,20 @@
                   }
                 ],
                 "type": "number",
-                "requiredvisibility": {
-                  "property": "dn_driverstatecode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": true,
                   "value": "dn_driverhouseno"
+                },
+                "requiredvisibility": {
+                  "property": "dn_driverstatecode",
+                  "value": true
+                },
+                "zipcode_components": {
+                  "postalcode": "dn_driverpostalcode",
+                  "houseno": "dn_driverhouseno",
+                  "city": "dn_drivercity",
+                  "street": "dn_driverstreet"
                 }
               },
               {
@@ -4154,14 +4226,14 @@
                   }
                 ],
                 "type": "string",
-                "requiredvisibility": {
-                  "property": "dn_driverstatecode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": true,
                   "value": "dn_driverhousenoaddition"
+                },
+                "requiredvisibility": {
+                  "property": "dn_driverstatecode",
+                  "value": true
                 }
               },
               {
@@ -4177,14 +4249,14 @@
                   }
                 ],
                 "type": "string",
-                "requiredvisibility": {
-                  "property": "dn_driverstatecode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": true,
                   "value": "dn_driverstreet"
+                },
+                "requiredvisibility": {
+                  "property": "dn_driverstatecode",
+                  "value": true
                 }
               },
               {
@@ -4200,14 +4272,14 @@
                   }
                 ],
                 "type": "string",
-                "requiredvisibility": {
-                  "property": "dn_driverstatecode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": true,
                   "value": "dn_drivercity"
+                },
+                "requiredvisibility": {
+                  "property": "dn_driverstatecode",
+                  "value": true
                 }
               },
               {
@@ -4223,14 +4295,14 @@
                   }
                 ],
                 "type": "phonenumber",
-                "requiredvisibility": {
-                  "property": "dn_driverstatecode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
                   "value": "dn_drivertelephonenumber1"
+                },
+                "requiredvisibility": {
+                  "property": "dn_driverstatecode",
+                  "value": true
                 }
               },
               {
@@ -4246,14 +4318,14 @@
                   }
                 ],
                 "type": "phonenumber",
-                "requiredvisibility": {
-                  "property": "dn_driverstatecode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": true,
                   "value": "dn_drivertelephonenumber2"
+                },
+                "requiredvisibility": {
+                  "property": "dn_driverstatecode",
+                  "value": true
                 }
               },
               {
@@ -4269,14 +4341,14 @@
                   }
                 ],
                 "type": "string",
-                "requiredvisibility": {
-                  "property": "dn_driverstatecode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": true,
                   "value": "dn_driveremail"
+                },
+                "requiredvisibility": {
+                  "property": "dn_driverstatecode",
+                  "value": true
                 }
               },
               {
@@ -4296,8 +4368,8 @@
                 "autoform": {
                   "readonly": false,
                   "optional": true,
-                  "value": "dn_alternativeregistrationownercode",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "dn_alternativeregistrationownercode"
                 }
               },
               {
@@ -4314,15 +4386,15 @@
                 ],
                 "type": "select",
                 "table": "leasecompany",
-                "requiredvisibility": {
-                  "property": "dn_alternativeregistrationownercode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
-                  "value": "_dn_registrationowneraccountid_value",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "_dn_registrationowneraccountid_value"
+                },
+                "requiredvisibility": {
+                  "property": "dn_alternativeregistrationownercode",
+                  "value": true
                 }
               },
               {
@@ -4339,15 +4411,15 @@
                 ],
                 "type": "select",
                 "table": "dn_salutation",
-                "requiredvisibility": {
-                  "property": "dn_alternativeregistrationownercode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": true,
-                  "value": "dn_registrationownersalutationcode",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "dn_registrationownersalutationcode"
+                },
+                "requiredvisibility": {
+                  "property": "dn_alternativeregistrationownercode",
+                  "value": true
                 }
               },
               {
@@ -4363,14 +4435,14 @@
                   }
                 ],
                 "type": "string",
-                "requiredvisibility": {
-                  "property": "dn_alternativeregistrationownercode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": true,
                   "value": "dn_registrationownermiddlename"
+                },
+                "requiredvisibility": {
+                  "property": "dn_alternativeregistrationownercode",
+                  "value": true
                 }
               },
               {
@@ -4386,14 +4458,14 @@
                   }
                 ],
                 "type": "string",
-                "requiredvisibility": {
-                  "property": "dn_alternativeregistrationownercode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
                   "value": "dn_registrationownerlastname"
+                },
+                "requiredvisibility": {
+                  "property": "dn_alternativeregistrationownercode",
+                  "value": true
                 }
               },
               {
@@ -4409,14 +4481,14 @@
                   }
                 ],
                 "type": "string",
-                "requiredvisibility": {
-                  "property": "dn_alternativeregistrationownercode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": true,
                   "value": "dn_registrationownerinitials"
+                },
+                "requiredvisibility": {
+                  "property": "dn_alternativeregistrationownercode",
+                  "value": true
                 }
               },
               {
@@ -4432,14 +4504,23 @@
                   }
                 ],
                 "type": "address",
-                "requiredvisibility": {
-                  "property": "dn_alternativeregistrationownercode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": true,
                   "value": "dn_registrationowneradresbar"
+                },
+                "requiredvisibility": {
+                  "property": "dn_alternativeregistrationownercode",
+                  "value": true
+                },
+                "address_components": {
+                  "country": "_dn_registrationownercountryid_value",
+                  "postalcode": "dn_registrationownerpostalcode",
+                  "houseno": "dn_registrationownerhouseno",
+                  "housenoadd": "dn_registrationownerhousenoaddition",
+                  "street": "dn_registrationownerstreet",
+                  "city": "dn_registrationownercity",
+                  "province": ""
                 }
               },
               {
@@ -4456,15 +4537,15 @@
                 ],
                 "type": "select",
                 "table": "dn_country",
-                "requiredvisibility": {
-                  "property": "dn_alternativeregistrationownercode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
-                  "value": "_dn_registrationownercountryid_value",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "_dn_registrationownercountryid_value"
+                },
+                "requiredvisibility": {
+                  "property": "dn_alternativeregistrationownercode",
+                  "value": true
                 }
               },
               {
@@ -4480,14 +4561,20 @@
                   }
                 ],
                 "type": "string",
-                "requiredvisibility": {
-                  "property": "dn_alternativeregistrationownercode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
                   "value": "dn_registrationownerpostalcode"
+                },
+                "requiredvisibility": {
+                  "property": "dn_alternativeregistrationownercode",
+                  "value": true
+                },
+                "zipcode_components": {
+                  "postalcode": "dn_registrationownerpostalcode",
+                  "houseno": "dn_registrationownerhouseno",
+                  "city": "dn_registrationownercity",
+                  "street": "dn_registrationownerstreet"
                 }
               },
               {
@@ -4503,14 +4590,20 @@
                   }
                 ],
                 "type": "number",
-                "requiredvisibility": {
-                  "property": "dn_alternativeregistrationownercode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
                   "value": "dn_registrationownerhouseno"
+                },
+                "requiredvisibility": {
+                  "property": "dn_alternativeregistrationownercode",
+                  "value": true
+                },
+                "zipcode_components": {
+                  "postalcode": "dn_registrationownerpostalcode",
+                  "houseno": "dn_registrationownerhouseno",
+                  "city": "dn_registrationownercity",
+                  "street": "dn_registrationownerstreet"
                 }
               },
               {
@@ -4526,14 +4619,14 @@
                   }
                 ],
                 "type": "string",
-                "requiredvisibility": {
-                  "property": "dn_alternativeregistrationownercode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": true,
                   "value": "dn_registrationownerhousenoaddition"
+                },
+                "requiredvisibility": {
+                  "property": "dn_alternativeregistrationownercode",
+                  "value": true
                 }
               },
               {
@@ -4549,14 +4642,14 @@
                   }
                 ],
                 "type": "string",
-                "requiredvisibility": {
-                  "property": "dn_alternativeregistrationownercode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
                   "value": "dn_registrationownerstreet"
+                },
+                "requiredvisibility": {
+                  "property": "dn_alternativeregistrationownercode",
+                  "value": true
                 }
               },
               {
@@ -4572,14 +4665,14 @@
                   }
                 ],
                 "type": "string",
-                "requiredvisibility": {
-                  "property": "dn_alternativeregistrationownercode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
                   "value": "dn_registrationownercity"
+                },
+                "requiredvisibility": {
+                  "property": "dn_alternativeregistrationownercode",
+                  "value": true
                 }
               },
               {
@@ -4595,14 +4688,14 @@
                   }
                 ],
                 "type": "phonenumber",
-                "requiredvisibility": {
-                  "property": "dn_alternativeregistrationownercode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
                   "value": "dn_registrationownertelephonenumber1"
+                },
+                "requiredvisibility": {
+                  "property": "dn_alternativeregistrationownercode",
+                  "value": true
                 }
               },
               {
@@ -4618,14 +4711,14 @@
                   }
                 ],
                 "type": "phonenumber",
-                "requiredvisibility": {
-                  "property": "dn_alternativeregistrationownercode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": true,
                   "value": "dn_registrationownertelephonenumber2"
+                },
+                "requiredvisibility": {
+                  "property": "dn_alternativeregistrationownercode",
+                  "value": true
                 }
               },
               {
@@ -4641,14 +4734,14 @@
                   }
                 ],
                 "type": "string",
-                "requiredvisibility": {
-                  "property": "dn_alternativeregistrationownercode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": true,
                   "value": "dn_registrationowneremail"
+                },
+                "requiredvisibility": {
+                  "property": "dn_alternativeregistrationownercode",
+                  "value": true
                 }
               },
               {
@@ -4668,8 +4761,8 @@
                 "autoform": {
                   "readonly": false,
                   "optional": true,
-                  "value": "dn_alternativeinsurercode",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "dn_alternativeinsurercode"
                 }
               },
               {
@@ -4689,8 +4782,8 @@
                 "autoform": {
                   "readonly": false,
                   "optional": true,
-                  "value": "_dn_insureraccountid_value",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "_dn_insureraccountid_value"
                 }
               },
               {
@@ -4707,15 +4800,15 @@
                 ],
                 "type": "select",
                 "table": "dn_salutation",
-                "requiredvisibility": {
-                  "property": "dn_alternativeinsurercode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": true,
-                  "value": "dn_insurersalutationcode",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "dn_insurersalutationcode"
+                },
+                "requiredvisibility": {
+                  "property": "dn_alternativeinsurercode",
+                  "value": true
                 }
               },
               {
@@ -4731,14 +4824,14 @@
                   }
                 ],
                 "type": "string",
-                "requiredvisibility": {
-                  "property": "dn_alternativeinsurercode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": true,
                   "value": "dn_insurermiddlename"
+                },
+                "requiredvisibility": {
+                  "property": "dn_alternativeinsurercode",
+                  "value": true
                 }
               },
               {
@@ -4754,14 +4847,14 @@
                   }
                 ],
                 "type": "string",
-                "requiredvisibility": {
-                  "property": "dn_alternativeinsurercode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
                   "value": "dn_insurerlastname"
+                },
+                "requiredvisibility": {
+                  "property": "dn_alternativeinsurercode",
+                  "value": true
                 }
               },
               {
@@ -4777,14 +4870,14 @@
                   }
                 ],
                 "type": "string",
-                "requiredvisibility": {
-                  "property": "dn_alternativeinsurercode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": true,
                   "value": "dn_insurerinitials"
+                },
+                "requiredvisibility": {
+                  "property": "dn_alternativeinsurercode",
+                  "value": true
                 }
               },
               {
@@ -4800,14 +4893,23 @@
                   }
                 ],
                 "type": "address",
-                "requiredvisibility": {
-                  "property": "dn_alternativeinsurercode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": true,
                   "value": "dn_insureradresbar"
+                },
+                "requiredvisibility": {
+                  "property": "dn_alternativeinsurercode",
+                  "value": true
+                },
+                "address_components": {
+                  "country": "_dn_licenseholdercountryid_value",
+                  "postalcode": "dn_licenseholderpostalcode",
+                  "houseno": "dn_licenseholderhouseno",
+                  "housenoadd": "dn_licenseholderhousenoaddition",
+                  "street": "dn_licenseholderstreet",
+                  "city": "dn_licenseholdercity",
+                  "province": ""
                 }
               },
               {
@@ -4824,15 +4926,15 @@
                 ],
                 "type": "select",
                 "table": "dn_country",
-                "requiredvisibility": {
-                  "property": "dn_alternativeinsurercode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
-                  "value": "_dn_insurercountryid_value",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "_dn_insurercountryid_value"
+                },
+                "requiredvisibility": {
+                  "property": "dn_alternativeinsurercode",
+                  "value": true
                 }
               },
               {
@@ -4848,14 +4950,20 @@
                   }
                 ],
                 "type": "string",
-                "requiredvisibility": {
-                  "property": "dn_alternativeinsurercode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
                   "value": "dn_insurerpostalcode"
+                },
+                "requiredvisibility": {
+                  "property": "dn_alternativeinsurercode",
+                  "value": true
+                },
+                "zipcode_components": {
+                  "postalcode": "dn_licenseholderpostalcode",
+                  "houseno": "dn_licenseholderhouseno",
+                  "city": "dn_licenseholdercity",
+                  "street": "dn_licenseholderstreet"
                 }
               },
               {
@@ -4871,14 +4979,20 @@
                   }
                 ],
                 "type": "number",
-                "requiredvisibility": {
-                  "property": "dn_alternativeinsurercode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
                   "value": "dn_insurerhouseno"
+                },
+                "requiredvisibility": {
+                  "property": "dn_alternativeinsurercode",
+                  "value": true
+                },
+                "zipcode_components": {
+                  "postalcode": "dn_licenseholderpostalcode",
+                  "houseno": "dn_licenseholderhouseno",
+                  "city": "dn_licenseholdercity",
+                  "street": "dn_licenseholderstreet"
                 }
               },
               {
@@ -4894,14 +5008,14 @@
                   }
                 ],
                 "type": "string",
-                "requiredvisibility": {
-                  "property": "dn_alternativeinsurercode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": true,
                   "value": "dn_insurerhousenoaddition"
+                },
+                "requiredvisibility": {
+                  "property": "dn_alternativeinsurercode",
+                  "value": true
                 }
               },
               {
@@ -4917,14 +5031,14 @@
                   }
                 ],
                 "type": "string",
-                "requiredvisibility": {
-                  "property": "dn_alternativeinsurercode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
                   "value": "dn_insurerstreet"
+                },
+                "requiredvisibility": {
+                  "property": "dn_alternativeinsurercode",
+                  "value": true
                 }
               },
               {
@@ -4940,14 +5054,14 @@
                   }
                 ],
                 "type": "string",
-                "requiredvisibility": {
-                  "property": "dn_alternativeinsurercode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
                   "value": "dn_insurercity"
+                },
+                "requiredvisibility": {
+                  "property": "dn_alternativeinsurercode",
+                  "value": true
                 }
               },
               {
@@ -4963,14 +5077,14 @@
                   }
                 ],
                 "type": "phonenumber",
-                "requiredvisibility": {
-                  "property": "dn_alternativeinsurercode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
                   "value": "dn_insurertelephonenumber1"
+                },
+                "requiredvisibility": {
+                  "property": "dn_alternativeinsurercode",
+                  "value": true
                 }
               },
               {
@@ -4986,14 +5100,14 @@
                   }
                 ],
                 "type": "phonenumber",
-                "requiredvisibility": {
-                  "property": "dn_alternativeinsurercode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": true,
                   "value": "dn_insurertelephonenumber2"
+                },
+                "requiredvisibility": {
+                  "property": "dn_alternativeinsurercode",
+                  "value": true
                 }
               },
               {
@@ -5009,14 +5123,14 @@
                   }
                 ],
                 "type": "string",
-                "requiredvisibility": {
-                  "property": "dn_alternativeinsurercode",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": true,
                   "value": "dn_insureremail"
+                },
+                "requiredvisibility": {
+                  "property": "dn_alternativeinsurercode",
+                  "value": true
                 }
               }
             ]
@@ -5050,8 +5164,8 @@
                 "autoform": {
                   "readonly": false,
                   "optional": false,
-                  "value": "dn_requesttaxi",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "dn_requesttaxi"
                 }
               },
               {
@@ -5067,14 +5181,14 @@
                   }
                 ],
                 "type": "number",
-                "requiredvisibility": {
-                  "property": "dn_requesttaxi",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
                   "value": "dn_requesttaxinumberofpersons"
+                },
+                "requiredvisibility": {
+                  "property": "dn_requesttaxi",
+                  "value": true
                 }
               },
               {
@@ -5090,14 +5204,14 @@
                   }
                 ],
                 "type": "string",
-                "requiredvisibility": {
-                  "property": "dn_requesttaxi",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
                   "value": "dn_requesttaxizipcodefrom"
+                },
+                "requiredvisibility": {
+                  "property": "dn_requesttaxi",
+                  "value": true
                 }
               },
               {
@@ -5113,14 +5227,14 @@
                   }
                 ],
                 "type": "number",
-                "requiredvisibility": {
-                  "property": "dn_requesttaxi",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
                   "value": "dn_requesttaxihousenofrom"
+                },
+                "requiredvisibility": {
+                  "property": "dn_requesttaxi",
+                  "value": true
                 }
               },
               {
@@ -5136,14 +5250,14 @@
                   }
                 ],
                 "type": "string",
-                "requiredvisibility": {
-                  "property": "dn_requesttaxi",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
                   "value": "dn_requesttaxizipcodeto"
+                },
+                "requiredvisibility": {
+                  "property": "dn_requesttaxi",
+                  "value": true
                 }
               },
               {
@@ -5159,14 +5273,14 @@
                   }
                 ],
                 "type": "number",
-                "requiredvisibility": {
-                  "property": "dn_requesttaxi",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
                   "value": "dn_requesttaxihousenoto"
+                },
+                "requiredvisibility": {
+                  "property": "dn_requesttaxi",
+                  "value": true
                 }
               },
               {
@@ -5182,14 +5296,14 @@
                   }
                 ],
                 "type": "string",
-                "requiredvisibility": {
-                  "property": "dn_requesttaxi",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": true,
                   "value": "dn_requesttaxidetails"
+                },
+                "requiredvisibility": {
+                  "property": "dn_requesttaxi",
+                  "value": true
                 }
               },
               {
@@ -5209,8 +5323,8 @@
                 "autoform": {
                   "readonly": false,
                   "optional": false,
-                  "value": "dn_requestreplacementtransport",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "dn_requestreplacementtransport"
                 }
               },
               {
@@ -5227,15 +5341,15 @@
                 ],
                 "type": "select",
                 "table": "dn_optionalyesno",
-                "requiredvisibility": {
-                  "property": "dn_requestreplacementtransport",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
-                  "value": "dn_driverslicenseavailablecode",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "dn_driverslicenseavailablecode"
+                },
+                "requiredvisibility": {
+                  "property": "dn_requestreplacementtransport",
+                  "value": true
                 }
               },
               {
@@ -5252,15 +5366,15 @@
                 ],
                 "type": "select",
                 "table": "dn_truefalse",
-                "requiredvisibility": {
-                  "property": "dn_replacementtransport",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
-                  "value": "dn_bankcardavailable",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "dn_bankcardavailable"
+                },
+                "requiredvisibility": {
+                  "property": "dn_replacementtransport",
+                  "value": true
                 }
               },
               {
@@ -5277,15 +5391,15 @@
                 ],
                 "type": "select",
                 "table": "dn_truefalse",
-                "requiredvisibility": {
-                  "property": "dn_requestreplacementtransport",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": false,
-                  "value": "dn_requestreplacementtransportautomatic",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "dn_requestreplacementtransportautomatic"
+                },
+                "requiredvisibility": {
+                  "property": "dn_requestreplacementtransport",
+                  "value": true
                 }
               },
               {
@@ -5301,15 +5415,15 @@
                   }
                 ],
                 "type": "string",
-                "requiredvisibility": {
-                  "property": "dn_requestreplacementtransport",
-                  "value": true
-                },
                 "autoform": {
                   "readonly": false,
                   "optional": true,
-                  "value": "dn_requestreplacementtransportdetails",
-                  "autocomplete": true
+                  "autocomplete": true,
+                  "value": "dn_requestreplacementtransportdetails"
+                },
+                "requiredvisibility": {
+                  "property": "dn_requestreplacementtransport",
+                  "value": true
                 }
               }
             ]
@@ -5328,17 +5442,6 @@
             "fields": [
               {
                 "name": "signature_addressee",
-                "label": [
-                  {
-                    "language-code": 1043,
-                    "value": "Handtekening ontvanger"
-                  },
-                  {
-                    "language-code": 1044,
-                    "value": "Signature addressee"
-                  }
-                ],
-                "type": "signature",
                 "extrafields": {
                   "email": [
                     {
@@ -5360,14 +5463,6 @@
                       "value": "Name addressee"
                     }
                   ]
-                },
-                "autoform": {
-                  "readonly": false,
-                  "optional": false,
-                  "requiredwhen": {
-                    "field": "dn_driverstatecode",
-                    "value": true
-                  }
                 },
                 "subFields": {
                   "email": {
@@ -5416,12 +5511,30 @@
                     "type": "conditions",
                     "url": "https://berging-mobiliteit.nl/disclaimer/20200526_abvv_vbm_rev2-0/"
                   }
+                },
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Handtekening ontvanger"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Signature addressee"
+                  }
+                ],
+                "type": "signature",
+                "autoform": {
+                  "readonly": false,
+                  "optional": false,
+                  "requiredwhen": {
+                    "field": "dn_driverstatecode",
+                    "value": true
+                  }
                 }
               }
             ]
           }
-        ],
-        "photosMandatory": ["links-voor", "rechts-achter"]
+        ]
       }
     ]
   }

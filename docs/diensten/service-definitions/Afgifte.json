@@ -1,0 +1,842 @@
+[
+  {
+    "servicecode": 9000,
+    "servicename": [
+      {
+        "language-code": 1043,
+        "value": "Afgifte"
+      },
+      {
+        "language-code": 1044,
+        "value": "Release"
+      }
+    ],
+    "definition": [
+      {
+        "phase": 1,
+        "phase-name": [
+          {
+            "language-code": 1043,
+            "value": "Afgifte"
+          },
+          {
+            "language-code": 1044,
+            "value": "Reception"
+          }
+        ],
+        "photosMandatory": ["links-voor", "rechts-voor", "rechts-achter", "links-achter"],
+        "tabs": [
+          {
+            "header": [
+              {
+                "language-code": 1043,
+                "value": "Dossiergegevens"
+              },
+              {
+                "language-code": 1044,
+                "value": "File information"
+              }
+            ],
+            "fields": [
+              {
+                "name": "_dn_assignementtoid_value",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Opdracht aan"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Assignment to"
+                  }
+                ],
+                "type": "string",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "_dn_assignementtoid_value@OData.Community.Display.V1.FormattedValue"
+                }
+              },
+              {
+                "name": "dn_purchaseorderno",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Opdrachtnr"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Orderno"
+                  }
+                ],
+                "type": "string",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "dn_purchaseorderno"
+                }
+              },
+              {
+                "name": "_dn_clientid_value",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Opdrachtgever"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Client"
+                  }
+                ],
+                "type": "string",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "_dn_clientid_value@OData.Community.Display.V1.FormattedValue"
+                }
+              },
+              {
+                "name": "_dn_debtorid_value",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Debiteur"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Debtor"
+                  }
+                ],
+                "type": "string",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "_dn_debtorid_value@OData.Community.Display.V1.FormattedValue"
+                }
+              },
+              {
+                "name": "dn_informationaboutclient",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Info over opdrachtgever"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Info on client"
+                  }
+                ],
+                "type": "textarea",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "dn_informationaboutclient"
+                }
+              }
+            ]
+          },
+          {
+            "header": [
+              {
+                "language-code": 1043,
+                "value": "Eisen en Instructies"
+              },
+              {
+                "language-code": 1044,
+                "value": "Demands and Instructions"
+              }
+            ],
+            "contractRights": [
+              {
+                "name": "dn_rightsrentalcar",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Rechten Huurauto"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Rights Rental Car"
+                  }
+                ]
+              },
+              {
+                "name": "dn_rightstaxi",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Rechten Taxi"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Rights Taxi"
+                  }
+                ]
+              },
+              {
+                "name": "dn_rightstransport",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Rechten Doortransport"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Rights Further Transport"
+                  }
+                ]
+              }
+            ],
+            "fields": []
+          },
+          {
+            "header": [
+              {
+                "language-code": 1043,
+                "value": "Voertuiggegevens"
+              },
+              {
+                "language-code": 1044,
+                "value": "Vehicle information"
+              }
+            ],
+            "fields": [
+              {
+                "name": "_dn_vehiclecountryoforiginid_value",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Land van herkomst (LET OP!)"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Country of origin (ATTENTION!)"
+                  }
+                ],
+                "type": "select",
+                "table": "dn_country",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "autocomplete": true,
+                  "value": "_dn_vehiclecountryoforiginid_value"
+                }
+              },
+              {
+                "name": "dn_vehicleregistrationno",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Aangetroffen Kenteken"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Licenseplate Recovered"
+                  }
+                ],
+                "type": "string",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "dn_vehicleregistrationno"
+                }
+              },
+              {
+                "name": "dn_vehiclebrand",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Automerk (RDW)"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Car brand (RDW)"
+                  }
+                ],
+                "type": "string",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "dn_vehiclebrand"
+                }
+              },
+              {
+                "name": "dn_vehicletradename",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Autotype (RDW)"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Car type (RDW)"
+                  }
+                ],
+                "type": "string",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "dn_vehicletradename"
+                }
+              },
+              {
+                "name": "dn_vwe_vehicleinformationid.vwe_rdw_kleur1",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Autokleur (RDW)"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Car color (RDW)"
+                  }
+                ],
+                "type": "string",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "dn_vwe_vehicleinformationid.vwe_rdw_kleur1"
+                }
+              },
+              {
+                "name": "dn_numberofkilometers",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "KM-stand"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Mileage"
+                  }
+                ],
+                "type": "number",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "dn_numberofkilometers",
+                  "validations": [
+                    {
+                      "validation_type": "max-int",
+                      "value": 9999999
+                    },
+                    {
+                      "validation_type": "min-int",
+                      "value": 0
+                    }
+                  ]
+                }
+              },
+              {
+                "name": "dn_vehicleidentificationno",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Chassis nummer"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Chassis number"
+                  }
+                ],
+                "type": "string",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "dn_vehicleidentificationno"
+                }
+              },
+              {
+                "name": "dn_damagedescription",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Omschrijving schade"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Damage description"
+                  }
+                ],
+                "type": "textarea",
+                "autoform": {
+                  "readonly": false,
+                  "optional": false,
+                  "value": "dn_damagedescription"
+                }
+              },
+              {
+                "name": "dn_keyavailablecode",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Sleutel aanwezig"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Keys available"
+                  }
+                ],
+                "type": "select",
+                "table": "dn_optionalyesno",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "autocomplete": true,
+                  "value": "dn_keyavailablecode"
+                }
+              },
+              {
+                "name": "dn_vehicledrivablecode",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Voertuig rijdbaar"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Vehicle driveable"
+                  }
+                ],
+                "type": "select",
+                "table": "dn_optionalyesno",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "autocomplete": true,
+                  "value": "dn_vehicledrivablecode"
+                }
+              },
+              {
+                "name": "dn_vehiclerollablecode",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Voertuig rolbaar"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Vehicle rollable"
+                  }
+                ],
+                "type": "select",
+                "table": "dn_optionalyesno",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "autocomplete": true,
+                  "value": "dn_vehiclerollablecode"
+                }
+              },
+              {
+                "name": "dn_roofboxcode",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Dakkoffer"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Roofbox"
+                  }
+                ],
+                "type": "select",
+                "table": "dn_roofboxcode",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "autocomplete": true,
+                  "value": "dn_roofboxcode"
+                }
+              },
+              {
+                "name": "dn_bicyclecarriercode",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Fietsendrager"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Bicycle"
+                  }
+                ],
+                "type": "select",
+                "table": "dn_bicyclecarriercode",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "autocomplete": true,
+                  "value": "dn_bicyclecarriercode"
+                }
+              },
+              {
+                "name": "dn_damagecategorycode",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Categorie schade"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Damage category"
+                  }
+                ],
+                "type": "select",
+                "table": "dn_damagecategorycode",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "autocomplete": true,
+                  "value": "dn_damagecategorycode"
+                }
+              }
+            ]
+          },
+          {
+            "header": [
+              {
+                "language-code": 1043,
+                "value": "Afgifte"
+              },
+              {
+                "language-code": 1044,
+                "value": "Release"
+              }
+            ],
+            "fields": [
+              {
+                "name": "dn_storage72hrreleaseobligationcode",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Beslaglegging 72u-regeling"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Seizure (stays max. 72u on depot)"
+                  }
+                ],
+                "type": "select",
+                "table": "dn_optionalyesno",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "autocomplete": true,
+                  "value": "dn_storage72hrreleaseobligationcode"
+                }
+              },
+              {
+                "name": "dn_storageseizurecode",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Deurwaarder beslaglegging"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Seizure tax collector"
+                  }
+                ],
+                "type": "select",
+                "table": "dn_optionalyesno",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "autocomplete": true,
+                  "value": "dn_storageseizurecode"
+                }
+              },
+              {
+                "name": "dn_storagetransitforexternalpartycode",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Kies: Opgehaald door..."
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Choose: taken by..."
+                  }
+                ],
+                "type": "select",
+                "table": "dn_storagetransitforexternalpartycode",
+                "autoform": {
+                  "readonly": false,
+                  "optional": false,
+                  "autocomplete": true,
+                  "value": "dn_storagetransitforexternalpartycode"
+                }
+              },
+              {
+                "name": "dn_pickedupby",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "naam ontvanger"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Name receiver"
+                  }
+                ],
+                "type": "string",
+                "autoform": {
+                  "readonly": false,
+                  "optional": false,
+                  "value": "dn_pickedupby"
+                }
+              },
+              {
+                "name": "dn_photo_module_example",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Foto Afgifteformulier"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Image receptionform"
+                  }
+                ],
+                "type": "photo",
+                "imageposition": "Afgifteformulier",
+                "autoform": {
+                  "readonly": true,
+                  "optional": false,
+                  "value": "dn_photo_module_example",
+                  "requiredwhen": {
+                    "field": "dn_imagerequired_form1_code",
+                    "value": true
+                  }
+                }
+              },
+              {
+                "name": "dn_photo_module_example 2",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Foto vrachtbrief afhaler"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Photo freightletter receptor"
+                  }
+                ],
+                "type": "photo",
+                "imageposition": "Vrachtbriefvervoerder",
+                "autoform": {
+                  "readonly": true,
+                  "optional": false,
+                  "value": "dn_photo_module_example 2",
+                  "requiredwhen": {
+                    "field": "dn_imagerequired_form2_code",
+                    "value": true
+                  }
+                }
+              },
+              {
+                "name": "dn_photo_module_example 3",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Foto ID"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Photo ID"
+                  }
+                ],
+                "type": "photo",
+                "imageposition": "Legitimatiebewijs",
+                "autoform": {
+                  "readonly": true,
+                  "optional": false,
+                  "value": "dn_photo_module_example 3",
+                  "requiredwhen": {
+                    "field": "dn_imagerequired_form3_code",
+                    "value": true
+                  }
+                }
+              },
+              {
+                "name": "dn_photo_module_example 4",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Foto baliekwitantie"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Photo of receipt"
+                  }
+                ],
+                "type": "photo",
+                "imageposition": "Baliekwitantie",
+                "autoform": {
+                  "readonly": true,
+                  "optional": false,
+                  "value": "dn_photo_module_example 4",
+                  "requiredwhen": {
+                    "field": "dn_imagerequired_form4_code",
+                    "value": true
+                  }
+                }
+              },
+              {
+                "name": "dn_photo_module_example 5",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Foto (zie opmerkingen)"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Photo (see remarks)"
+                  }
+                ],
+                "type": "photo",
+                "imageposition": "Overig",
+                "autoform": {
+                  "readonly": true,
+                  "optional": false,
+                  "value": "dn_photo_module_example 5",
+                  "requiredwhen": {
+                    "field": "dn_imagerequired_form5_code",
+                    "value": true
+                  }
+                }
+              },
+              {
+                "name": "dn_remarksondeliverance",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Opmerkingen bij afgifte"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Remarks on deliverance"
+                  }
+                ],
+                "type": "textarea",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "autocomplete": true,
+                  "value": "dn_remarksondeliverance"
+                }
+              }
+            ]
+          },
+          {
+            "header": [
+              {
+                "language-code": 1043,
+                "value": "Handtekeningen"
+              },
+              {
+                "language-code": 1044,
+                "value": "Signatures"
+              }
+            ],
+            "fields": [
+              {
+                "name": "signature_receiver",
+                "extrafields": {
+                  "email": [
+                    {
+                      "language-code": 1043,
+                      "value": "Ontvanger e-mailadres"
+                    },
+                    {
+                      "language-code": 1044,
+                      "value": "Receiver e-mailadres"
+                    }
+                  ],
+                  "name": [
+                    {
+                      "language-code": 1043,
+                      "value": "Ontvanger voor+achternaam"
+                    },
+                    {
+                      "language-code": 1044,
+                      "value": "Receiver name+surname"
+                    }
+                  ]
+                },
+                "subFields": {
+                  "email": {
+                    "label": [
+                      {
+                        "language-code": 1043,
+                        "value": "Ontvanger e-mailadres"
+                      },
+                      {
+                        "language-code": 1044,
+                        "value": "Receiver e-mailadres"
+                      }
+                    ],
+                    "type": "string",
+                    "autoform": {
+                      "copyfrom": ["dn_driveremail"]
+                    }
+                  },
+                  "name": {
+                    "label": [
+                      {
+                        "language-code": 1043,
+                        "value": "Ontvanger Naam"
+                      },
+                      {
+                        "language-code": 1044,
+                        "value": "Receiver name"
+                      }
+                    ],
+                    "type": "string",
+                    "autoform": {
+                      "copyfrom": ["dn_driverinitials", "dn_drivermiddlename", "dn_driverlastname"]
+                    }
+                  },
+                  "transportConditions": {
+                    "label": [
+                      {
+                        "language-code": 1043,
+                        "value": "Akkoord Vervoerscondities"
+                      },
+                      {
+                        "language-code": 1044,
+                        "value": "Accept transport conditions"
+                      }
+                    ],
+                    "type": "conditions",
+                    "url": "https://berging-mobiliteit.nl/disclaimer/20200526_abvv_vbm_rev2-0/"
+                  }
+                },
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Handtekening Ontvanger"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Signature receiver"
+                  }
+                ],
+                "type": "signature",
+                "autoform": {
+                  "readonly": false,
+                  "optional": false,
+                  "requiredwhen": {
+                    "field": "dn_driverstatecode",
+                    "value": true
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]

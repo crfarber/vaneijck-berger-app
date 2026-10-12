@@ -87,7 +87,7 @@ const styles = StyleSheet.create({
     color: colors.text,
     marginBottom: spacing.sm,
   },
-  list: { flexGrow: 0, maxHeight: 360 },
+  list: { flexGrow: 0, flexShrink: 1, maxHeight: 360 },
   item: {
     minHeight: 48,
     flexDirection: 'row',

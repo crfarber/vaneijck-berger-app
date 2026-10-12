@@ -155,7 +155,7 @@ const styles = StyleSheet.create({
     paddingRight: spacing.md,
     justifyContent: 'center',
     paddingHorizontal: spacing.sm,
-    backgroundColor: colors.brandDarker,
+    backgroundColor: colors.brandDark,
     borderTopRightRadius: radius.xxl,
     borderBottomRightRadius: radius.xxl,
   },

@@ -23,8 +23,9 @@ const CONFIRM_MESSAGE_KEY = {
 >;
 
 /**
- * Lets the berger change their truck/trailer from the allocations toolbar. Uses the same
- * `decideReregister` outcome as the onboarding gate, plus an active-work guard for ACTIVE_INCIDENT.
+ * Opens the current-unit overview from the allocations toolbar. Forced re-registration paths
+ * (missing unit/vehicle, expired shift) still go straight into registration/extend; active-work
+ * guards live on the overview's edit actions.
  */
 export function ChangeVehicleButton({ hasActiveAllocations }: { hasActiveAllocations: boolean }) {
   const { t } = useTranslation();
@@ -46,23 +47,15 @@ export function ChangeVehicleButton({ hasActiveAllocations }: { hasActiveAllocat
     setBusy(true);
     try {
       const outcome = await service.checkReregister(hasActiveAllocations);
-      const decision = decideChangeVehicle(outcome, hasActiveAllocations);
+      const decision = decideChangeVehicle(outcome);
       switch (decision.action) {
         case 'call-dispatch':
           showNoUnitDispatchAlert(noUnitDispatchAlertTexts(t));
           break;
         case 'alert':
           Alert.alert(
-            t(
-              decision.reason === 'active-work'
-                ? 'unit.changeVehicle.activeWorkTitle'
-                : 'unit.changeVehicle.finishFirstTitle',
-            ),
-            t(
-              decision.reason === 'active-work'
-                ? 'unit.changeVehicle.activeWorkMessage'
-                : 'unit.changeVehicle.finishFirstMessage',
-            ),
+            t('unit.changeVehicle.finishFirstTitle'),
+            t('unit.changeVehicle.finishFirstMessage'),
             [{ text: t('common.ok') }],
           );
           break;
@@ -81,7 +74,7 @@ export function ChangeVehicleButton({ hasActiveAllocations }: { hasActiveAllocat
         case 'extend-shift':
           openExtendShift();
           break;
-        case 'register':
+        case 'open-overview':
           openUnit();
           break;
       }

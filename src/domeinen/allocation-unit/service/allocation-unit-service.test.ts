@@ -26,10 +26,13 @@ function setup(
     getSyncStatus: vi.fn(() => ({ phase: 'idle' as const, synced: [], failed: [], topics: [] })),
     subscribeToSyncStatus: vi.fn(() => () => undefined),
     getEntity: vi.fn(async () => null),
+    replaceEntityData: vi.fn(async () => undefined),
+    getEntityMeta: vi.fn(async () => null),
     listEntities: vi.fn(async () => []),
     refreshEntity: vi.fn(async () => undefined),
     abortPending: vi.fn(async () => undefined),
     reset: vi.fn(async () => undefined),
+    clearAll: vi.fn(async () => undefined),
     ...referenceDataOverrides,
   };
   const clock = createFakeClock(NOW);

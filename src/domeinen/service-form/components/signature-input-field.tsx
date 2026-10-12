@@ -6,10 +6,10 @@ import { TextField } from '@/shared/ui/text-field';
 import { colors, spacing } from '@/shared/ui/theme';
 import type { ServiceFormAnswer, ServiceFormError, ServiceFormField } from '../domain/types';
 import { useServiceFormStore } from '../store/service-form-store-provider';
-import { BooleanToggle } from './boolean-toggle';
 import { FieldFrame, useErrorText } from './field-frame';
 import { SignatureCaptureSheet } from './signature-capture-sheet';
 import { SignatureThumbnail } from './signature-thumbnail';
+import { Toggle } from '@/shared/ui/toggle';
 
 export function SignatureInputField({
   field,
@@ -57,16 +57,12 @@ export function SignatureInputField({
   return (
     <FieldFrame label={field.label} optional={field.optional} error={error}>
       <View style={styles.stack}>
-        <BooleanToggle
-          value={hidden ? true : false}
-          optional={false}
-          labels={{
-            yes: t('serviceForm.signature.notAvailable'),
-            no: t('serviceForm.signature.available'),
-            clear: t('serviceForm.clear'),
-          }}
-          hasError={false}
-          onChange={(next) => {
+        <Toggle
+          label={
+            hidden ? t('serviceForm.signature.notAvailable') : t('serviceForm.signature.available')
+          }
+          value={hidden}
+          onValueChange={(next) => {
             onFocus?.(field);
             if ((next === true) !== hidden) {
               toggleHideSignature(field.key);
@@ -88,6 +84,21 @@ export function SignatureInputField({
               onBlur={() => onBlur(field)}
               error={error?.code === 'signature-name-required' ? errorText : null}
             />
+            <Toggle
+              label={
+                noEmail ? t('serviceForm.signature.noEmail') : t('serviceForm.signature.withEmail')
+              }
+              value={noEmail}
+              onValueChange={(next) => {
+                onFocus?.(field);
+                if ((next === true) !== noEmail) {
+                  toggleNoEmailConfirmation(field.key);
+                }
+                if (next === true) {
+                  patch({ email: '' });
+                }
+              }}
+            />
             {!noEmail ? (
               <TextField
                 label={t('serviceForm.signature.email')}
@@ -100,40 +111,15 @@ export function SignatureInputField({
                 error={error?.code === 'signature-email-required' ? errorText : null}
               />
             ) : null}
-            <BooleanToggle
-              value={noEmail ? true : false}
-              optional={false}
-              labels={{
-                yes: t('serviceForm.signature.noEmail'),
-                no: t('serviceForm.signature.withEmail'),
-                clear: t('serviceForm.clear'),
-              }}
-              hasError={false}
-              onChange={(next) => {
-                onFocus?.(field);
-                if ((next === true) !== noEmail) {
-                  toggleNoEmailConfirmation(field.key);
-                }
-                if (next === true) {
-                  patch({ email: '' });
-                }
-                onBlur(field);
-              }}
-            />
             {requiresTerms ? (
-              <BooleanToggle
-                value={acceptedTerms ? true : false}
-                optional={false}
-                labels={{
-                  yes: t('serviceForm.signature.termsAccepted'),
-                  no: t('serviceForm.signature.termsRejected'),
-                  clear: t('serviceForm.clear'),
-                }}
-                hasError={false}
-                onChange={(next) => {
-                  onFocus?.(field);
-                  setAcceptedTerms(next === true);
-                }}
+              <Toggle
+                label={
+                  acceptedTerms
+                    ? t('serviceForm.signature.termsAccepted')
+                    : t('serviceForm.signature.termsRejected')
+                }
+                value={acceptedTerms}
+                onValueChange={setAcceptedTerms}
               />
             ) : null}
             <Pressable

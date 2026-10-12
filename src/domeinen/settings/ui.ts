@@ -4,11 +4,15 @@ export {
   SettingsProvider,
   useDevicePermissions,
   useLanguageSettings,
+  usePermissionDisclosurePreference,
+  usePushRuntime,
   useReferenceDataService,
   useAllocationUnitManagement,
   useSignOutGuard,
 } from './hooks/settings-context';
+export { usePermissionDisclosureGate } from './hooks/use-permission-disclosure-gate';
 export { LanguageScreen } from './screens/language-screen';
+export { PermissionDisclosureScreen } from './screens/permission-disclosure-screen';
 export { PermissionsScreen } from './screens/permissions-screen';
 export { ReferenceDataSyncScreen } from './screens/reference-data-sync-screen';
 export { AllocationUnitManagementScreen } from './screens/allocation-unit-management-screen';

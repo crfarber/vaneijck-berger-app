@@ -77,6 +77,46 @@ export type ServiceFormSignatureSubFields = {
   transportConditions?: ServiceFormTransportConditions;
 };
 
+export type ServiceFormAddressGroupFields = {
+  postalCode: string;
+  houseNumber: string;
+  addition?: string;
+  street: string;
+  city: string;
+  country?: string;
+};
+
+export type ServiceFormAddressGroup = {
+  id: string;
+  labelNl?: string;
+  labelEn?: string;
+  fields: ServiceFormAddressGroupFields;
+  confirmAddress: boolean;
+  allowManual: boolean;
+  allowForeignManual: boolean;
+};
+
+export type ServiceFormLicensePlateGroupFields = {
+  foundPlate: string;
+  reportedPlate?: string;
+  country?: string;
+  rdwBrand?: string;
+  rdwType?: string;
+  rdwColor?: string;
+  brand: string;
+  type?: string;
+};
+
+export type ServiceFormLicensePlateGroup = {
+  id: string;
+  label?: LocalizedServiceFormValue[];
+  fields: ServiceFormLicensePlateGroupFields;
+  flow: 'nl_rdw_lookup';
+  confirmVehicle?: boolean;
+  allowManual?: boolean;
+  allowForeignManual?: boolean;
+};
+
 export type RawServiceFormField = {
   name?: string;
   label?: LocalizedServiceFormValue[];
@@ -87,6 +127,8 @@ export type RawServiceFormField = {
   sortoptions?: ServiceFormSortOptions;
   dependencies?: ServiceFormDependencies;
   subFields?: ServiceFormSignatureSubFields;
+  address_group?: ServiceFormAddressGroup;
+  license_plate_group?: ServiceFormLicensePlateGroup;
   [key: string]: unknown;
 };
 

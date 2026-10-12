@@ -1,10 +1,15 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import { Linking, Pressable, StyleSheet, Text, View, type TextInput } from 'react-native';
+import { Keyboard, Linking, Pressable, StyleSheet, Text, View, type TextInput } from 'react-native';
 import { PlaceSearchControl } from '@/domeinen/places/ui';
 import { TextField } from '@/shared/ui/text-field';
 import { colors, spacing } from '@/shared/ui/theme';
-import { normalizeFieldInput, resolveFieldKind, type FieldKind } from '../domain/field-kind';
+import {
+  formatServiceFormFieldLabel,
+  normalizeFieldInput,
+  resolveFieldKind,
+  type FieldKind,
+} from '../domain/field-kind';
 import { booleanSelectState, buildBooleanSelectAnswer } from '../domain/select-options';
 import {
   buildAddressPlaceAnswers,
@@ -22,6 +27,7 @@ import { BooleanToggle } from './boolean-toggle';
 import { FieldFrame, fieldStyles, useErrorText } from './field-frame';
 import { SignatureInputField } from './signature-input-field';
 import { SelectSheet } from './select-sheet';
+import { t } from 'i18next';
 
 export type FieldRendererProps = {
   field: ServiceFormField;
@@ -58,7 +64,6 @@ function TextInputField({
   onFocus,
   onBlur,
 }: FieldRendererProps) {
-  const { t } = useTranslation();
   const errorText = useErrorText(error);
   const kind = resolveFieldKind(field);
   const shown = text(answer?.displayValue);
@@ -69,7 +74,7 @@ function TextInputField({
       <TextField
         inputRef={(node) => registerInputRef?.(field.id, node)}
         containerStyle={styles.grow}
-        label={field.optional ? `${field.label} (${t('serviceForm.optional')})` : field.label}
+        label={formatServiceFormFieldLabel(field.label, field.optional)}
         value={value}
         placeholder={kind === 'decimal' ? '0.00' : undefined}
         keyboardType={KEYBOARD[kind] ?? 'default'}
@@ -131,14 +136,18 @@ function SelectInputField({
     <FieldFrame label={field.label} optional={field.optional} error={error}>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={field.label}
+        accessibilityLabel={formatServiceFormFieldLabel(field.label, field.optional)}
         accessibilityValue={{ text: empty ? pleaseSelectLabel : shown }}
         disabled={field.readOnly}
         onPress={() => {
-          if (!field.readOnly) {
-            onFocus?.(field);
-            void select.open();
+          if (field.readOnly) {
+            return;
           }
+          if (!field.autocomplete) {
+            Keyboard.dismiss();
+          }
+          onFocus?.(field);
+          void select.open();
         }}
         style={({ pressed }) => [
           fieldStyles.box,
@@ -237,7 +246,6 @@ function AddressInputField({
   onFocus,
   onBlur,
 }: FieldRendererProps) {
-  const { t } = useTranslation();
   const service = useServiceFormService();
   const errorText = useErrorText(error);
   const shown = text(answer?.displayValue);
@@ -248,7 +256,7 @@ function AddressInputField({
       <TextField
         inputRef={(node) => registerInputRef?.(field.id, node)}
         containerStyle={styles.grow}
-        label={field.optional ? `${field.label} (${t('serviceForm.optional')})` : field.label}
+        label={formatServiceFormFieldLabel(field.label, field.optional)}
         value={shown}
         onChangeText={(next) =>
           onChange(field.key, {

@@ -4,6 +4,7 @@ import { Button } from '@/shared/ui/button';
 import { FleetPickerList } from '../components/fleet-picker-list';
 import { RegisterUnitLayout } from '../components/register-unit-layout';
 import { useUnitRegistrationFlow } from '../hooks/unit-registration-flow-context';
+import { colors } from '@/shared/ui/theme';
 
 export function InternalUnitTrailerScreen() {
   const { t } = useTranslation();
@@ -13,6 +14,8 @@ export function InternalUnitTrailerScreen() {
     <RegisterUnitLayout
       title={t('unit.trailerQuestion')}
       message={internal.message}
+      scroll={false}
+      backgroundColor={colors.background}
       footer={
         <Button
           label={t('unit.noTrailerChoice')}

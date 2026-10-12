@@ -5,6 +5,7 @@ import {
   type LookupRow,
   type RdwInfo,
 } from '@/domeinen/rdw';
+import { LEGACY_LICENSE_PLATE_MAPPING, type LicensePlateFieldMapping } from './license-plate-entry';
 import type { ServiceFormAnswer, ServiceFormAnswers } from './types';
 
 /** Field keys that belong to the vehicle-registration group (when present in the schema). */
@@ -124,6 +125,14 @@ export type ApplyRdwAutofillParams = {
   pleaseSelectLabel: string;
   /** When true, overwrite country/brand/type even if already filled (plate changed). */
   overwriteRdwDerivedFields?: boolean;
+  /** Role → CRM key map; defaults to the legacy Van Eijck field names. */
+  mapping?: LicensePlateFieldMapping;
+};
+
+export type ApplyRdwAutofillResult = {
+  updates: ServiceFormAnswers;
+  brandMatched: boolean;
+  typeMatched: boolean;
 };
 
 /**
@@ -132,45 +141,58 @@ export type ApplyRdwAutofillParams = {
  * the vehicle group reads those from `rdwInfo` directly.
  */
 export function applyRdwVehicleAutofill(params: ApplyRdwAutofillParams): ServiceFormAnswers {
+  return applyRdwVehicleAutofillWithMatch(params).updates;
+}
+
+/** Same as `applyRdwVehicleAutofill`, but also reports whether brand/type matched. */
+export function applyRdwVehicleAutofillWithMatch(
+  params: ApplyRdwAutofillParams,
+): ApplyRdwAutofillResult {
+  const mapping = params.mapping ?? LEGACY_LICENSE_PLATE_MAPPING;
+  const countryKey = mapping.country ?? LEGACY_LICENSE_PLATE_MAPPING.country;
+  const brandKey = mapping.brand ?? LEGACY_LICENSE_PLATE_MAPPING.brand;
+  const typeKey = mapping.type ?? LEGACY_LICENSE_PLATE_MAPPING.type;
+
   const updates: ServiceFormAnswers = {};
   const shouldFill = (key: string) =>
     params.fieldKeys.has(key) &&
     (params.overwriteRdwDerivedFields ||
       isSelectAnswerEmpty(params.answers[key], params.pleaseSelectLabel));
 
-  if (shouldFill('_dn_vehiclecountryoforiginid_value')) {
+  if (shouldFill(countryKey)) {
     const country = findNetherlandsCountry(params.countries);
     if (country) {
-      updates._dn_vehiclecountryoforiginid_value = selectAnswer(
-        country.displayName,
-        country.valueData,
-      );
+      updates[countryKey] = selectAnswer(country.displayName, country.valueData);
     }
   }
 
   let brandId: string | undefined;
-  const existingBrand = params.answers._dn_vehiclebrandid_value;
+  let brandMatched = false;
+  const existingBrand = params.answers[brandKey];
   if (
-    !shouldFill('_dn_vehiclebrandid_value') &&
+    !shouldFill(brandKey) &&
     existingBrand?.value !== undefined &&
     existingBrand.value !== null &&
     existingBrand.value !== ''
   ) {
     brandId = String(existingBrand.value);
+    brandMatched = true;
   }
 
-  if (shouldFill('_dn_vehiclebrandid_value') && params.rdwInfo.model) {
+  if (shouldFill(brandKey) && params.rdwInfo.model) {
     const brand = matchVehicleBrand(params.rdwInfo.model, params.vehicleBrands);
     if (brand) {
-      updates._dn_vehiclebrandid_value = selectAnswer(brand.displayName, brand.valueData);
+      updates[brandKey] = selectAnswer(brand.displayName, brand.valueData);
       brandId = brand.valueData;
+      brandMatched = true;
     }
   } else if (brandId === undefined) {
-    const fromUpdate = updates._dn_vehiclebrandid_value?.value;
+    const fromUpdate = updates[brandKey]?.value;
     brandId = fromUpdate === undefined || fromUpdate === null ? undefined : String(fromUpdate);
   }
 
-  if (brandId && shouldFill('_dn_vehicletypeid_value') && params.rdwInfo.tradeName) {
+  let typeMatched = false;
+  if (brandId && shouldFill(typeKey) && params.rdwInfo.tradeName) {
     const vehicleType = matchVehicleType(
       params.rdwInfo.tradeName,
       params.rdwInfo.model ?? '',
@@ -178,23 +200,35 @@ export function applyRdwVehicleAutofill(params: ApplyRdwAutofillParams): Service
       brandId,
     );
     if (vehicleType) {
-      updates._dn_vehicletypeid_value = selectAnswer(
-        vehicleType.displayName,
-        vehicleType.valueData,
-      );
+      updates[typeKey] = selectAnswer(vehicleType.displayName, vehicleType.valueData);
+      typeMatched = true;
     }
+  } else if (brandId && !shouldFill(typeKey)) {
+    const existingType = params.answers[typeKey];
+    typeMatched = Boolean(
+      existingType?.value !== undefined &&
+      existingType.value !== null &&
+      existingType.value !== '' &&
+      !isSelectAnswerEmpty(existingType, params.pleaseSelectLabel),
+    );
   }
 
-  return updates;
+  return { updates, brandMatched, typeMatched };
 }
 
 /** Empty select answers for the autofill keys (used when RDW fails or the plate changes). */
 export function clearRdwAutofillAnswers(
   fieldKeys: ReadonlySet<string>,
   pleaseSelectLabel: string,
+  mapping: LicensePlateFieldMapping = LEGACY_LICENSE_PLATE_MAPPING,
 ): ServiceFormAnswers {
   const updates: ServiceFormAnswers = {};
-  for (const key of RDW_AUTOFILL_FIELD_NAMES) {
+  const keys = [
+    mapping.country ?? LEGACY_LICENSE_PLATE_MAPPING.country,
+    mapping.brand ?? LEGACY_LICENSE_PLATE_MAPPING.brand,
+    mapping.type ?? LEGACY_LICENSE_PLATE_MAPPING.type,
+  ];
+  for (const key of keys) {
     if (fieldKeys.has(key)) {
       updates[key] = { value: '', displayValue: pleaseSelectLabel };
     }
@@ -202,17 +236,24 @@ export function clearRdwAutofillAnswers(
   return updates;
 }
 
-export function rdwReadonlyDisplay(fieldKey: string, rdwInfo: RdwInfo | null): string | undefined {
-  switch (fieldKey) {
-    case 'dn_vehiclebrand':
-      return rdwInfo?.model ?? undefined;
-    case 'dn_vehicletradename':
-      return rdwInfo?.tradeName ?? undefined;
-    case 'dn_vwe_vehicleinformationid.vwe_rdw_kleur1':
-      return rdwInfo?.primaryColor ?? undefined;
-    default:
-      return undefined;
+export function rdwReadonlyDisplay(
+  fieldKey: string,
+  rdwInfo: RdwInfo | null,
+  mapping: LicensePlateFieldMapping = LEGACY_LICENSE_PLATE_MAPPING,
+): string | undefined {
+  if (!rdwInfo) {
+    return undefined;
   }
+  if (fieldKey === (mapping.rdwBrand ?? LEGACY_LICENSE_PLATE_MAPPING.rdwBrand)) {
+    return rdwInfo.model ?? undefined;
+  }
+  if (fieldKey === (mapping.rdwType ?? LEGACY_LICENSE_PLATE_MAPPING.rdwType)) {
+    return rdwInfo.tradeName ?? undefined;
+  }
+  if (fieldKey === (mapping.rdwColor ?? LEGACY_LICENSE_PLATE_MAPPING.rdwColor)) {
+    return rdwInfo.primaryColor ?? undefined;
+  }
+  return undefined;
 }
 
 /**

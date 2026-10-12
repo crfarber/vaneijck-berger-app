@@ -36,39 +36,39 @@ worden gecontroleerd.
 
 ### Alle pagina's
 
-| Pagina                                          | Waarover                                                               | Gecontroleerd |
-| ----------------------------------------------- | ---------------------------------------------------------------------- | ------------- |
-| [Wiki-index](README.md)                         | leesroutes, paginaoverzicht en uitleg van claimstatussen               | `ba1383c`     |
-| [API en fouten](api-en-fouten.md)               | HTTP-client, fouttypen, retry en sessieverloop                         | `c0687077`    |
-| [Applicatieflow](applicatieflow.md)             | end-to-end gebruikersreis van appstart tot uitloggen                   | `ba1383c`     |
-| [Beschikbaarheid](beschikbaarheid.md)           | medewerkerstatus, opties en wijzigen                                   | `ba1383c`     |
-| [Builds](builds.md)                             | varianten, runtimeconfiguratie en buildprofielen                       | `ba1383c`     |
-| [Componenten en routes](componenten.md)         | alle actuele routes, schermen en UI-componenten                        | `c0687077`    |
-| [Diensten](diensten.md)                         | diensten laden, accepteren, weigeren en afronden                       | `ba1383c`     |
-| [Feedback en dialogen](feedback.md)             | toasts, procesoverlay, bevestigingen en sheets                         | `ba1383c`     |
-| [Foto's](fotos.md)                              | schermstroom, fotofasen, lokale opslag en uploadwachtrij               | `ba1383c`     |
-| [Internationalisatie](i18n.md)                  | Nederlands, Engels en taal richting CRM                                | `ba1383c`     |
-| [Inloggen](inloggen.md)                         | externe en interne login, sessie en tokenverversing                    | `ba1383c`     |
-| [Instellingen](instellingen.md)                 | taal, toestemmingen, support, debug en uitloggen                       | `ba1383c`     |
-| [Klantacceptatie](klantacceptatie.md)           | deelbare handmatige acceptatiescenario's                               | `ba1383c`     |
-| [Locatie](locatie.md)                           | GPS, afstandscontrole, doelkeuze en kaartlinks                         | `ba1383c`     |
-| [Logging en privacy](logging-en-privacy.md)     | logging, redactie en privacygrenzen                                    | `ba1383c`     |
-| [Offline werken](offline.md)                    | bewaarde querydata, mutaties en fotowachtrij                           | `ba1383c`     |
-| [Onboarding en eenheid](onboarding.md)          | gate, voertuig, uitvoerlocatie, beschikbaarheid en eindtijd            | `ba1383c`     |
-| [Ontwikkelstatus](ontwikkelstatus.md)           | gebouwd, gedeeltelijk en ontbrekende validatie                         | `ba1383c`     |
-| [Opdrachten](opdrachten.md)                     | lijst, accepteren, afwijzen, afronden en overdragen                    | `ba1383c`     |
-| [Opslagsleutels](opslagsleutels.md)             | duurzame sleutels en wat uitloggen wist                                | `ba1383c`     |
-| [Outbox](outbox.md)                             | duurzame mutatiewachtrij en aflevervolgorde                            | `ba1383c`     |
-| [Overzicht](overzicht.md)                       | appstart, container, providers en navigatie                            | `ba1383c`     |
-| [PLTR](pltr.md)                                 | planbaar transport, fasen en acties                                    | `ba1383c`     |
-| [Pushmeldingen](pushmeldingen.md)               | registratie, parsing, effecten en historie                             | `ba1383c`     |
-| [Referentiedata](referentiedata.md)             | synchronisatie, opslag en formulierdefinities                          | `ba1383c`     |
-| [Statuscodes](statuscodes.md)                   | opdracht-, dienst- en beschikbaarheidsstatussen                        | `ba1383c`     |
-| [Stores](stores.md)                             | Query, Zustand, opslag en tokenbezit                                   | `ba1383c`     |
-| [Support](support.md)                           | geredigeerd log bekijken en delen                                      | `ba1383c`     |
-| [Testen](testen.md)                             | testopzet, fakes, coverage en architectuurtest                         | `ba1383c`     |
-| [Toestemmingen](toestemmingen.md)               | locatie, meldingen en camera                                           | `ba1383c`     |
-| [Verwerkingsformulier](verwerkingsformulier.md) | dynamisch formulier, concept, validatie, adres, handtekening en submit | `c0687077`    |
+| Pagina                                          | Waarover                                                                | Gecontroleerd               |
+| ----------------------------------------------- | ----------------------------------------------------------------------- | --------------------------- |
+| [Wiki-index](README.md)                         | leesroutes, paginaoverzicht en uitleg van claimstatussen                | `ba1383c`                   |
+| [API en fouten](api-en-fouten.md)               | HTTP-client, fouttypen, retry en sessieverloop                          | `c0687077`                  |
+| [Applicatieflow](applicatieflow.md)             | end-to-end gebruikersreis en terugnavigatie vanuit het eenheidoverzicht | `c1506088` (terugnavigatie) |
+| [Beschikbaarheid](beschikbaarheid.md)           | medewerkerstatus, opties en wijzigen                                    | `ba1383c`                   |
+| [Builds](builds.md)                             | varianten, runtimeconfiguratie en buildprofielen                        | `ba1383c`                   |
+| [Componenten en routes](componenten.md)         | alle actuele routes, schermen en UI-componenten                         | `c0687077`                  |
+| [Diensten](diensten.md)                         | diensten laden, accepteren, weigeren en afronden                        | `ba1383c`                   |
+| [Feedback en dialogen](feedback.md)             | toasts, procesoverlay, bevestigingen en sheets                          | `ba1383c`                   |
+| [Foto's](fotos.md)                              | schermstroom, fotofasen, lokale opslag en uploadwachtrij                | `ba1383c`                   |
+| [Internationalisatie](i18n.md)                  | Nederlands, Engels en taal richting CRM                                 | `ba1383c`                   |
+| [Inloggen](inloggen.md)                         | externe en interne login, sessie en tokenverversing                     | `ba1383c`                   |
+| [Instellingen](instellingen.md)                 | taal, toestemmingen, support, debug en uitloggen                        | `ba1383c`                   |
+| [Klantacceptatie](klantacceptatie.md)           | deelbare handmatige acceptatiescenario's                                | `ba1383c`                   |
+| [Locatie](locatie.md)                           | GPS, afstandscontrole, doelkeuze en kaartlinks                          | `ba1383c`                   |
+| [Logging en privacy](logging-en-privacy.md)     | logging, redactie en privacygrenzen                                     | `ba1383c`                   |
+| [Offline werken](offline.md)                    | bewaarde querydata, mutaties en fotowachtrij                            | `ba1383c`                   |
+| [Onboarding en eenheid](onboarding.md)          | gate, voertuig, uitvoerlocatie, beschikbaarheid en eindtijd             | `ba1383c`                   |
+| [Ontwikkelstatus](ontwikkelstatus.md)           | gebouwd, gedeeltelijk en ontbrekende validatie                          | `ba1383c`                   |
+| [Opdrachten](opdrachten.md)                     | lijst, accepteren, afwijzen, afronden en overdragen                     | `ba1383c`                   |
+| [Opslagsleutels](opslagsleutels.md)             | duurzame sleutels en wat uitloggen wist                                 | `ba1383c`                   |
+| [Outbox](outbox.md)                             | duurzame mutatiewachtrij en aflevervolgorde                             | `ba1383c`                   |
+| [Overzicht](overzicht.md)                       | appstart, container, providers en navigatie                             | `ba1383c`                   |
+| [PLTR](pltr.md)                                 | planbaar transport, fasen en acties                                     | `ba1383c`                   |
+| [Pushmeldingen](pushmeldingen.md)               | registratie, parsing, effecten en historie                              | `ba1383c`                   |
+| [Referentiedata](referentiedata.md)             | synchronisatie, opslag en formulierdefinities                           | `ba1383c`                   |
+| [Statuscodes](statuscodes.md)                   | opdracht-, dienst- en beschikbaarheidsstatussen                         | `ba1383c`                   |
+| [Stores](stores.md)                             | Query, Zustand, opslag en tokenbezit                                    | `ba1383c`                   |
+| [Support](support.md)                           | geredigeerd log bekijken en delen                                       | `ba1383c`                   |
+| [Testen](testen.md)                             | testopzet, fakes, coverage en architectuurtest                          | `ba1383c`                   |
+| [Toestemmingen](toestemmingen.md)               | locatie, meldingen en camera                                            | `ba1383c`                   |
+| [Verwerkingsformulier](verwerkingsformulier.md) | dynamisch formulier, concept, validatie, adres, handtekening en submit  | `c1506088`                  |
 
 ### Betekenis van signalen
 

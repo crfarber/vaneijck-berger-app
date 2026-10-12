@@ -128,6 +128,7 @@ export function AddressSearchSheet({
         data={predictions}
         keyExtractor={(item) => item.placeId}
         keyboardShouldPersistTaps="handled"
+        style={styles.list}
         renderItem={({ item }) => (
           <Pressable
             accessibilityRole="button"
@@ -163,6 +164,7 @@ const styles = StyleSheet.create({
     color: colors.text,
     marginBottom: spacing.sm,
   },
+  list: { flexGrow: 1, flexShrink: 1 },
   loader: { marginVertical: spacing.sm },
   error: { color: colors.danger, marginBottom: spacing.sm },
   empty: { color: colors.textMuted, paddingVertical: spacing.md },

@@ -58,25 +58,6 @@
                 }
               },
               {
-                "name": "dn_aisamenvatting",
-                "label": [
-                  {
-                    "language-code": 1043,
-                    "value": "Samenvatting"
-                  },
-                  {
-                    "language-code": 1044,
-                    "value": "Sit-rap"
-                  }
-                ],
-                "type": "textarea",
-                "autoform": {
-                  "readonly": true,
-                  "optional": true,
-                  "value": "dn_aisamenvatting"
-                }
-              },
-              {
                 "name": "dn_reason",
                 "label": [
                   {
@@ -350,7 +331,7 @@
                 ],
                 "type": "textarea",
                 "autoform": {
-                  "readonly": true,
+                  "readonly": false,
                   "optional": true,
                   "value": "dn_IncidentId.dn_description"
                 }
@@ -371,7 +352,7 @@
                 "table": "dn_insurancecoveragecode",
                 "autoform": {
                   "readonly": false,
-                  "optional": true,
+                  "optional": false,
                   "autocomplete": true,
                   "value": "dn_insurancecoveragecode"
                 }
@@ -381,18 +362,18 @@
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "NL Verzekeraar (onbekend = 00)"
+                    "value": "Verzekeraar (onbekend = 00)"
                   },
                   {
                     "language-code": 1044,
-                    "value": "NL Insurer (unknown = 00)"
+                    "value": "Insurer (unknown = 00)"
                   }
                 ],
                 "type": "select",
                 "table": "insurancecompany",
                 "autoform": {
                   "readonly": false,
-                  "optional": true,
+                  "optional": false,
                   "autocomplete": true,
                   "value": "_dn_insurancecompanyid_value"
                 }
@@ -433,7 +414,7 @@
                 "type": "string",
                 "autoform": {
                   "readonly": false,
-                  "optional": true,
+                  "optional": false,
                   "value": "dn_insurancecontractno"
                 }
               }
@@ -533,6 +514,29 @@
                   "optional": false,
                   "autocomplete": true,
                   "value": "dn_ekv"
+                }
+              },
+              {
+                "name": "dn_photo_module_example",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Fotomodule voorbeeld"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Fotomodule voorbeeld"
+                  }
+                ],
+                "type": "photo",
+                "autoform": {
+                  "readonly": true,
+                  "optional": false,
+                  "value": "dn_photo_module_example"
+                },
+                "requiredvisibility": {
+                  "property": "dn_ekv",
+                  "value": true
                 }
               },
               {
@@ -3153,25 +3157,6 @@
                 }
               },
               {
-                "name": "dn_aisamenvatting",
-                "label": [
-                  {
-                    "language-code": 1043,
-                    "value": "Samenvatting"
-                  },
-                  {
-                    "language-code": 1044,
-                    "value": "Sit-rap"
-                  }
-                ],
-                "type": "textarea",
-                "autoform": {
-                  "readonly": true,
-                  "optional": true,
-                  "value": "dn_aisamenvatting"
-                }
-              },
-              {
                 "name": "dn_reason",
                 "label": [
                   {
@@ -3445,7 +3430,7 @@
                 ],
                 "type": "textarea",
                 "autoform": {
-                  "readonly": true,
+                  "readonly": false,
                   "optional": true,
                   "value": "dn_IncidentId.dn_description"
                 }
@@ -3466,7 +3451,7 @@
                 "table": "dn_insurancecoveragecode",
                 "autoform": {
                   "readonly": false,
-                  "optional": true,
+                  "optional": false,
                   "autocomplete": true,
                   "value": "dn_insurancecoveragecode"
                 }
@@ -3487,7 +3472,7 @@
                 "table": "insurancecompany",
                 "autoform": {
                   "readonly": false,
-                  "optional": true,
+                  "optional": false,
                   "autocomplete": true,
                   "value": "_dn_insurancecompanyid_value"
                 }
@@ -3528,7 +3513,7 @@
                 "type": "string",
                 "autoform": {
                   "readonly": false,
-                  "optional": true,
+                  "optional": false,
                   "value": "dn_insurancecontractno"
                 }
               }

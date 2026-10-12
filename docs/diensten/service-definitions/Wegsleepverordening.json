@@ -1,0 +1,2481 @@
+[
+  {
+    "servicecode": 1009,
+    "servicename": [
+      {
+        "language-code": 1043,
+        "value": "Wegsleepverordening"
+      },
+      {
+        "language-code": 1044,
+        "value": "Hauling"
+      }
+    ],
+    "definition": [
+      {
+        "phase": 1,
+        "phase-name": [
+          {
+            "language-code": 1043,
+            "value": "Aanvang"
+          },
+          {
+            "language-code": 1044,
+            "value": "Start"
+          }
+        ],
+        "photosMandatory": [
+          "links-voor",
+          "rechts-voor",
+          "rechts-achter",
+          "links-achter",
+          "Overzicht"
+        ],
+        "tabs": [
+          {
+            "header": [
+              {
+                "language-code": 1043,
+                "value": "Dossiergegevens"
+              },
+              {
+                "language-code": 1044,
+                "value": "File information"
+              }
+            ],
+            "fields": [
+              {
+                "name": "dn_servicetypecode",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Type Dienst"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Service Type"
+                  }
+                ],
+                "type": "string",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "dn_servicetypecode@OData.Community.Display.V1.FormattedValue"
+                }
+              },
+              {
+                "name": "dn_servicelocationdescription",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Locatie-details"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Location-details"
+                  }
+                ],
+                "type": "textarea",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "dn_servicelocationdescription"
+                }
+              },
+              {
+                "name": "dn_acceptedon",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Meldmoment dienst"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Moment of execution"
+                  }
+                ],
+                "type": "date",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "dn_acceptedon"
+                }
+              },
+              {
+                "name": "_dn_assignementtoid_value",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Opdracht aan"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Assignment to"
+                  }
+                ],
+                "type": "string",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "_dn_assignementtoid_value@OData.Community.Display.V1.FormattedValue"
+                }
+              },
+              {
+                "name": "dn_purchaseorderno",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Opdrachtnummer"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Order number"
+                  }
+                ],
+                "type": "string",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "dn_purchaseorderno"
+                }
+              },
+              {
+                "name": "dn_situationdescription",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Situatie omschrijving"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Situation description"
+                  }
+                ],
+                "type": "textarea",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "dn_situationdescription"
+                }
+              },
+              {
+                "name": "dn_internalremarks",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "ATTENTIE!"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "ATTENTION!"
+                  }
+                ],
+                "type": "textarea",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "dn_internalremarks"
+                }
+              },
+              {
+                "name": "dn_restrictionsonsite",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Inzetbeperkingen"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Restrictions on site"
+                  }
+                ],
+                "type": "textarea",
+                "autoform": {
+                  "readonly": false,
+                  "optional": true,
+                  "value": "dn_restrictionsonsite"
+                }
+              },
+              {
+                "name": "_dn_clientid_value",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Opdrachtgever"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Client"
+                  }
+                ],
+                "type": "string",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "_dn_clientid_value@OData.Community.Display.V1.FormattedValue"
+                }
+              },
+              {
+                "name": "_dn_debtorid_value",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Debiteur"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Debtor"
+                  }
+                ],
+                "type": "string",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "_dn_debtorid_value@OData.Community.Display.V1.FormattedValue"
+                }
+              },
+              {
+                "name": "dn_informationaboutclient",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Info over opdrachtgever"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Info on client"
+                  }
+                ],
+                "type": "textarea",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "dn_informationaboutclient"
+                }
+              }
+            ]
+          },
+          {
+            "header": [
+              {
+                "language-code": 1043,
+                "value": "Voertuiggegevens"
+              },
+              {
+                "language-code": 1044,
+                "value": "Vehicle Information"
+              }
+            ],
+            "fields": [
+              {
+                "name": "_dn_vehiclecountryoforiginid_value",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Land van herkomst"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Country of origin"
+                  }
+                ],
+                "type": "select",
+                "table": "dn_country",
+                "autoform": {
+                  "readonly": false,
+                  "optional": false,
+                  "autocomplete": true,
+                  "value": "_dn_vehiclecountryoforiginid_value"
+                }
+              },
+              {
+                "name": "dn_vehicleregistrationno",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Kenteken"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Licenseplate No."
+                  }
+                ],
+                "type": "string",
+                "autoform": {
+                  "readonly": false,
+                  "optional": false,
+                  "value": "dn_vehicleregistrationno"
+                }
+              },
+              {
+                "name": "dn_vehiclebrand",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Automerk (RDW)"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Vehicle Brand (RDW)"
+                  }
+                ],
+                "type": "string",
+                "autoform": {
+                  "readonly": true,
+                  "optional": false,
+                  "value": "dn_vehiclebrand"
+                }
+              },
+              {
+                "name": "dn_vehicletradename",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Autotype (RDW)"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Vehicle Type (RDW)"
+                  }
+                ],
+                "type": "string",
+                "autoform": {
+                  "readonly": true,
+                  "optional": false,
+                  "value": "dn_vehicletradename"
+                }
+              },
+              {
+                "name": "dn_vwe_vehicleinformationid.vwe_rdw_kleur1",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Autokleur (RDW)"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Vehicle Color (RDW)"
+                  }
+                ],
+                "type": "string",
+                "autoform": {
+                  "readonly": true,
+                  "optional": false,
+                  "value": "dn_vwe_vehicleinformationid.vwe_rdw_kleur1"
+                }
+              },
+              {
+                "name": "_dn_vehiclebrandid_value",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Automerk"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Vehicle Brand"
+                  }
+                ],
+                "type": "select",
+                "table": "dn_vehiclebrands",
+                "autoform": {
+                  "readonly": false,
+                  "optional": false,
+                  "autocomplete": true,
+                  "value": "_dn_vehiclebrandid_value"
+                }
+              },
+              {
+                "name": "_dn_vehicletypeid_value",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Autotype"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Car type"
+                  }
+                ],
+                "type": "select",
+                "table": "dn_vehicletypes",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "autocomplete": true,
+                  "value": "_dn_vehicletypeid_value"
+                },
+                "dependencies": {
+                  "required": "_dn_vehiclebrandid_value",
+                  "value": "ABCDEFGHI"
+                }
+              },
+              {
+                "name": "dn_vehicleidentificationno",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Chassisnummer"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "VIN number"
+                  }
+                ],
+                "type": "string",
+                "autoform": {
+                  "readonly": false,
+                  "optional": true,
+                  "value": "dn_vehicleidentificationno"
+                }
+              }
+            ]
+          },
+          {
+            "header": [
+              {
+                "language-code": 1043,
+                "value": "Afhandeling"
+              },
+              {
+                "language-code": 1044,
+                "value": "Handling"
+              }
+            ],
+            "fields": [
+              {
+                "name": "dn_towtypeoftowingcode",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Soort Wegsleep"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Type of service"
+                  }
+                ],
+                "type": "select",
+                "table": "dn_typeoftowingcode",
+                "autoform": {
+                  "readonly": false,
+                  "optional": false,
+                  "autocomplete": true,
+                  "value": "dn_towtypeoftowingcode"
+                }
+              },
+              {
+                "name": "dn_towlightweightcode",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Voertuig tot 3500kg"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Vehicle until 3500kg"
+                  }
+                ],
+                "type": "select",
+                "table": "dn_optionalyesno",
+                "autoform": {
+                  "readonly": false,
+                  "optional": false,
+                  "autocomplete": true,
+                  "value": "dn_towlightweightcode"
+                },
+                "requiredvisibility": {
+                  "property": "dn_towtypeoftowingcode",
+                  "value": [1001, 1002]
+                }
+              },
+              {
+                "name": "dn_towcancelcallcode",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Afgebeld voor uitrijden?"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Cancelled befor start?"
+                  }
+                ],
+                "type": "select",
+                "table": "dn_optionalyesno",
+                "autoform": {
+                  "readonly": false,
+                  "optional": false,
+                  "autocomplete": true,
+                  "value": "dn_towcancelcallcode"
+                },
+                "requiredvisibility": {
+                  "property": "dn_towlightweightcode",
+                  "value": [1, 0]
+                }
+              },
+              {
+                "name": "dn_towcarleftcode",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Auto al weg voor aankomst?"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Car gone at arrival?"
+                  }
+                ],
+                "type": "select",
+                "table": "dn_optionalyesno",
+                "autoform": {
+                  "readonly": false,
+                  "optional": false,
+                  "autocomplete": true,
+                  "value": "dn_towcarleftcode"
+                },
+                "requiredvisibility": {
+                  "property": "dn_towcancelcallcode",
+                  "value": 0
+                }
+              },
+              {
+                "name": "dn_towownerarrivedbeforecode",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Eigenaar ter plaatse voor aanvang?"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Owner prior on location?"
+                  }
+                ],
+                "type": "select",
+                "table": "dn_optionalyesno",
+                "autoform": {
+                  "readonly": false,
+                  "optional": false,
+                  "autocomplete": true,
+                  "value": "dn_towownerarrivedbeforecode"
+                },
+                "requiredvisibility": {
+                  "property": "dn_towcarleftcode",
+                  "value": 0
+                }
+              },
+              {
+                "name": "dn_towownerarrivedaftercode",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Eigenaar ter plaatse na aanvang?"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Owner on location after arrival?"
+                  }
+                ],
+                "type": "select",
+                "table": "dn_optionalyesno",
+                "autoform": {
+                  "readonly": false,
+                  "optional": false,
+                  "autocomplete": true,
+                  "value": "dn_towownerarrivedaftercode"
+                },
+                "requiredvisibility": {
+                  "property": "dn_towownerarrivedbeforecode",
+                  "value": 0
+                }
+              },
+              {
+                "name": "dn_towmoveexecutedcode",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Verplaatsing uitgevoerd?"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Relocation carried out?"
+                  }
+                ],
+                "type": "select",
+                "table": "dn_optionalyesno",
+                "autoform": {
+                  "readonly": false,
+                  "optional": false,
+                  "autocomplete": true,
+                  "value": "dn_towmoveexecutedcode"
+                },
+                "requiredvisibility": {
+                  "property": "dn_towtypeoftowingcode",
+                  "value": 1002
+                }
+              },
+              {
+                "name": "dn_towtodepotcode",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Op depot gelost?"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Towed to depot?"
+                  }
+                ],
+                "type": "select",
+                "table": "dn_optionalyesno",
+                "autoform": {
+                  "readonly": false,
+                  "optional": false,
+                  "autocomplete": true,
+                  "value": "dn_towtodepotcode"
+                },
+                "requiredvisibility": {
+                  "property": "dn_towtypeoftowingcode",
+                  "value": 1001
+                }
+              },
+              {
+                "name": "dn_keyavailablecode",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Sleutel aanwezig"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Keys available?"
+                  }
+                ],
+                "type": "select",
+                "table": "dn_optionalyesno",
+                "autoform": {
+                  "readonly": false,
+                  "optional": false,
+                  "autocomplete": true,
+                  "value": "dn_keyavailablecode"
+                },
+                "requiredvisibility": {
+                  "property": "dn_towtodepotcode",
+                  "value": 1
+                }
+              },
+              {
+                "name": "dn_vehicledrivablecode",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Voertuig rijdbaar"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Vehicle drivable?"
+                  }
+                ],
+                "type": "select",
+                "table": "dn_optionalyesno",
+                "autoform": {
+                  "readonly": false,
+                  "optional": false,
+                  "autocomplete": true,
+                  "value": "dn_vehicledrivablecode"
+                },
+                "requiredvisibility": {
+                  "property": "dn_towtodepotcode",
+                  "value": 1
+                }
+              },
+              {
+                "name": "dn_vehiclerollablecode",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Voertuig rolbaar"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Vehicle rollable?"
+                  }
+                ],
+                "type": "select",
+                "table": "dn_optionalyesno",
+                "autoform": {
+                  "readonly": false,
+                  "optional": false,
+                  "autocomplete": true,
+                  "value": "dn_vehiclerollablecode"
+                },
+                "requiredvisibility": {
+                  "property": "dn_towtodepotcode",
+                  "value": 1
+                }
+              },
+              {
+                "name": "_dn_locationid_value",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Op welk Depot gelost?"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Depot?"
+                  }
+                ],
+                "type": "select",
+                "table": "dn_locations",
+                "sortoptions": {
+                  "orderby": "distance",
+                  "direction": "ascending"
+                },
+                "autoform": {
+                  "readonly": false,
+                  "optional": false,
+                  "autocomplete": true,
+                  "value": "_dn_locationid_value"
+                },
+                "requiredvisibility": {
+                  "property": "dn_towtodepotcode",
+                  "value": 1
+                }
+              },
+              {
+                "name": "dn_valueindicationcode",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Waardeschatting voertuig"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Value indication"
+                  }
+                ],
+                "type": "select",
+                "table": "dn_valueindicationcode",
+                "autoform": {
+                  "readonly": false,
+                  "optional": false,
+                  "autocomplete": true,
+                  "value": "dn_valueindicationcode"
+                },
+                "requiredvisibility": {
+                  "property": "dn_towtodepotcode",
+                  "value": 1
+                }
+              },
+              {
+                "name": "dn_deliveryname",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Naam afleveradres"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Name Delivery adress"
+                  }
+                ],
+                "type": "string",
+                "autoform": {
+                  "readonly": false,
+                  "optional": false,
+                  "value": "dn_deliveryname",
+                  "validations": [
+                    {
+                      "validation_type": "max-len",
+                      "value": 250
+                    }
+                  ]
+                },
+                "requiredvisibility": {
+                  "property": "dn_towmoveexecutedcode",
+                  "value": 1
+                }
+              },
+              {
+                "name": "_dn_deliverycountryid_value",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Land afleveradres"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Country Delivery address"
+                  }
+                ],
+                "type": "select",
+                "table": "_dn_deliverycountryid_value",
+                "autoform": {
+                  "readonly": false,
+                  "optional": false,
+                  "autocomplete": true,
+                  "value": "_dn_deliverycountryid_value"
+                },
+                "requiredvisibility": {
+                  "property": "dn_towmoveexecutedcode",
+                  "value": 1
+                }
+              },
+              {
+                "name": "dn_deliveryadressbar",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Adres afleveradres zoeken"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Search delivery location"
+                  }
+                ],
+                "type": "address",
+                "autoform": {
+                  "readonly": false,
+                  "optional": true,
+                  "value": "dn_deliveryadressbar",
+                  "validations": [
+                    {
+                      "validation_type": "max-len",
+                      "value": 100
+                    }
+                  ]
+                },
+                "requiredvisibility": {
+                  "property": "dn_towmoveexecutedcode",
+                  "value": 1
+                },
+                "address_components": {
+                  "name": "dn_deliveryname",
+                  "country": "_dn_deliverycountryid_value",
+                  "postalcode": "dn_deliverypostalcode",
+                  "houseno": "dn_deliveryhouseno",
+                  "housenoadd": "dn_deliveryhousenoaddition",
+                  "street": "dn_deliverystreet",
+                  "city": "dn_deliverycity",
+                  "province": ""
+                }
+              },
+              {
+                "name": "dn_deliverypostalcode",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Postcode afleveradres"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Postalcode Delivery address"
+                  }
+                ],
+                "type": "string",
+                "autoform": {
+                  "readonly": false,
+                  "optional": true,
+                  "value": "dn_deliverypostalcode",
+                  "validations": [
+                    {
+                      "validation_type": "max-len",
+                      "value": 10
+                    }
+                  ]
+                },
+                "zipcode_components": {
+                  "postalcode": "dn_deliverypostalcode",
+                  "houseno": "dn_deliveryhouseno",
+                  "street": "dn_deliverystreet",
+                  "city": "dn_deliverycity"
+                },
+                "requiredvisibility": {
+                  "property": "dn_towmoveexecutedcode",
+                  "value": 1
+                }
+              },
+              {
+                "name": "dn_deliveryhouseno",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Huisnummer afleveradres"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Houseno Delivery address"
+                  }
+                ],
+                "type": "number",
+                "autoform": {
+                  "readonly": false,
+                  "optional": true,
+                  "value": "dn_deliveryhouseno",
+                  "validations": [
+                    {
+                      "validation_type": "max-len",
+                      "value": 10
+                    }
+                  ]
+                },
+                "requiredvisibility": {
+                  "property": "dn_towmoveexecutedcode",
+                  "value": 1
+                }
+              },
+              {
+                "name": "dn_deliveryhousenoaddition",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Huisnummer toevoeging afleveradres"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Houseno ext. Delivery address"
+                  }
+                ],
+                "type": "string",
+                "autoform": {
+                  "readonly": false,
+                  "optional": true,
+                  "value": "dn_deliveryhousenoaddition",
+                  "validations": [
+                    {
+                      "validation_type": "max-len",
+                      "value": 10
+                    }
+                  ]
+                },
+                "requiredvisibility": {
+                  "property": "dn_towmoveexecutedcode",
+                  "value": 1
+                }
+              },
+              {
+                "name": "dn_deliverycity",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Plaats afleveradres"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "City Delivery address"
+                  }
+                ],
+                "type": "string",
+                "autoform": {
+                  "readonly": false,
+                  "optional": true,
+                  "value": "dn_deliverycity",
+                  "validations": [
+                    {
+                      "validation_type": "max-len",
+                      "value": 100
+                    }
+                  ]
+                },
+                "requiredvisibility": {
+                  "property": "dn_towmoveexecutedcode",
+                  "value": 1
+                }
+              },
+              {
+                "name": "dn_deliverystreet",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Straat afleveradres"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Street Delivery address"
+                  }
+                ],
+                "type": "string",
+                "autoform": {
+                  "readonly": false,
+                  "optional": true,
+                  "value": "dn_deliverystreet",
+                  "validations": [
+                    {
+                      "validation_type": "max-len",
+                      "value": 250
+                    }
+                  ]
+                },
+                "requiredvisibility": {
+                  "property": "dn_towmoveexecutedcode",
+                  "value": 1
+                }
+              },
+              {
+                "name": "dn_deliverydistancedepot",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Afstand tot depot"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Distance to Depot location"
+                  }
+                ],
+                "type": "number",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "dn_deliverydistancedepot"
+                },
+                "requiredvisibility": {
+                  "property": "dn_towtodepotcode",
+                  "value": 1
+                }
+              },
+              {
+                "name": "dn_totaldistance",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Afstand totaal"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Distance total ride"
+                  }
+                ],
+                "type": "number",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "dn_totaldistance"
+                },
+                "requiredvisibility": {
+                  "property": "dn_towmoveexecutedcode",
+                  "value": 1
+                }
+              },
+              {
+                "name": "dn_deliverydistance",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Afstand tot afleverlocatie"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Distance tot Delivery location"
+                  }
+                ],
+                "type": "number",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "dn_deliverydistance"
+                },
+                "requiredvisibility": {
+                  "property": "dn_towtodepotcode",
+                  "value": 1
+                }
+              },
+              {
+                "name": "dn_totaldistance",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Afstand totaal"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Distance total ride"
+                  }
+                ],
+                "type": "number",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "dn_totaldistance"
+                },
+                "requiredvisibility": {
+                  "property": "dn_towtodepotcode",
+                  "value": 1
+                }
+              },
+              {
+                "name": "dn_damagedescription",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Omschrijving eventuele schade"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Description possible damage"
+                  }
+                ],
+                "type": "textarea",
+                "autoform": {
+                  "readonly": false,
+                  "optional": true,
+                  "value": "dn_damagedescription"
+                }
+              }
+            ]
+          },
+          {
+            "header": [
+              {
+                "language-code": 1043,
+                "value": "Handtekeningen"
+              },
+              {
+                "language-code": 1044,
+                "value": "Signatures"
+              }
+            ],
+            "fields": [
+              {
+                "name": "signature_sender",
+                "extrafields": {
+                  "email": [
+                    {
+                      "language-code": 1043,
+                      "value": "Opdrachtgever emailadres"
+                    },
+                    {
+                      "language-code": 1044,
+                      "value": "Opdrachtgever emailadres"
+                    }
+                  ],
+                  "name": [
+                    {
+                      "language-code": 1043,
+                      "value": "Opdrachtgever Naam"
+                    },
+                    {
+                      "language-code": 1044,
+                      "value": "Opdrachtgever Naam"
+                    }
+                  ]
+                },
+                "subFields": {
+                  "email": {
+                    "label": [
+                      {
+                        "language-code": 1043,
+                        "value": "Opdrachtgever emailadres"
+                      },
+                      {
+                        "language-code": 1044,
+                        "value": "Opdrachtgever emailadres"
+                      }
+                    ],
+                    "type": "string"
+                  },
+                  "name": {
+                    "label": [
+                      {
+                        "language-code": 1043,
+                        "value": "Opdrachtgever Naam"
+                      },
+                      {
+                        "language-code": 1044,
+                        "value": "Opdrachtgever Naam"
+                      }
+                    ],
+                    "type": "string"
+                  },
+                  "transportConditions": {
+                    "label": [
+                      {
+                        "language-code": 1043,
+                        "value": "Akkoord Vervoerscondities"
+                      },
+                      {
+                        "language-code": 1044,
+                        "value": "Accept transport conditions"
+                      }
+                    ],
+                    "type": "conditions",
+                    "url": "https://berging-mobiliteit.nl/disclaimer/20200526_abvv_vbm_rev2-0/"
+                  }
+                },
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Handtekening Opdrachtgever"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Handttekening Opdrachtgever"
+                  }
+                ],
+                "type": "signature",
+                "autoform": {
+                  "readonly": false,
+                  "optional": false
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "phase": 2,
+        "phase-name": [
+          {
+            "language-code": 1043,
+            "value": "Aflevering"
+          },
+          {
+            "language-code": 1044,
+            "value": "Delivery"
+          }
+        ],
+        "photosMandatory": ["links-voor", "rechts-voor", "rechts-achter", "links-achter"],
+        "tabs": [
+          {
+            "header": [
+              {
+                "language-code": 1043,
+                "value": "Dossiergegevens"
+              },
+              {
+                "language-code": 1044,
+                "value": "File information"
+              }
+            ],
+            "fields": [
+              {
+                "name": "dn_servicetypecode",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Type Dienst"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Service Type"
+                  }
+                ],
+                "type": "string",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "dn_servicetypecode@OData.Community.Display.V1.FormattedValue"
+                }
+              },
+              {
+                "name": "dn_servicelocationdescription",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Locatie-details"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Location-details"
+                  }
+                ],
+                "type": "textarea",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "dn_servicelocationdescription"
+                }
+              },
+              {
+                "name": "dn_acceptedon",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Meldmoment dienst"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Moment of execution"
+                  }
+                ],
+                "type": "date",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "dn_acceptedon"
+                }
+              },
+              {
+                "name": "_dn_assignementtoid_value",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Opdracht aan"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Assignment to"
+                  }
+                ],
+                "type": "string",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "_dn_assignementtoid_value@OData.Community.Display.V1.FormattedValue"
+                }
+              },
+              {
+                "name": "dn_purchaseorderno",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Opdrachtnummer"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Order number"
+                  }
+                ],
+                "type": "string",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "dn_purchaseorderno"
+                }
+              },
+              {
+                "name": "dn_situationdescription",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Situatie omschrijving"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Situation description"
+                  }
+                ],
+                "type": "textarea",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "dn_situationdescription"
+                }
+              },
+              {
+                "name": "dn_internalremarks",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "ATTENTIE!"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "ATTENTION!"
+                  }
+                ],
+                "type": "textarea",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "dn_internalremarks"
+                }
+              },
+              {
+                "name": "dn_restrictionsonsite",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Inzetbeperkingen"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Restrictions on site"
+                  }
+                ],
+                "type": "textarea",
+                "autoform": {
+                  "readonly": false,
+                  "optional": true,
+                  "value": "dn_restrictionsonsite"
+                }
+              },
+              {
+                "name": "_dn_clientid_value",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Opdrachtgever"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Client"
+                  }
+                ],
+                "type": "string",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "_dn_clientid_value@OData.Community.Display.V1.FormattedValue"
+                }
+              },
+              {
+                "name": "_dn_debtorid_value",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Debiteur"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Debtor"
+                  }
+                ],
+                "type": "string",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "_dn_debtorid_value@OData.Community.Display.V1.FormattedValue"
+                }
+              },
+              {
+                "name": "dn_informationaboutclient",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Info over opdrachtgever"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Info on client"
+                  }
+                ],
+                "type": "textarea",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "dn_informationaboutclient"
+                }
+              }
+            ]
+          },
+          {
+            "header": [
+              {
+                "language-code": 1043,
+                "value": "Voertuiggegevens"
+              },
+              {
+                "language-code": 1044,
+                "value": "Vehicle Information"
+              }
+            ],
+            "fields": [
+              {
+                "name": "_dn_vehiclecountryoforiginid_value",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Land van herkomst"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Country of origin"
+                  }
+                ],
+                "type": "select",
+                "table": "dn_country",
+                "autoform": {
+                  "readonly": false,
+                  "optional": false,
+                  "autocomplete": true,
+                  "value": "_dn_vehiclecountryoforiginid_value"
+                }
+              },
+              {
+                "name": "dn_vehicleregistrationno",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Kenteken"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Licenseplate No."
+                  }
+                ],
+                "type": "string",
+                "autoform": {
+                  "readonly": false,
+                  "optional": false,
+                  "value": "dn_vehicleregistrationno"
+                }
+              },
+              {
+                "name": "dn_vehiclebrand",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Automerk (RDW)"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Vehicle Brand (RDW)"
+                  }
+                ],
+                "type": "string",
+                "autoform": {
+                  "readonly": true,
+                  "optional": false,
+                  "value": "dn_vehiclebrand"
+                }
+              },
+              {
+                "name": "dn_vehicletradename",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Autotype (RDW)"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Vehicle Type (RDW)"
+                  }
+                ],
+                "type": "string",
+                "autoform": {
+                  "readonly": true,
+                  "optional": false,
+                  "value": "dn_vehicletradename"
+                }
+              },
+              {
+                "name": "dn_vwe_vehicleinformationid.vwe_rdw_kleur1",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Autokleur (RDW)"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Vehicle Color (RDW)"
+                  }
+                ],
+                "type": "string",
+                "autoform": {
+                  "readonly": true,
+                  "optional": false,
+                  "value": "dn_vwe_vehicleinformationid.vwe_rdw_kleur1"
+                }
+              },
+              {
+                "name": "_dn_vehiclebrandid_value",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Automerk"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Vehicle Brand"
+                  }
+                ],
+                "type": "select",
+                "table": "dn_vehiclebrands",
+                "autoform": {
+                  "readonly": false,
+                  "optional": false,
+                  "autocomplete": true,
+                  "value": "_dn_vehiclebrandid_value"
+                }
+              },
+              {
+                "name": "_dn_vehicletypeid_value",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Autotype"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Car type"
+                  }
+                ],
+                "type": "select",
+                "table": "dn_vehicletypes",
+                "autoform": {
+                  "readonly": false,
+                  "optional": true,
+                  "autocomplete": true,
+                  "value": "_dn_vehicletypeid_value"
+                },
+                "dependencies": {
+                  "required": "_dn_vehiclebrandid_value",
+                  "value": "ABCDEFGHI"
+                }
+              },
+              {
+                "name": "dn_vehicleidentificationno",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Chassisnummer"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "VIN number"
+                  }
+                ],
+                "type": "string",
+                "autoform": {
+                  "readonly": false,
+                  "optional": true,
+                  "value": "dn_vehicleidentificationno"
+                }
+              }
+            ]
+          },
+          {
+            "header": [
+              {
+                "language-code": 1043,
+                "value": "Afhandeling"
+              },
+              {
+                "language-code": 1044,
+                "value": "Handling"
+              }
+            ],
+            "fields": [
+              {
+                "name": "dn_towtypeoftowingcode",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Soort Wegsleep"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Type of service"
+                  }
+                ],
+                "type": "select",
+                "table": "dn_typeoftowingcode",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "autocomplete": true,
+                  "value": "dn_towtypeoftowingcode"
+                }
+              },
+              {
+                "name": "dn_towlightweightcode",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Voertuig tot 3500kg"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Vehicle until 3500kg"
+                  }
+                ],
+                "type": "select",
+                "table": "dn_optionalyesno",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "autocomplete": true,
+                  "value": "dn_towlightweightcode"
+                },
+                "requiredvisibility": {
+                  "property": "dn_towtypeoftowingcode",
+                  "value": [1001, 1002]
+                }
+              },
+              {
+                "name": "dn_towcancelcallcode",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Afgebeld voor uitrijden?"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Cancelled befor start?"
+                  }
+                ],
+                "type": "select",
+                "table": "dn_optionalyesno",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "autocomplete": true,
+                  "value": "dn_towcancelcallcode"
+                },
+                "requiredvisibility": {
+                  "property": "dn_towlightweightcode",
+                  "value": [1, 0]
+                }
+              },
+              {
+                "name": "dn_towcarleftcode",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Auto al weg voor aankomst?"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Car gone at arrival?"
+                  }
+                ],
+                "type": "select",
+                "table": "dn_optionalyesno",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "autocomplete": true,
+                  "value": "dn_towcarleftcode"
+                },
+                "requiredvisibility": {
+                  "property": "dn_towcancelcallcode",
+                  "value": 0
+                }
+              },
+              {
+                "name": "dn_towownerarrivedbeforecode",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Eigenaar ter plaatse voor aanvang?"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Owner prior on location?"
+                  }
+                ],
+                "type": "select",
+                "table": "dn_optionalyesno",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "autocomplete": true,
+                  "value": "dn_towownerarrivedbeforecode"
+                },
+                "requiredvisibility": {
+                  "property": "dn_towcarleftcode",
+                  "value": 0
+                }
+              },
+              {
+                "name": "dn_towownerarrivedaftercode",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Eigenaar ter plaatse na aanvang?"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Owner on location after arrival?"
+                  }
+                ],
+                "type": "select",
+                "table": "dn_optionalyesno",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "autocomplete": true,
+                  "value": "dn_towownerarrivedaftercode"
+                },
+                "requiredvisibility": {
+                  "property": "dn_towownerarrivedbeforecode",
+                  "value": 0
+                }
+              },
+              {
+                "name": "dn_towmoveexecutedcode",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Verplaatsing uitgevoerd?"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Relocation carried out?"
+                  }
+                ],
+                "type": "select",
+                "table": "dn_optionalyesno",
+                "autoform": {
+                  "readonly": false,
+                  "optional": false,
+                  "autocomplete": true,
+                  "value": "dn_towmoveexecutedcode"
+                },
+                "requiredvisibility": {
+                  "property": "dn_towtypeoftowingcode",
+                  "value": 1002
+                }
+              },
+              {
+                "name": "dn_towtodepotcode",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Op depot gelost?"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Towed to depot?"
+                  }
+                ],
+                "type": "select",
+                "table": "dn_optionalyesno",
+                "autoform": {
+                  "readonly": false,
+                  "optional": false,
+                  "autocomplete": true,
+                  "value": "dn_towtodepotcode"
+                },
+                "requiredvisibility": {
+                  "property": "dn_towtypeoftowingcode",
+                  "value": 1001
+                }
+              },
+              {
+                "name": "dn_keyavailablecode",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Sleutel aanwezig"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Keys available?"
+                  }
+                ],
+                "type": "select",
+                "table": "dn_optionalyesno",
+                "autoform": {
+                  "readonly": false,
+                  "optional": false,
+                  "autocomplete": true,
+                  "value": "dn_keyavailablecode"
+                },
+                "requiredvisibility": {
+                  "property": "dn_towtodepotcode",
+                  "value": 1
+                }
+              },
+              {
+                "name": "dn_vehicledrivablecode",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Voertuig rijdbaar"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Vehicle drivable?"
+                  }
+                ],
+                "type": "select",
+                "table": "dn_optionalyesno",
+                "autoform": {
+                  "readonly": false,
+                  "optional": false,
+                  "autocomplete": true,
+                  "value": "dn_vehicledrivablecode"
+                },
+                "requiredvisibility": {
+                  "property": "dn_towtodepotcode",
+                  "value": 1
+                }
+              },
+              {
+                "name": "dn_vehiclerollablecode",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Voertuig rolbaar"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Vehicle rollable?"
+                  }
+                ],
+                "type": "select",
+                "table": "dn_optionalyesno",
+                "autoform": {
+                  "readonly": false,
+                  "optional": false,
+                  "autocomplete": true,
+                  "value": "dn_vehiclerollablecode"
+                },
+                "requiredvisibility": {
+                  "property": "dn_towtodepotcode",
+                  "value": 1
+                }
+              },
+              {
+                "name": "_dn_locationid_value",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Op welk Depot gelost?"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Depot?"
+                  }
+                ],
+                "type": "select",
+                "table": "dn_locations",
+                "sortoptions": {
+                  "orderby": "distance",
+                  "direction": "ascending"
+                },
+                "autoform": {
+                  "readonly": false,
+                  "optional": false,
+                  "autocomplete": true,
+                  "value": "_dn_locationid_value"
+                },
+                "requiredvisibility": {
+                  "property": "dn_towtodepotcode",
+                  "value": 1
+                }
+              },
+              {
+                "name": "dn_valueindicationcode",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Waardeschatting voertuig"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Value indication"
+                  }
+                ],
+                "type": "select",
+                "table": "dn_valueindicationcode",
+                "autoform": {
+                  "readonly": false,
+                  "optional": false,
+                  "autocomplete": true,
+                  "value": "dn_valueindicationcode"
+                },
+                "requiredvisibility": {
+                  "property": "dn_towtodepotcode",
+                  "value": 1
+                }
+              },
+              {
+                "name": "dn_deliveryname",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Naam afleveradres"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Name Delivery adress"
+                  }
+                ],
+                "type": "string",
+                "autoform": {
+                  "readonly": false,
+                  "optional": false,
+                  "value": "dn_deliveryname",
+                  "validations": [
+                    {
+                      "validation_type": "max-len",
+                      "value": 250
+                    }
+                  ]
+                },
+                "requiredvisibility": {
+                  "property": "dn_towmoveexecutedcode",
+                  "value": 1
+                }
+              },
+              {
+                "name": "_dn_deliverycountryid_value",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Land afleveradres"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Country Delivery address"
+                  }
+                ],
+                "type": "select",
+                "table": "_dn_deliverycountryid_value",
+                "autoform": {
+                  "readonly": false,
+                  "optional": false,
+                  "autocomplete": true,
+                  "value": "_dn_deliverycountryid_value"
+                },
+                "requiredvisibility": {
+                  "property": "dn_towmoveexecutedcode",
+                  "value": 1
+                }
+              },
+              {
+                "name": "dn_deliveryadressbar",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Adres afleveradres zoeken"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Search delivery location"
+                  }
+                ],
+                "type": "address",
+                "autoform": {
+                  "readonly": false,
+                  "optional": true,
+                  "value": "dn_deliveryadressbar",
+                  "validations": [
+                    {
+                      "validation_type": "max-len",
+                      "value": 100
+                    }
+                  ]
+                },
+                "requiredvisibility": {
+                  "property": "dn_towmoveexecutedcode",
+                  "value": 1
+                },
+                "address_components": {
+                  "name": "dn_deliveryname",
+                  "country": "_dn_deliverycountryid_value",
+                  "postalcode": "dn_deliverypostalcode",
+                  "houseno": "dn_deliveryhouseno",
+                  "housenoadd": "dn_deliveryhousenoaddition",
+                  "street": "dn_deliverystreet",
+                  "city": "dn_deliverycity",
+                  "province": ""
+                }
+              },
+              {
+                "name": "dn_deliverypostalcode",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Postcode afleveradres"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Postalcode Delivery address"
+                  }
+                ],
+                "type": "string",
+                "autoform": {
+                  "readonly": false,
+                  "optional": true,
+                  "value": "dn_deliverypostalcode",
+                  "validations": [
+                    {
+                      "validation_type": "max-len",
+                      "value": 10
+                    }
+                  ]
+                },
+                "zipcode_components": {
+                  "postalcode": "dn_deliverypostalcode",
+                  "houseno": "dn_deliveryhouseno",
+                  "street": "dn_deliverystreet",
+                  "city": "dn_deliverycity"
+                },
+                "requiredvisibility": {
+                  "property": "dn_towmoveexecutedcode",
+                  "value": 1
+                }
+              },
+              {
+                "name": "dn_deliveryhouseno",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Huisnummer afleveradres"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Houseno Delivery address"
+                  }
+                ],
+                "type": "number",
+                "autoform": {
+                  "readonly": false,
+                  "optional": true,
+                  "value": "dn_deliveryhouseno",
+                  "validations": [
+                    {
+                      "validation_type": "max-len",
+                      "value": 10
+                    }
+                  ]
+                },
+                "requiredvisibility": {
+                  "property": "dn_towmoveexecutedcode",
+                  "value": 1
+                }
+              },
+              {
+                "name": "dn_deliveryhousenoaddition",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Huisnummer toevoeging afleveradres"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Houseno ext. Delivery address"
+                  }
+                ],
+                "type": "string",
+                "autoform": {
+                  "readonly": false,
+                  "optional": true,
+                  "value": "dn_deliveryhousenoaddition",
+                  "validations": [
+                    {
+                      "validation_type": "max-len",
+                      "value": 10
+                    }
+                  ]
+                },
+                "requiredvisibility": {
+                  "property": "dn_towmoveexecutedcode",
+                  "value": 1
+                }
+              },
+              {
+                "name": "dn_deliverycity",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Plaats afleveradres"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "City Delivery address"
+                  }
+                ],
+                "type": "string",
+                "autoform": {
+                  "readonly": false,
+                  "optional": true,
+                  "value": "dn_deliverycity",
+                  "validations": [
+                    {
+                      "validation_type": "max-len",
+                      "value": 100
+                    }
+                  ]
+                },
+                "requiredvisibility": {
+                  "property": "dn_towmoveexecutedcode",
+                  "value": 1
+                }
+              },
+              {
+                "name": "dn_deliverystreet",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Straat afleveradres"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Street Delivery address"
+                  }
+                ],
+                "type": "string",
+                "autoform": {
+                  "readonly": false,
+                  "optional": true,
+                  "value": "dn_deliverystreet",
+                  "validations": [
+                    {
+                      "validation_type": "max-len",
+                      "value": 250
+                    }
+                  ]
+                },
+                "requiredvisibility": {
+                  "property": "dn_towmoveexecutedcode",
+                  "value": 1
+                }
+              },
+              {
+                "name": "dn_deliverydistancedepot",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Afstand tot depot"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Distance to depot"
+                  }
+                ],
+                "type": "number",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "dn_deliverydistancedepot"
+                },
+                "requiredvisibility": {
+                  "property": "dn_towmoveexecutedcode",
+                  "value": 1
+                }
+              },
+              {
+                "name": "dn_totaldistance",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Afstand totaal"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Distance total ride"
+                  }
+                ],
+                "type": "number",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "dn_totaldistance"
+                },
+                "requiredvisibility": {
+                  "property": "dn_towmoveexecutedcode",
+                  "value": 1
+                }
+              },
+              {
+                "name": "dn_deliverydistancedepot",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Afstand tot Depot"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Distance tot Depot"
+                  }
+                ],
+                "type": "number",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "dn_deliverydistancedepot"
+                },
+                "requiredvisibility": {
+                  "property": "dn_deliverydistancedepot",
+                  "value": 1
+                }
+              },
+              {
+                "name": "dn_totaldistance",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Afstand totaal"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Distance total ride"
+                  }
+                ],
+                "type": "number",
+                "autoform": {
+                  "readonly": true,
+                  "optional": true,
+                  "value": "dn_totaldistance"
+                },
+                "requiredvisibility": {
+                  "property": "dn_towtodepotcode",
+                  "value": 1
+                }
+              },
+              {
+                "name": "dn_storageblockcolorcode",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Blokkleur"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Block color"
+                  }
+                ],
+                "type": "select",
+                "table": "dn_storageblockcolorcode",
+                "autoform": {
+                  "readonly": false,
+                  "optional": true,
+                  "autocomplete": true,
+                  "value": "dn_storageblockcolorcode"
+                },
+                "requiredvisibility": {
+                  "property": "dn_towtodepotcode",
+                  "value": 1
+                }
+              },
+              {
+                "name": "dn_storageblocknumber",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Bloknummer (1-99)"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Block number (1-99)"
+                  }
+                ],
+                "type": "number",
+                "autoform": {
+                  "readonly": false,
+                  "optional": true,
+                  "value": "dn_storageblocknumber"
+                },
+                "requiredvisibility": {
+                  "property": "dn_towtodepotcode",
+                  "value": 1
+                }
+              },
+              {
+                "name": "dn_damagedescription",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Omschrijving eventuele schade"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Description possible damage"
+                  }
+                ],
+                "type": "textarea",
+                "autoform": {
+                  "readonly": false,
+                  "optional": true,
+                  "value": "dn_damagedescription"
+                }
+              }
+            ]
+          },
+          {
+            "header": [
+              {
+                "language-code": 1043,
+                "value": "Handtekeningen"
+              },
+              {
+                "language-code": 1044,
+                "value": "Signatures"
+              }
+            ],
+            "fields": [
+              {
+                "name": "signature_addressee",
+                "extrafields": {
+                  "email": [
+                    {
+                      "language-code": 1043,
+                      "value": "Bewaarder emailadres"
+                    },
+                    {
+                      "language-code": 1044,
+                      "value": "Receiver emailadres"
+                    }
+                  ],
+                  "name": [
+                    {
+                      "language-code": 1043,
+                      "value": "Bewaarder Naam"
+                    },
+                    {
+                      "language-code": 1044,
+                      "value": "Receiver name"
+                    }
+                  ]
+                },
+                "subFields": {
+                  "email": {
+                    "label": [
+                      {
+                        "language-code": 1043,
+                        "value": "Bewaarder emailadres"
+                      },
+                      {
+                        "language-code": 1044,
+                        "value": "Receiver emailadres"
+                      }
+                    ],
+                    "type": "string"
+                  },
+                  "name": {
+                    "label": [
+                      {
+                        "language-code": 1043,
+                        "value": "Bewaarder Naam"
+                      },
+                      {
+                        "language-code": 1044,
+                        "value": "Receiver name"
+                      }
+                    ],
+                    "type": "string"
+                  },
+                  "transportConditions": {
+                    "label": [
+                      {
+                        "language-code": 1043,
+                        "value": "Akkoord Vervoerscondities"
+                      },
+                      {
+                        "language-code": 1044,
+                        "value": "Accept transport conditions"
+                      }
+                    ],
+                    "type": "conditions",
+                    "url": "https://berging-mobiliteit.nl/disclaimer/20200526_abvv_vbm_rev2-0/"
+                  }
+                },
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Handtekening bewaarder namens Bewaarplaats"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Signature on behalf of receiver"
+                  }
+                ],
+                "type": "signature",
+                "autoform": {
+                  "readonly": false,
+                  "optional": false
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]

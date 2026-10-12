@@ -10,9 +10,21 @@ export type {
   PermissionStatus,
   PermissionStep,
 } from './domain/permission-step';
+export {
+  DISCLOSURE_ORDER,
+  markDisclosureSeen,
+  nextDisclosureStep,
+  parseDisclosureSeenList,
+} from './domain/permission-disclosure';
+export type { DisclosureKind } from './domain/permission-disclosure';
 export type { DevicePermissions } from './service/device-permissions';
 export { createLanguageSettings, LANGUAGE_KEY } from './service/language-settings';
 export type { LanguageSettings } from './service/language-settings';
+export {
+  createPermissionDisclosurePreference,
+  PERMISSION_DISCLOSURE_SEEN_KEY,
+} from './service/permission-disclosure-preference';
+export type { PermissionDisclosurePreference } from './service/permission-disclosure-preference';
 export { createSignOutGuard } from './service/sign-out-guard';
 export type { SignOutFailure, SignOutGuard } from './service/sign-out-guard';
 export { createAllocationUnitManagement } from './service/allocation-unit-management';

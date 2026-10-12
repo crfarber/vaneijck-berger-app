@@ -1,15 +1,20 @@
 import { createContext, useContext, type ReactNode } from 'react';
 import type { ReferenceDataService } from '@/domeinen/reference-data';
+import type { PushRuntime } from '@/domeinen/notifications';
 import type {
   AllocationUnitManagement,
   DevicePermissions,
   LanguageSettings,
+  PermissionDisclosurePreference,
   SignOutGuard,
 } from '../index';
 
 type SettingsContextValue = {
   permissions: DevicePermissions;
   languageSettings: LanguageSettings;
+  permissionDisclosurePreference: PermissionDisclosurePreference;
+  /** Restart after the disclosure screen grants notification permission. */
+  pushRuntime: PushRuntime;
   signOutGuard: SignOutGuard;
   allocationUnitManagement: AllocationUnitManagement;
   referenceDataService: ReferenceDataService;
@@ -41,6 +46,14 @@ export function useDevicePermissions(): DevicePermissions {
 
 export function useLanguageSettings(): LanguageSettings {
   return useSettings().languageSettings;
+}
+
+export function usePermissionDisclosurePreference(): PermissionDisclosurePreference {
+  return useSettings().permissionDisclosurePreference;
+}
+
+export function usePushRuntime(): PushRuntime {
+  return useSettings().pushRuntime;
 }
 
 export function useSignOutGuard(): SignOutGuard {

@@ -30,3 +30,4 @@ export { ExternalUnitAvailabilityScreen } from './screens/external-unit-availabi
 export { ExternalUnitEndDateScreen } from './screens/external-unit-end-date-screen';
 export { CurrentUnitOverviewScreen } from './screens/current-unit-overview-screen';
 export { allocationUnitKeys, useCurrentUnitOverview } from './hooks/use-current-unit-overview';
+export { NumberPlate } from './components/number-plate';

@@ -1,6 +1,8 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { router, useLocalSearchParams } from 'expo-router';
+import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Pressable } from 'react-native';
 import {
   allocationUnitKeys,
   CurrentUnitOverviewScreen,
@@ -8,29 +10,42 @@ import {
   useUnitRegistrationFlow,
 } from '@/domeinen/allocation-unit/ui';
 import { allocationKeys } from '@/domeinen/allocations';
-import { useCompleteAllocationAccept } from '@/domeinen/allocations/ui';
+import {
+  hasActiveAllocations,
+  useAllocations,
+  useCompleteAllocationAccept,
+} from '@/domeinen/allocations/ui';
 import { useSession } from '@/domeinen/auth/ui';
 import { onboardingGateKey } from '@/domeinen/onboarding/ui';
+import { ChevronLeftSVG } from '@/shared/ui/icons/chevron-left';
+import { goBackOrReplace } from '@/shared/ui/navigation';
+import { colors } from '@/shared/ui/theme';
 
 export default function UnitIndexRoute() {
+  const { t } = useTranslation();
   const userType = useSession((state) => state.userType);
   const queryClient = useQueryClient();
   const { mode, returnTo } = useLocalSearchParams<{ mode?: string; returnTo?: string }>();
   const { start } = useUnitRegistrationFlow();
   const completeAccept = useCompleteAllocationAccept();
+  const { sections } = useAllocations();
+  const hasActiveWork = hasActiveAllocations(sections);
   const isOnboarding = mode === 'onboarding';
   const isAccepting = mode === 'accept';
   const extendOnly = mode === 'extend';
+  const fromSettings = returnTo === 'allocation-unit-management';
+
+  const goBack = useCallback(() => {
+    goBackOrReplace(router, fromSettings ? '/settings' : '/');
+  }, [fromSettings]);
 
   const onSaved = useCallback(() => {
     void completeAccept(() => {
       void queryClient.invalidateQueries({ queryKey: onboardingGateKey });
       void queryClient.invalidateQueries({ queryKey: allocationUnitKeys.current() });
-      router.replace(
-        returnTo === 'allocation-unit-management' ? '/allocation-unit-management' : '/',
-      );
+      router.replace(fromSettings ? '/allocation-unit-management' : '/');
     });
-  }, [completeAccept, queryClient, returnTo]);
+  }, [completeAccept, fromSettings, queryClient]);
 
   const openRegistration = useCallback(
     (replace: boolean) => {
@@ -79,10 +94,28 @@ export default function UnitIndexRoute() {
   }
 
   return (
-    <CurrentUnitOverviewScreen
-      onChangeUnit={changeUnit}
-      onChangeEndDate={changeEndDate}
-      onMissingUnit={registerMissingUnit}
-    />
+    <>
+      <Stack.Screen
+        options={{
+          headerLeft: () => (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t('common.back')}
+              hitSlop={8}
+              onPress={goBack}
+              style={{ paddingHorizontal: 4 }}
+            >
+              <ChevronLeftSVG color={colors.brandText} />
+            </Pressable>
+          ),
+        }}
+      />
+      <CurrentUnitOverviewScreen
+        hasActiveWork={hasActiveWork}
+        onChangeUnit={changeUnit}
+        onChangeEndDate={changeEndDate}
+        onMissingUnit={registerMissingUnit}
+      />
+    </>
   );
 }

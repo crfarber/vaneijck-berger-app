@@ -8,6 +8,8 @@ import { CollapsibleSectionHeader } from '@/shared/ui/collapsible-section-header
 import { CameraSVG } from '@/shared/ui/icons/camera';
 import CheckIcon from '@/shared/ui/icons/check';
 import { CarSVG, MotorcycleSVG, TruckSVG } from '@/shared/ui/icons/vehicles';
+import { Toolbar, ToolbarSlot } from '@/shared/ui/toolbar';
+import { ToolbarButton } from '@/shared/ui/toolbar-button';
 import { colors, spacing } from '@/shared/ui/theme';
 import {
   PHOTO_CATEGORY_LABEL,
@@ -296,33 +298,27 @@ export function PhotoOverviewScreen({
       }
     >
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.segmentedContainer}>
+        <Toolbar>
           {VEHICLE_TYPES.map(({ key, label, Icon }) => {
             const selected = vehicleType === key;
+            const iconColor = selected ? colors.brandText : colors.brandLight;
             return (
-              <Pressable
-                key={key}
-                accessibilityRole="button"
-                onPress={() => setVehicleType(key)}
-                style={[styles.segmentedOption, selected && styles.segmentedOptionSelected]}
-              >
-                {Icon ? (
-                  <Icon size={22} color={selected ? colors.text : '#fff'} />
-                ) : (
-                  <View style={styles.otherPill}>
-                    <Text style={styles.otherPillText}>?</Text>
-                  </View>
-                )}
-                <Text
-                  style={[styles.segmentedText, selected && styles.segmentedTextSelected]}
-                  numberOfLines={1}
+              <ToolbarSlot key={key}>
+                <ToolbarButton
+                  accessibilityLabel={label}
+                  selected={selected}
+                  onPress={() => setVehicleType(key)}
                 >
-                  {label}
-                </Text>
-              </Pressable>
+                  {Icon ? (
+                    <Icon size={22} color={iconColor} />
+                  ) : (
+                    <Text style={[styles.otherPillText, { color: iconColor }]}>?</Text>
+                  )}
+                </ToolbarButton>
+              </ToolbarSlot>
             );
           })}
-        </View>
+        </Toolbar>
         {phase === PHOTO_PHASE.delivery &&
         (loadPhotos.length > 0 || serverLoadPhotos.length > 0) ? (
           <>
@@ -581,7 +577,7 @@ function positionName(position: PhotoPosition): string {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#F7F7F8' },
-  content: { paddingTop: 8, paddingBottom: 24, gap: 0 },
+  content: { gap: 0 },
   fieldLabel: {
     color: colors.textMuted,
     fontSize: 11,
@@ -590,42 +586,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     marginTop: 4,
   },
-  segmentedContainer: {
-    flexDirection: 'row',
-    backgroundColor: 'rgba(0, 0, 0, 0.75)',
-    borderWidth: 1,
-    borderColor: 'rgba(0, 0, 0, 0.025)',
-    borderRadius: 14,
-    padding: 5,
-    gap: 6,
-  },
-  segmentedOption: {
-    flex: 1,
-    height: 58,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingTop: 6,
-  },
-  segmentedOptionSelected: {
-    backgroundColor: colors.brand,
-    shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 1 },
-    elevation: 2,
-  },
-  segmentedText: { color: '#fff', fontWeight: '700', fontSize: 11.5 },
-  segmentedTextSelected: { color: colors.text },
-  otherPill: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  otherPillText: { color: colors.textMuted, fontSize: 14, fontWeight: '700' },
+  otherPillText: { fontSize: 18, fontWeight: '700' },
   counterText: { color: colors.textMuted, fontSize: 12, fontWeight: '700' },
   gridTwo: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   requiredTile: {
@@ -721,8 +682,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   stripTile: {
-    width: '50%',
+    // Fixed width: % in a horizontal ScrollView breaks content-size and clips the end.
+    width: 168,
     height: 112,
+    flexShrink: 0,
   },
   extraImage: { width: '100%', height: 70, backgroundColor: '#E7E8EA' },
   stripImage: { height: 82, backgroundColor: '#222428' },

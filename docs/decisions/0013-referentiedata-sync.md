@@ -41,8 +41,8 @@ zie de tests in `service/reference-data-service.test.ts`.
   eenheidkeuze). Die beslissingen horen bij slice 3 (onboarding); deze slice levert alleen het
   werkende mechanisme. De container start een sync op de achtergrond zodra een sessie er is
   (inloggen of app-herstart), en logt voortgang en fouten (`logger`, categorie `sync`) — er is nog
-  geen voortgangsbalk. Bij uitloggen blijft de gecommitteerde syncdatum staan zodat de volgende
-  login alleen wijzigingen vraagt; een half afgemaakte pending-batch wordt wel afgebroken.
+  geen voortgangsbalk. Bij uitloggen wist `clearAll()` since, pending, entities en entity-data
+  (open vraag 12); de volgende login start een volle sync.
 - Nog niet tegen de echte backend getest: de build- en architectuurverificatie zijn wel gedaan, maar
   er is geen sessie met een account dat referentiedata teruggeeft gebruikt in deze sessie.
 - **Lijst van entiteiten (slice 12).** Na elke geslaagde entiteit staat de naam in

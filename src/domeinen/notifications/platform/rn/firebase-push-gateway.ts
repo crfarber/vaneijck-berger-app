@@ -10,7 +10,6 @@ import {
   onNotificationOpenedApp,
   onTokenRefresh,
   registerDeviceForRemoteMessages,
-  requestPermission,
 } from '@react-native-firebase/messaging';
 import { Platform } from 'react-native';
 import type { Logger } from '@/shared/logging/logger';
@@ -92,17 +91,13 @@ export function createFirebasePushGateway(logger?: Logger): PushGateway {
       }
     },
 
+    /**
+     * Read-only. The OS dialog is asked from DevicePermissions (disclosure / settings), so a
+     * signed-in start never races a disclosure screen.
+     */
     async permission() {
       const current = await hasPermission(firebaseMessaging);
-      if (permissionGranted(current)) {
-        return 'granted';
-      }
-      const asked = await requestPermission(firebaseMessaging, {
-        alert: true,
-        badge: true,
-        sound: true,
-      });
-      return permissionGranted(asked) ? 'granted' : 'denied';
+      return permissionGranted(current) ? 'granted' : 'denied';
     },
 
     token: readToken,

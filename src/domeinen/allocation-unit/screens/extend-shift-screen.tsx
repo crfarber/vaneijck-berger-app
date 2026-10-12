@@ -41,7 +41,6 @@ export function ExtendShiftScreen({
       footer={
         <Button label={t('unit.extendShiftSubmit')} onPress={() => void submit()} loading={busy} />
       }
-      backgroundColor={colors.background}
     >
       <Text style={styles.title}>{t('unit.extendShiftTitle')}</Text>
       <Text style={styles.hint}>{t('unit.extendShiftHint')}</Text>

@@ -35,10 +35,12 @@ import { createRdwApi, type RdwApi } from '@/domeinen/rdw';
 import {
   createAllocationUnitManagement,
   createLanguageSettings,
+  createPermissionDisclosurePreference,
   createSignOutGuard,
   type AllocationUnitManagement,
   type DevicePermissions,
   type LanguageSettings,
+  type PermissionDisclosurePreference,
   type SignOutGuard,
 } from '@/domeinen/settings';
 import {
@@ -65,6 +67,7 @@ import {
   type NotificationHistory,
   type PushGateway,
   type PushNavigation,
+  type PushRuntime,
 } from '@/domeinen/notifications';
 import {
   createPhotosApi,
@@ -197,6 +200,13 @@ export type Container = {
   /** Shared timer port — used by toasts and the status overlay. */
   scheduler: Scheduler;
   languageSettings: LanguageSettings;
+  /** Which post-login permission disclosures the berger already dismissed. */
+  permissionDisclosurePreference: PermissionDisclosurePreference;
+  /**
+   * Push listen/register. Permission is requested from the disclosure / settings screens; call
+   * `start` again after notifications are granted.
+   */
+  pushRuntime: PushRuntime;
   /** Voluntary sign-out from settings; blocked while an assignment is in progress. */
   signOutGuard: SignOutGuard;
   allocationUnitManagement: AllocationUnitManagement;
@@ -209,6 +219,38 @@ export type Container = {
   start(): Promise<void>;
   stop(): void;
 };
+
+/**
+ * Experiment form definitions from `docs/diensten/experiment`. Metro inlines `__DEV__` and drops
+ * the require from release bundles, so those JSON files stay out of the store build. Vitest leaves
+ * `__DEV__` unset, so the container tests keep using synced reference data.
+ */
+function devBundledServiceDefinitions(): readonly unknown[] | undefined {
+  if (typeof __DEV__ === 'boolean' && __DEV__) {
+    const loaded = require('./dev/experiment-service-definitions') as {
+      experimentServiceDefinitions?: readonly unknown[];
+      default?: { experimentServiceDefinitions?: readonly unknown[] };
+    };
+    const definitions =
+      loaded.experimentServiceDefinitions ?? loaded.default?.experimentServiceDefinitions;
+    if (definitions === undefined) {
+      throw new Error('Experiment service definitions did not export a catalog');
+    }
+    return definitions;
+  }
+  return undefined;
+}
+
+/** Live re-read of the experiment JSON. Metro serves the files from disk; a release build omits this. */
+function devBundledDefinitionLoader(): (() => Promise<readonly unknown[]>) | undefined {
+  if (typeof __DEV__ === 'boolean' && __DEV__) {
+    const loaded = require('./dev/load-experiment-service-definitions') as {
+      loadExperimentServiceDefinitionsFromDevServer: () => Promise<readonly unknown[]>;
+    };
+    return () => loaded.loadExperimentServiceDefinitionsFromDevServer();
+  }
+  return undefined;
+}
 
 const timerScheduler: Scheduler = {
   schedule(callback, delayMs) {
@@ -311,11 +353,19 @@ export function createContainer(input: ContainerInput): Container {
     });
   };
 
-  const runReferenceDataAbortPending = (): void => {
-    referenceDataService.abortPending().catch((error: unknown) => {
-      logger.warn('sync', 'Could not clear reference-data pending batch', { error });
+  const runReferenceDataClearAll = (): void => {
+    referenceDataService.clearAll().catch((error: unknown) => {
+      logger.warn('sync', 'Could not clear reference data on sign-out', { error });
     });
   };
+
+  const endDatePreference = createEndDatePreference(input.keyValueStore);
+  const recentTruckPreference = createRecentTruckPreference(input.keyValueStore);
+  const homebasePreference = createHomebasePreference(input.keyValueStore);
+  const permissionDisclosurePreference = createPermissionDisclosurePreference({
+    store: input.keyValueStore,
+    logger,
+  });
 
   const sessionStore = createSessionStore();
   const unbindSessionStore = bindSessionStore(tokenProvider, sessionStore);
@@ -426,9 +476,8 @@ export function createContainer(input: ContainerInput): Container {
     provider: tokenProvider,
     external,
     internal: input.internalAuth,
-    // Data of the previous user must not be visible to the next one. Keep the committed
-    // reference-data since date so the next login only asks what changed (docs/decisions/0013);
-    // drop a half-done pending batch so it is not resumed for another session.
+    // Data of the previous user must not be visible to the next one. Only the language choice
+    // survives logout (open question 12).
     onSignedOut: async () => {
       cancelPendingCacheSave();
       queryClient.clear();
@@ -442,19 +491,23 @@ export function createContainer(input: ContainerInput): Container {
       await outbox.clearAll();
       await serviceFormDrafts.clearAll();
       await notificationHistory.clear();
-      return referenceDataService.abortPending();
+      await permissionDisclosurePreference.clear();
+      await endDatePreference.clear();
+      await homebasePreference.clear();
+      await recentTruckPreference.clear();
+      await referenceDataService.clearAll();
     },
     logger,
   });
 
-  // A session that ends by itself (refresh token refused) also clears the cache. A session that
+  // A session that ends by itself (refresh token refused) also clears user data. A session that
   // starts or was already there at launch kicks off a reference-data sync in the background.
   const unsubscribeSessionEvents = tokenProvider.subscribe((event) => {
     if (event.type === 'signed-out' && event.reason === 'expired') {
       cancelPendingCacheSave();
       queryClient.clear();
       void clearQueryCache(input.keyValueStore);
-      runReferenceDataAbortPending();
+      runReferenceDataClearAll();
       photoService.stop();
       void (async () => {
         await photoMigration;
@@ -466,6 +519,10 @@ export function createContainer(input: ContainerInput): Container {
       void outbox.clearAll();
       void serviceFormDrafts.clearAll();
       void notificationHistory.clear();
+      void permissionDisclosurePreference.clear();
+      void endDatePreference.clear();
+      void homebasePreference.clear();
+      void recentTruckPreference.clear();
     }
     if (event.type === 'signed-in' || (event.type === 'restored' && event.userType !== null)) {
       runReferenceDataSync();
@@ -598,9 +655,9 @@ export function createContainer(input: ContainerInput): Container {
     reassignService: createReassignService({ api: allocationsApi, referenceDataService, logger }),
     workerApi,
     workerAvailabilityService,
-    endDatePreference: createEndDatePreference(input.keyValueStore),
-    recentTruckPreference: createRecentTruckPreference(input.keyValueStore),
-    homebasePreference: createHomebasePreference(input.keyValueStore),
+    endDatePreference,
+    recentTruckPreference,
+    homebasePreference,
     allocationUnitService,
     referenceDataService,
     rdwApi,
@@ -611,6 +668,8 @@ export function createContainer(input: ContainerInput): Container {
       referenceData: referenceDataService,
       locationReader: input.locationReader,
       logger,
+      bundledDefinitions: devBundledServiceDefinitions(),
+      bundledDefinitionLoader: devBundledDefinitionLoader(),
     }),
     serviceFormDrafts,
     photoService,
@@ -624,6 +683,8 @@ export function createContainer(input: ContainerInput): Container {
     statusOverlay,
     scheduler,
     languageSettings,
+    permissionDisclosurePreference,
+    pushRuntime,
     signOutGuard,
     allocationUnitManagement,
 

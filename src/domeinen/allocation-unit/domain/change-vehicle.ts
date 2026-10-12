@@ -1,21 +1,18 @@
 import type { ReregisterOutcome, ReregisterReason } from './reregister';
 
 /**
- * What the "change vehicle" button should do after a fresh `decideReregister` / `checkReregister`.
- * Only active work blocks a change; with pending assignments alone the berger may switch vehicle,
- * as in the old app (open question 32).
+ * What the "change vehicle" toolbar button should do after a fresh `decideReregister` /
+ * `checkReregister`. Active work no longer blocks opening the current-unit overview; that guard
+ * lives on the overview's edit actions (backend still refuses `ACTIVE_INCIDENT`).
  */
 export type ChangeVehicleDecision =
   | { action: 'call-dispatch' }
-  | { action: 'alert'; reason: 'no-vehicle' | 'active-work' }
+  | { action: 'alert'; reason: 'no-vehicle' }
   | { action: 'confirm-then-register'; reason: Exclude<ReregisterReason, 'expired'> }
   | { action: 'extend-shift' }
-  | { action: 'register' };
+  | { action: 'open-overview' };
 
-export function decideChangeVehicle(
-  outcome: ReregisterOutcome,
-  hasActiveAllocations: boolean,
-): ChangeVehicleDecision {
+export function decideChangeVehicle(outcome: ReregisterOutcome): ChangeVehicleDecision {
   if (outcome.kind === 'blocked') {
     return outcome.reason === 'no-unit'
       ? { action: 'call-dispatch' }
@@ -30,11 +27,6 @@ export function decideChangeVehicle(
     return { action: 'confirm-then-register', reason: outcome.reason };
   }
 
-  // not-needed: the old app still opened SelectTransport. The backend refuses a unit change
-  // while work is in progress (ACTIVE_INCIDENT), so warn first instead of a failing form.
-  if (hasActiveAllocations) {
-    return { action: 'alert', reason: 'active-work' };
-  }
-
-  return { action: 'register' };
+  // not-needed: open the current-unit overview; edit actions there guard against active work.
+  return { action: 'open-overview' };
 }

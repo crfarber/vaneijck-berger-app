@@ -6,6 +6,8 @@ const MAX_RECENT_TRUCKS = 5;
 export type RecentTruckPreference = {
   load(): Promise<readonly string[]>;
   remember(truckId: string): Promise<void>;
+  /** Drops the recent-truck list on sign-out. */
+  clear(): Promise<void>;
 };
 
 function parseTruckIds(value: string | null): string[] {
@@ -39,6 +41,10 @@ export function createRecentTruckPreference(store: KeyValueStore): RecentTruckPr
         MAX_RECENT_TRUCKS,
       );
       await store.setItem(RECENT_TRUCK_IDS_KEY, JSON.stringify(next));
+    },
+
+    async clear() {
+      await store.removeItem(RECENT_TRUCK_IDS_KEY);
     },
   };
 }

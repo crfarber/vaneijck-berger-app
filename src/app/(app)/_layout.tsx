@@ -46,6 +46,14 @@ export default function AppLayout() {
         options={{ title: t('settings.permissions.title'), headerTitle: undefined }}
       />
       <Stack.Screen
+        name="permission-disclosure"
+        options={{
+          headerShown: false,
+          gestureEnabled: false,
+          headerBackVisible: false,
+        }}
+      />
+      <Stack.Screen
         name="reference-data-sync"
         options={{ title: t('settings.referenceData.title'), headerTitle: undefined }}
       />

@@ -6,6 +6,8 @@ export const REMEMBERED_HOMEBASE_KEY = 'allocationUnit.rememberedHomebaseLocatio
 export type HomebasePreference = {
   load(): Promise<string | null>;
   remember(locationId: string): Promise<void>;
+  /** Drops the remembered homebase on sign-out. */
+  clear(): Promise<void>;
 };
 
 export function createHomebasePreference(store: KeyValueStore): HomebasePreference {
@@ -17,6 +19,10 @@ export function createHomebasePreference(store: KeyValueStore): HomebasePreferen
 
     async remember(locationId) {
       await store.setItem(REMEMBERED_HOMEBASE_KEY, locationId);
+    },
+
+    async clear() {
+      await store.removeItem(REMEMBERED_HOMEBASE_KEY);
     },
   };
 }

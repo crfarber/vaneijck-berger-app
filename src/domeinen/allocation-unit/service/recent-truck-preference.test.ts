@@ -31,4 +31,15 @@ describe('createRecentTruckPreference', () => {
 
     expect(await preference.load()).toEqual([]);
   });
+
+  it('clears recent trucks on sign-out', async () => {
+    const store = createInMemoryStore();
+    const preference = createRecentTruckPreference(store);
+    await preference.remember('truck-1');
+
+    await preference.clear();
+
+    expect(await preference.load()).toEqual([]);
+    expect(store.dump()[RECENT_TRUCK_IDS_KEY]).toBeUndefined();
+  });
 });

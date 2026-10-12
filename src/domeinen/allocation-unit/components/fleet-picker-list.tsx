@@ -1,7 +1,14 @@
 import { useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
-import { colors, radius, spacing } from '@/shared/ui/theme';
+import { useTranslation } from 'react-i18next';
+import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { QRSVG } from '@/shared/ui/icons/qrcode';
+import { colors, radius, spacing, type } from '@/shared/ui/theme';
 import { searchFleet, type FleetVehicle } from '../domain/fleet';
+
+type ListRow =
+  | { kind: 'header'; id: string; title: string }
+  | { kind: 'vehicle'; id: string; vehicle: FleetVehicle }
+  | { kind: 'empty'; id: string; label: string };
 
 /** Searchable, inline fleet picker for the unit registration wizard. */
 export function FleetPickerList({
@@ -9,6 +16,7 @@ export function FleetPickerList({
   recentVehicles = [],
   selectedId,
   onSelect,
+  onScan,
   searchPlaceholder,
   recentTitle,
   allTitle,
@@ -18,11 +26,14 @@ export function FleetPickerList({
   recentVehicles?: readonly FleetVehicle[];
   selectedId: string | null | undefined;
   onSelect: (vehicle: FleetVehicle) => void;
+  /** Optional QR scan action — only for internal trucks, not trailers. */
+  onScan?: () => void;
   searchPlaceholder: string;
   recentTitle?: string;
   allTitle: string;
   emptyLabel: string;
 }) {
+  const { t } = useTranslation();
   const [query, setQuery] = useState('');
   const recentIds = useMemo(
     () => new Set(recentVehicles.map((vehicle) => vehicle.id)),
@@ -34,38 +45,71 @@ export function FleetPickerList({
   );
   const showRecent = query.trim() === '' && recentTitle !== undefined && recentVehicles.length > 0;
 
+  const rows = useMemo((): readonly ListRow[] => {
+    const items: ListRow[] = [];
+    if (showRecent && recentTitle !== undefined) {
+      items.push({ kind: 'header', id: 'recent-header', title: recentTitle });
+      for (const vehicle of recentVehicles) {
+        items.push({ kind: 'vehicle', id: `recent-${vehicle.id}`, vehicle });
+      }
+    }
+    items.push({ kind: 'header', id: 'all-header', title: allTitle });
+    if (shown.length === 0) {
+      items.push({ kind: 'empty', id: 'empty', label: emptyLabel });
+    } else {
+      for (const vehicle of shown) {
+        items.push({ kind: 'vehicle', id: vehicle.id, vehicle });
+      }
+    }
+    return items;
+  }, [allTitle, emptyLabel, recentTitle, recentVehicles, showRecent, shown]);
+
   return (
     <View style={styles.container}>
-      <TextInput
-        value={query}
-        onChangeText={setQuery}
-        placeholder={searchPlaceholder}
-        placeholderTextColor={colors.textMuted}
-        autoCapitalize="characters"
-        autoCorrect={false}
-        style={styles.search}
-      />
-      {showRecent ? <Text style={styles.sectionTitle}>{recentTitle}</Text> : null}
-      {showRecent
-        ? recentVehicles.map((vehicle) => (
-            <VehicleRow
-              key={vehicle.id}
-              vehicle={vehicle}
-              selected={vehicle.id === selectedId}
-              onPress={() => onSelect(vehicle)}
-            />
-          ))
-        : null}
-      <Text style={styles.sectionTitle}>{allTitle}</Text>
-      {shown.length === 0 ? <Text style={styles.empty}>{emptyLabel}</Text> : null}
-      {shown.map((vehicle) => (
-        <VehicleRow
-          key={vehicle.id}
-          vehicle={vehicle}
-          selected={vehicle.id === selectedId}
-          onPress={() => onSelect(vehicle)}
+      <View style={styles.searchContainer}>
+        <TextInput
+          value={query}
+          onChangeText={setQuery}
+          placeholder={searchPlaceholder}
+          placeholderTextColor={colors.textMuted}
+          autoCapitalize="characters"
+          autoCorrect={false}
+          style={styles.search}
         />
-      ))}
+        {onScan ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t('unit.scanTruckTitle')}
+            onPress={onScan}
+            style={({ pressed }) => [styles.scanButton, pressed && styles.pressed]}
+          >
+            <QRSVG color={colors.brandLight} />
+          </Pressable>
+        ) : null}
+      </View>
+      <FlatList
+        data={rows}
+        keyExtractor={(item) => item.id}
+        style={styles.list}
+        contentContainerStyle={styles.listContent}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        renderItem={({ item }) => {
+          if (item.kind === 'header') {
+            return <Text style={styles.sectionTitle}>{item.title}</Text>;
+          }
+          if (item.kind === 'empty') {
+            return <Text style={styles.empty}>{item.label}</Text>;
+          }
+          return (
+            <VehicleRow
+              vehicle={item.vehicle}
+              selected={item.vehicle.id === selectedId}
+              onPress={() => onSelect(item.vehicle)}
+            />
+          );
+        }}
+      />
     </View>
   );
 }
@@ -93,28 +137,48 @@ function VehicleRow({
 }
 
 const styles = StyleSheet.create({
-  container: { gap: spacing.sm },
+  container: { flex: 1, gap: spacing.sm, minHeight: 0 },
   search: {
+    ...type.body,
     minHeight: 56,
     borderRadius: radius.lg,
     backgroundColor: colors.surface,
     paddingHorizontal: spacing.md,
     color: colors.text,
-    fontSize: 18,
+    flex: 1,
   },
-  sectionTitle: { color: colors.textMuted, fontSize: 15, fontWeight: '700', marginTop: spacing.sm },
+  list: { flex: 1 },
+  listContent: { gap: spacing.sm, paddingBottom: spacing.md, backgroundColor: colors.background },
+  sectionTitle: {
+    color: colors.textMuted,
+    ...type.body,
+    fontWeight: '700',
+    marginTop: spacing.sm,
+  },
   row: {
-    minHeight: 64,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    backgroundColor: colors.surface,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.lg,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.border,
+    borderRadius: radius.lg,
     gap: spacing.md,
   },
-
   pressed: { opacity: 0.65 },
-  name: { color: colors.text, fontSize: 20, fontWeight: '700', flexShrink: 1 },
-  number: { color: colors.textMuted, fontSize: 20, fontWeight: '600' },
-  empty: { color: colors.textMuted, fontSize: 16, paddingVertical: spacing.md },
+  name: { color: colors.text, ...type.body, fontWeight: '700', flexShrink: 1 },
+  number: { color: colors.textMuted, ...type.body, fontWeight: '600' },
+  empty: { color: colors.textMuted, ...type.body, paddingVertical: spacing.md },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  scanButton: {
+    padding: spacing.lg,
+    borderRadius: radius.lg,
+    backgroundColor: colors.brandDark,
+  },
 });

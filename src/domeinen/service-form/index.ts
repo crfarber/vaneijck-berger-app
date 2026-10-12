@@ -14,6 +14,17 @@ export {
 } from './domain/rdw-autofill';
 export type { VehicleFieldName } from './domain/rdw-autofill';
 export {
+  buildLicensePlateRenderItems,
+  findLicensePlateGroupInFields,
+  nextLicensePlateState,
+  readLicensePlateGroup,
+} from './domain/license-plate-entry';
+export type {
+  LicensePlateEntryGroup,
+  LicensePlateFieldMapping,
+  LicensePlateGroupConfig,
+} from './domain/license-plate-entry';
+export {
   buildAddressPlaceAnswers,
   readAddressComponentMapping,
   resolveCountryAnswer,

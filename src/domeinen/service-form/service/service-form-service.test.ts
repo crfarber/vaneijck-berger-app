@@ -62,6 +62,8 @@ const definition = (servicecode: number) => ({
 function setup(
   entities: Record<string, unknown[]>,
   location: CurrentLocation = { isValid: false },
+  bundledDefinitions?: readonly unknown[],
+  bundledDefinitionLoader?: () => Promise<readonly unknown[]>,
 ) {
   const stored = { ...entities };
   const getEntity = vi.fn(async (name: string) => stored[name] ?? null);
@@ -76,7 +78,14 @@ function setup(
   const api: ServiceFormApi = { updateService: vi.fn(async () => undefined) };
   const locationReader = { getCurrent: vi.fn(async () => location) };
   const logger = createLogger({ clock: createFakeClock() });
-  const service = createServiceFormService({ api, referenceData, locationReader, logger });
+  const service = createServiceFormService({
+    api,
+    referenceData,
+    locationReader,
+    logger,
+    ...(bundledDefinitions === undefined ? {} : { bundledDefinitions }),
+    ...(bundledDefinitionLoader === undefined ? {} : { bundledDefinitionLoader }),
+  });
   return { service, stored, getEntity, referenceData, api, locationReader, logger };
 }
 
@@ -148,6 +157,84 @@ describe('findDefinition', () => {
     expect(referenceData.reset.mock.invocationCallOrder[0]).toBeLessThan(
       referenceData.sync.mock.invocationCallOrder[0] ?? 0,
     );
+  });
+
+  it('reads a bundled catalog instead of synced reference data', async () => {
+    const bundled = definition(1004);
+    const { service, referenceData, logger } = setup(
+      { dn_definitions: [{ dataDefinition: [definition(1003)] }] },
+      { isValid: false },
+      [bundled],
+    );
+
+    expect(await service.findDefinition(1004)).toEqual(bundled);
+    expect(await service.findDefinition(1003)).toBeNull();
+    expect(referenceData.listEntities).not.toHaveBeenCalled();
+    expect(referenceData.getEntity).not.toHaveBeenCalled();
+    expect(logger.entries().map((entry) => entry.message)).toEqual([
+      'Form definitions come from the bundled catalog, not synced reference data',
+      'No bundled form definition for this service type',
+    ]);
+  });
+
+  it('retries a bundled catalog without resetting or syncing reference data', async () => {
+    const { service, referenceData } = setup({}, { isValid: false }, [definition(1004)]);
+
+    expect(await service.refreshDefinition(1004)).toEqual(definition(1004));
+    expect(referenceData.reset).not.toHaveBeenCalled();
+    expect(referenceData.sync).not.toHaveBeenCalled();
+    expect(referenceData.listEntities).not.toHaveBeenCalled();
+  });
+
+  it('reloads a bundled catalog from the dev server without touching reference data', async () => {
+    const updated = {
+      ...definition(1004),
+      servicename: [{ 'language-code': 1043, value: 'Nieuw' }],
+    };
+    const loader = vi.fn(async () => [updated]);
+    const { service, referenceData } = setup(
+      { dn_definitions: [{ dataDefinition: [definition(1003)] }] },
+      { isValid: false },
+      [definition(1004)],
+      loader,
+    );
+
+    expect(await service.reloadBundledDefinition(1004)).toEqual(updated);
+    expect(await service.findDefinition(1004)).toEqual(updated);
+    expect(loader).toHaveBeenCalledOnce();
+    expect(referenceData.listEntities).not.toHaveBeenCalled();
+    expect(referenceData.getEntity).not.toHaveBeenCalled();
+    expect(referenceData.reset).not.toHaveBeenCalled();
+    expect(referenceData.sync).not.toHaveBeenCalled();
+  });
+
+  it('keeps the previous bundled catalog when a reload fails', async () => {
+    const loader = vi.fn(async () => {
+      throw new Error('dev server down');
+    });
+    const { service, logger } = setup({}, { isValid: false }, [definition(1004)], loader);
+
+    await expect(service.reloadBundledDefinition(1004)).rejects.toThrow('dev server down');
+    expect(await service.findDefinition(1004)).toEqual(definition(1004));
+    expect(logger.entries()[0]).toEqual(
+      expect.objectContaining({
+        level: 'warn',
+        category: 'serviceForm',
+        data: { errorType: 'Error' },
+      }),
+    );
+    expect(JSON.stringify(logger.entries())).not.toContain('dev server down');
+  });
+
+  it('still loads select tables from synced reference data when definitions are bundled', async () => {
+    const { service, getEntity } = setup(
+      { dn_truefalse: [{ Text: 'Ja', Value: true }] },
+      { isValid: false },
+      [definition(1004)],
+    );
+
+    expect(await service.loadTable('dn_truefalse')).toEqual([{ Text: 'Ja', Value: true }]);
+    expect(getEntity.mock.calls.map(([name]) => name)).toEqual(['dn_truefalse']);
   });
 });
 

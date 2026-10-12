@@ -33,5 +33,5 @@ export const type = {
   label: { fontSize: 15, lineHeight: 20, fontWeight: '600' },
   body: { fontSize: 17, lineHeight: 22, fontWeight: '400' },
   header: { fontSize: 20, lineHeight: 25, fontWeight: '600' },
-  large: { fontSize: 22, lineHeight: 28, fontWeight: '700' },
+  large: { fontSize: 28, lineHeight: 28, fontWeight: '700' },
 } as const;

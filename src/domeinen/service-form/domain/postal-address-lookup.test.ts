@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  isPostalAddressLookupReady,
   normalizeDutchPostalCode,
   parsePostalAddressLookupResponse,
 } from './postal-address-lookup';
@@ -9,6 +10,16 @@ describe('postal address lookup', () => {
     expect(normalizeDutchPostalCode('1234ab')).toBe('1234 AB');
     expect(normalizeDutchPostalCode('1234 AB')).toBe('1234 AB');
     expect(normalizeDutchPostalCode('123')).toBeNull();
+  });
+
+  it('allows lookup when the optional house number addition is omitted', () => {
+    expect(isPostalAddressLookupReady('1234 AB', '12')).toBe(true);
+  });
+
+  it('requires a valid Dutch postal code and numeric house number before lookup', () => {
+    expect(isPostalAddressLookupReady('1234 AB', '')).toBe(false);
+    expect(isPostalAddressLookupReady('1234 AB', '12A')).toBe(false);
+    expect(isPostalAddressLookupReady('1234', '12')).toBe(false);
   });
 
   it('parses the current formatted response into a structured address', () => {

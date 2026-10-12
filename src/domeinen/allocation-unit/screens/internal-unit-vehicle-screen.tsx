@@ -1,7 +1,6 @@
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
-import { QRSVG } from '@/shared/ui/icons/qrcode';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { colors } from '@/shared/ui/theme';
 import { FleetPickerList } from '../components/fleet-picker-list';
 import { RegisterUnitLayout } from '../components/register-unit-layout';
@@ -13,26 +12,20 @@ export function InternalUnitVehicleScreen() {
 
   if (internal.loading) {
     return (
-      <View style={styles.center}>
+      <View style={[styles.center, styles.opaque]}>
         <ActivityIndicator color={colors.text} />
       </View>
     );
   }
 
   return (
-    <RegisterUnitLayout title={t('unit.vehicleQuestion')} message={internal.message} footer={null}>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={t('unit.scanTruckTitle')}
-        onPress={() => router.push('/unit/internal/scan')}
-        style={({ pressed }) => [styles.scanButton, pressed && styles.pressed]}
-      >
-        <QRSVG color={colors.text} />
-        <View style={styles.scanText}>
-          <Text style={styles.scanTitle}>{t('unit.scanTruckTitle')}</Text>
-          <Text style={styles.scanHint}>{t('unit.scanTruckHint')}</Text>
-        </View>
-      </Pressable>
+    <RegisterUnitLayout
+      title={t('unit.vehicleQuestion')}
+      message={internal.message}
+      scroll={false}
+      backgroundColor={colors.background}
+      footer={null}
+    >
       <FleetPickerList
         vehicles={internal.trucks}
         recentVehicles={internal.recentTrucks}
@@ -41,6 +34,7 @@ export function InternalUnitVehicleScreen() {
           internal.selectTruck(vehicle);
           router.push('/unit/internal/trailer');
         }}
+        onScan={() => router.push('/unit/internal/scan')}
         searchPlaceholder={t('unit.searchVehiclePlaceholder')}
         recentTitle={t('unit.recentVehicles')}
         allTitle={t('unit.allVehicles')}
@@ -52,18 +46,5 @@ export function InternalUnitVehicleScreen() {
 
 const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  scanButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    padding: 16,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.buttonLight,
-  },
-  scanText: { flex: 1, gap: 2 },
-  scanTitle: { color: colors.text, fontSize: 16, fontWeight: '700' },
-  scanHint: { color: colors.textMuted, fontSize: 14, lineHeight: 20 },
-  pressed: { opacity: 0.75 },
+  opaque: { backgroundColor: colors.background },
 });

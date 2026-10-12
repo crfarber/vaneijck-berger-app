@@ -415,7 +415,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
-    backgroundColor: colors.brandDarker,
+    backgroundColor: colors.brandDark,
     borderRadius: radius.lg,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
@@ -426,7 +426,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   pltrBadge: {
-    backgroundColor: colors.brandDarker,
+    backgroundColor: colors.brandDark,
     borderRadius: radius.xxl,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,

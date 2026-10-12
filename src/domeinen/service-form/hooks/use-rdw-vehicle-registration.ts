@@ -2,10 +2,10 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { isDutchLicensePlate, normalizeLicensePlate } from '@/domeinen/allocation-unit';
 import type { LookupRow, RdwInfo } from '@/domeinen/rdw';
 import {
-  applyRdwVehicleAutofill,
-  clearRdwAutofillAnswers,
-  RDW_AUTOFILL_FIELD_NAMES,
-} from '../domain/rdw-autofill';
+  LEGACY_LICENSE_PLATE_MAPPING,
+  type LicensePlateFieldMapping,
+} from '../domain/license-plate-entry';
+import { applyRdwVehicleAutofillWithMatch, clearRdwAutofillAnswers } from '../domain/rdw-autofill';
 import type { ServiceFormAnswers } from '../domain/types';
 import type { FetchRdwInfo } from './service-form-context';
 import { useServiceFormService } from './service-form-context';
@@ -20,6 +20,15 @@ export type UseRdwVehicleRegistrationParams = {
   getAnswers: () => ServiceFormAnswers;
   updateAnswers: (answers: ServiceFormAnswers) => void;
   setFieldsRequired: (fieldKeys: string[], required: boolean) => void;
+  /** Role → CRM key map; defaults to legacy Van Eijck field names. */
+  mapping?: LicensePlateFieldMapping;
+  /** Called after a successful or failed lookup with match details. */
+  onLookupResult?: (result: {
+    plate: string;
+    info: RdwInfo | null;
+    typeMatched: boolean;
+    failed: boolean;
+  }) => void;
 };
 
 /**
@@ -33,6 +42,8 @@ export function useRdwVehicleRegistration({
   getAnswers,
   updateAnswers,
   setFieldsRequired,
+  mapping = LEGACY_LICENSE_PLATE_MAPPING,
+  onLookupResult,
 }: UseRdwVehicleRegistrationParams) {
   const service = useServiceFormService();
   const [rdwInfo, setRdwInfo] = useState<RdwInfo | null>(null);
@@ -42,11 +53,38 @@ export function useRdwVehicleRegistration({
   const getAnswersRef = useRef(getAnswers);
   const updateAnswersRef = useRef(updateAnswers);
   const fieldKeysRef = useRef(fieldKeys);
+  const mappingRef = useRef(mapping);
+  const onLookupResultRef = useRef(onLookupResult);
   useEffect(() => {
     getAnswersRef.current = getAnswers;
     updateAnswersRef.current = updateAnswers;
     fieldKeysRef.current = fieldKeys;
-  }, [fieldKeys, getAnswers, updateAnswers]);
+    mappingRef.current = mapping;
+    onLookupResultRef.current = onLookupResult;
+  }, [fieldKeys, getAnswers, mapping, onLookupResult, updateAnswers]);
+
+  const plateAnswerKey = (): string => {
+    const current = mappingRef.current;
+    if (current.foundPlate && fieldKeysRef.current.has(current.foundPlate)) {
+      return current.foundPlate;
+    }
+    if (fieldKeysRef.current.has('dn_vehicleregistrationno')) {
+      return 'dn_vehicleregistrationno';
+    }
+    return 'dn_vehicleregistration';
+  };
+
+  const readCurrentPlate = (): string =>
+    normalizeLicensePlate(String(getAnswersRef.current()[plateAnswerKey()]?.displayValue ?? ''));
+
+  const autofillKeys = (): string[] => {
+    const current = mappingRef.current;
+    return [
+      current.country ?? LEGACY_LICENSE_PLATE_MAPPING.country,
+      current.brand ?? LEGACY_LICENSE_PLATE_MAPPING.brand,
+      current.type ?? LEGACY_LICENSE_PLATE_MAPPING.type,
+    ].filter((key) => fieldKeysRef.current.has(key));
+  };
 
   const loadLookupTables = useCallback(async () => {
     const [countries, vehicleBrands, vehicleTypes] = await Promise.all([
@@ -64,7 +102,7 @@ export function useRdwVehicleRegistration({
   const applyAutofill = useCallback(
     async (info: RdwInfo, overwriteRdwDerivedFields: boolean) => {
       const tables = await loadLookupTables();
-      const updates = applyRdwVehicleAutofill({
+      const result = applyRdwVehicleAutofillWithMatch({
         rdwInfo: info,
         answers: getAnswersRef.current(),
         fieldKeys: fieldKeysRef.current,
@@ -73,10 +111,12 @@ export function useRdwVehicleRegistration({
         vehicleTypes: tables.vehicleTypes,
         pleaseSelectLabel,
         overwriteRdwDerivedFields,
+        mapping: mappingRef.current,
       });
-      if (Object.keys(updates).length > 0) {
-        updateAnswersRef.current(updates);
+      if (Object.keys(result.updates).length > 0) {
+        updateAnswersRef.current(result.updates);
       }
+      return result;
     },
     [loadLookupTables, pleaseSelectLabel],
   );
@@ -99,14 +139,7 @@ export function useRdwVehicleRegistration({
 
       void fetchRdwInfo(requestedPlate)
         .then(async (response) => {
-          const currentPlate = normalizeLicensePlate(
-            String(
-              getAnswersRef.current().dn_vehicleregistrationno?.displayValue ??
-                getAnswersRef.current().dn_vehicleregistration?.displayValue ??
-                '',
-            ),
-          );
-          if (currentPlate !== requestedPlate) {
+          if (readCurrentPlate() !== requestedPlate) {
             return;
           }
 
@@ -117,32 +150,43 @@ export function useRdwVehicleRegistration({
             lastSuccessfulPlateRef.current = requestedPlate;
             setRdwInfo(response);
             setRdwLookupFailed(false);
-            await applyAutofill(response, overwrite);
+            const match = await applyAutofill(response, overwrite);
+            onLookupResultRef.current?.({
+              plate: requestedPlate,
+              info: response,
+              typeMatched: match.typeMatched,
+              failed: false,
+            });
             return;
           }
 
           setRdwInfo(null);
           setRdwLookupFailed(true);
           updateAnswersRef.current(
-            clearRdwAutofillAnswers(fieldKeysRef.current, pleaseSelectLabel),
+            clearRdwAutofillAnswers(fieldKeysRef.current, pleaseSelectLabel, mappingRef.current),
           );
+          onLookupResultRef.current?.({
+            plate: requestedPlate,
+            info: null,
+            typeMatched: false,
+            failed: true,
+          });
         })
         .catch(() => {
-          const currentPlate = normalizeLicensePlate(
-            String(
-              getAnswersRef.current().dn_vehicleregistrationno?.displayValue ??
-                getAnswersRef.current().dn_vehicleregistration?.displayValue ??
-                '',
-            ),
-          );
-          if (currentPlate !== requestedPlate) {
+          if (readCurrentPlate() !== requestedPlate) {
             return;
           }
           setRdwInfo(null);
           setRdwLookupFailed(true);
           updateAnswersRef.current(
-            clearRdwAutofillAnswers(fieldKeysRef.current, pleaseSelectLabel),
+            clearRdwAutofillAnswers(fieldKeysRef.current, pleaseSelectLabel, mappingRef.current),
           );
+          onLookupResultRef.current?.({
+            plate: requestedPlate,
+            info: null,
+            typeMatched: false,
+            failed: true,
+          });
         })
         .finally(() => {
           if (inFlightPlateRef.current === requestedPlate) {
@@ -155,9 +199,8 @@ export function useRdwVehicleRegistration({
 
   const handlePlateChange = useCallback(
     (value: string) => {
-      const plateKey = fieldKeysRef.current.has('dn_vehicleregistrationno')
-        ? 'dn_vehicleregistrationno'
-        : 'dn_vehicleregistration';
+      const plateKey = plateAnswerKey();
+      const typeKey = mappingRef.current.type ?? LEGACY_LICENSE_PLATE_MAPPING.type;
       const current = getAnswersRef.current()[plateKey] ?? { value: '', displayValue: '' };
       updateAnswersRef.current({
         [plateKey]: { ...current, value, displayValue: value },
@@ -172,9 +215,9 @@ export function useRdwVehicleRegistration({
       if (plateChanged || normalizedPlate.length < 6) {
         setRdwInfo(null);
         setRdwLookupFailed(false);
-        if (plateChanged && fieldKeysRef.current.has('_dn_vehicletypeid_value')) {
+        if (plateChanged && fieldKeysRef.current.has(typeKey)) {
           updateAnswersRef.current({
-            _dn_vehicletypeid_value: { value: '', displayValue: pleaseSelectLabel },
+            [typeKey]: { value: '', displayValue: pleaseSelectLabel },
           });
         }
       }
@@ -193,27 +236,22 @@ export function useRdwVehicleRegistration({
     if (rdwInfo || rdwLookupFailed) {
       return;
     }
-    const plate = normalizeLicensePlate(
-      String(
-        getAnswersRef.current().dn_vehicleregistrationno?.displayValue ??
-          getAnswersRef.current().dn_vehicleregistration?.displayValue ??
-          '',
-      ),
-    );
+    const plate = readCurrentPlate();
     if (isDutchLicensePlate(plate)) {
       loadRdwForPlate(plate);
     }
   }, [fetchRdwInfo, loadRdwForPlate, rdwInfo, rdwLookupFailed]);
 
   useEffect(() => {
-    const keys = RDW_AUTOFILL_FIELD_NAMES.filter((key) => fieldKeys.has(key));
+    const keys = autofillKeys();
     setFieldsRequired(keys, Boolean(fetchRdwInfo && rdwLookupFailed));
     return () => setFieldsRequired(keys, false);
-  }, [fetchRdwInfo, fieldKeys, rdwLookupFailed, setFieldsRequired]);
+  }, [fetchRdwInfo, fieldKeys, mapping, rdwLookupFailed, setFieldsRequired]);
 
   return {
     rdwInfo,
     rdwLookupFailed,
     handlePlateChange,
+    loadRdwForPlate,
   };
 }

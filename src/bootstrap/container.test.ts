@@ -333,15 +333,14 @@ describe('reference data', () => {
     expect(await container.referenceDataService.getEntity('dn_broken')).toEqual([{ id: 2 }]);
   });
 
-  it('keeps the since date on sign-out so the next login only asks what changed', async () => {
+  it('clears all reference data on sign-out so the next login starts a full sync', async () => {
     const { container, backend, keyValueStore } = setup({ stored: storedSession() });
     backend.on('GET', '/api/client-sync/schema/1043', () => jsonResponse(['dn_servicetype']));
     backend.on('GET', '/api/client-sync/dn_servicetype/1043', () => jsonResponse([{ id: 1 }]));
 
     await container.start();
     await flushPromises();
-    const since = await keyValueStore.getItem('referenceData.since');
-    expect(since).not.toBeNull();
+    expect(await keyValueStore.getItem('referenceData.since')).not.toBeNull();
     await keyValueStore.setItem(
       'referenceData.pending',
       JSON.stringify({ since: '2026-09-22T12:00:00.000Z', entities: ['dn_leftover'] }),
@@ -349,9 +348,10 @@ describe('reference data', () => {
 
     await container.authService.signOut();
 
-    expect(await keyValueStore.getItem('referenceData.since')).toBe(since);
+    expect(await keyValueStore.getItem('referenceData.since')).toBeNull();
     expect(await keyValueStore.getItem('referenceData.pending')).toBeNull();
-    expect(await container.referenceDataService.getEntity('dn_servicetype')).toEqual([{ id: 1 }]);
+    expect(await keyValueStore.getItem('referenceData.entities')).toBeNull();
+    expect(await container.referenceDataService.getEntity('dn_servicetype')).toBeNull();
   });
 
   it('syncs homebaselocations and sends the chosen one when an internal berger registers', async () => {
@@ -460,7 +460,7 @@ describe('keeping the token fresh', () => {
 
 describe('when the session cannot be kept', () => {
   it('signs the user out and clears everything when the refresh token is refused', async () => {
-    const { container, backend, secretStore } = setup({
+    const { container, backend, secretStore, keyValueStore } = setup({
       stored: storedSession({ expiresAt: NOW - MINUTE }),
     });
     backend.on(
@@ -470,8 +470,13 @@ describe('when the session cannot be kept', () => {
     );
     await container.start();
     container.queryClient.setQueryData(['allocations'], ['previous user data']);
+    await container.permissionDisclosurePreference.markSeen('location');
+    await keyValueStore.setItem('referenceData.since', '2026-09-01T00:00:00.000Z');
+    await keyValueStore.setItem('referenceData.entities', JSON.stringify(['dn_a']));
+    await keyValueStore.setItem('referenceData.entity.dn_a', JSON.stringify([{ id: 1 }]));
 
     const error = await container.allocationsApi.list().catch((caught: unknown) => caught);
+    await flushPromises();
 
     expect(error).toBeInstanceOf(AuthExpiredError);
     expect(container.sessionStore.getState()).toMatchObject({
@@ -480,6 +485,10 @@ describe('when the session cannot be kept', () => {
     });
     expect(secretStore.dump()).toEqual({});
     expect(container.queryClient.getQueryData(['allocations'])).toBeUndefined();
+    expect((await container.permissionDisclosurePreference.readSeen()).size).toBe(0);
+    expect(await keyValueStore.getItem('referenceData.since')).toBeNull();
+    expect(await keyValueStore.getItem('referenceData.entities')).toBeNull();
+    expect(await keyValueStore.getItem('referenceData.entity.dn_a')).toBeNull();
   });
 
   it('keeps the session when the network is down during a refresh', async () => {
@@ -500,7 +509,7 @@ describe('when the session cannot be kept', () => {
   });
 
   it('signs out on request and removes the data of that user', async () => {
-    const { container, secretStore } = setup({ stored: storedSession() });
+    const { container, secretStore, keyValueStore } = setup({ stored: storedSession() });
     await container.start();
     container.queryClient.setQueryData(['allocations'], ['data']);
     await container.serviceFormDrafts.save('alloc-1', 'svc-1', {
@@ -511,6 +520,11 @@ describe('when the session cannot be kept', () => {
       recommendedFieldId: null,
       expandedSections: {},
     });
+    await container.permissionDisclosurePreference.markSeen('notifications');
+    await container.endDatePreference.remember(new Date(NOW + 3 * 60 * 60 * 1000));
+    await container.homebasePreference.remember('loc-1');
+    await container.recentTruckPreference.remember('truck-1');
+    await container.languageSettings.choose('en');
 
     await container.authService.signOut();
 
@@ -521,6 +535,11 @@ describe('when the session cannot be kept', () => {
     expect(secretStore.dump()).toEqual({});
     expect(container.queryClient.getQueryData(['allocations'])).toBeUndefined();
     expect(await container.serviceFormDrafts.load('alloc-1', 'svc-1')).toBeNull();
+    expect((await container.permissionDisclosurePreference.readSeen()).size).toBe(0);
+    expect(keyValueStore.dump()['allocationUnit.rememberedEndDate']).toBeUndefined();
+    expect(keyValueStore.dump()['allocationUnit.rememberedHomebaseLocationId']).toBeUndefined();
+    expect(keyValueStore.dump()['allocationUnit.recentTruckIds']).toBeUndefined();
+    expect(keyValueStore.dump()['settings.language']).toBe('en');
   });
 });
 
@@ -1067,7 +1086,7 @@ describe('changing vehicle', () => {
     const sections = createAllocationSections(await container.allocationsApi.list(), []);
     const activeWork = hasActiveAllocations(sections);
     const outcome = await container.allocationUnitService.checkReregister(activeWork);
-    return decideChangeVehicle(outcome, activeWork);
+    return decideChangeVehicle(outcome);
   }
 
   it('lets a berger with only a pending assignment register a new vehicle', async () => {
@@ -1079,7 +1098,7 @@ describe('changing vehicle', () => {
     backend.on('PATCH', '/api/allocation-units', () => new Response(null, { status: 204 }));
     await container.start();
 
-    expect(await decideFromList(container)).toEqual({ action: 'register' });
+    expect(await decideFromList(container)).toEqual({ action: 'open-overview' });
 
     const result = await container.allocationUnitService.registerExternal({
       plateNumber: 'XY-34-ZZ',
@@ -1090,12 +1109,12 @@ describe('changing vehicle', () => {
     expect(backend.callsTo('PATCH', '/api/allocation-units')).toHaveLength(1);
   });
 
-  it('warns instead of registering while an assignment is in progress', async () => {
+  it('opens the current-unit overview while an assignment is in progress (edit actions guard later)', async () => {
     const { container, backend } = setup({ stored: storedSession() });
     backend.on('GET', '/api/allocation-units', validUnit);
     await container.start();
 
-    expect(await decideFromList(container)).toEqual({ action: 'alert', reason: 'active-work' });
+    expect(await decideFromList(container)).toEqual({ action: 'open-overview' });
     expect(backend.callsTo('PATCH', '/api/allocation-units')).toHaveLength(0);
   });
 

@@ -8,10 +8,12 @@ export function ProgressCircle({
   completed,
   total,
   size = 36,
+  accessible = true,
 }: {
   completed: number;
   total: number;
   size?: number;
+  accessible?: boolean;
 }) {
   const done = total > 0 && completed >= total;
   const stroke = Math.max(3, size / 12);
@@ -23,6 +25,7 @@ export function ProgressCircle({
   return (
     <View
       accessibilityLabel={`${completed}/${total}`}
+      accessible={accessible}
       style={[
         styles.circle,
         { width: size, height: size, borderRadius: size / 2 },

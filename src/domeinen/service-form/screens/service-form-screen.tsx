@@ -1,6 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRouter } from 'expo-router';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactElement,
+  type RefObject,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
@@ -36,6 +44,7 @@ import {
 import { usePhotoService } from '@/domeinen/photos/ui';
 import { isRetryable } from '@/shared/api/errors';
 import { Button } from '@/shared/ui/button';
+import { useFeedback } from '@/shared/ui/toast-host';
 import { confirm } from '@/shared/ui/confirm';
 import { ScreenFooter } from '@/shared/ui/screen-footer';
 import { useStatusOverlay } from '@/shared/ui/status-overlay-host';
@@ -46,7 +55,13 @@ import { ServiceFieldRenderer } from '../components/service-field-renderer';
 import { ServiceFormAddressGroup } from '../components/service-form-address-group';
 import { ServiceFormHeader } from '../components/service-form-header';
 import { ServiceFormToolbar } from '../components/service-form-toolbar';
-import { ServiceFormSection } from '../components/service-form-section';
+import { useServiceFormToolbarScroll } from '../components/use-service-form-toolbar-scroll';
+import {
+  ServiceFormSectionBody,
+  ServiceFormSectionHeader,
+  serviceFormSectionHeaderFallbackHeight,
+} from '../components/service-form-section';
+import { ServiceFormLicensePlateGroup } from '../components/service-form-license-plate-group';
 import { ServiceFormVehicleRegistrationGroup } from '../components/service-form-vehicle-registration-group';
 import { buildAddressEntrySectionRenderItems } from '../domain/address-entry';
 import { groupSectionFields } from '../domain/field-kind';
@@ -55,10 +70,15 @@ import {
   serviceFormLanguageCode,
   serviceFormPhaseForStatus,
 } from '../domain/form-context';
+import { findLicensePlateGroupInFields } from '../domain/license-plate-entry';
 import { resolveServiceFormLoadState } from '../domain/load-state';
 import { areServicePhotosUploaded, needsPhotoConfirmation } from '../domain/photos-confirm';
 import { partitionVehicleRegistrationFields } from '../domain/rdw-autofill';
 import { normalizeServiceFormDefinition } from '../domain/schema';
+import {
+  scrollOffsetBelowSectionHeader,
+  serviceFormStickyHeaderIndices,
+} from '../domain/section-scroll';
 import { createServiceFormScenario } from '../domain/scenario-export';
 import {
   isServiceFormDirty,
@@ -71,7 +91,7 @@ import { hasAnySignature } from '../domain/signature';
 import { buildUploadSignatureParams } from '../domain/signature-upload';
 import { buildSignaturePostData, buildServicePostBody } from '../domain/submission';
 import { validateVisibleServiceForm } from '../domain/validation';
-import type { NormalizedServiceForm, ServiceFormField } from '../domain/types';
+import type { NormalizedServiceForm, ServiceFormField, ServiceFormSection } from '../domain/types';
 import {
   useFetchRdwInfo,
   useServiceFormDrafts,
@@ -121,7 +141,9 @@ export function ServiceFormScreen({
   preview?: boolean;
 }) {
   const { t, i18n } = useTranslation();
+  const feedback = useFeedback();
   const router = useRouter();
+  const definitionReloadInFlight = useRef(false);
   const drafts = useServiceFormDrafts();
   const { sections, isPending: allocationsPending } = useAllocations();
   const [active, pending] = sections;
@@ -132,7 +154,29 @@ export function ServiceFormScreen({
   const servicesQuery = useServices(incidentId, allocation?.services ?? null);
   const services = servicesQuery.data ?? allocation?.services ?? [];
   const service = services.find((item) => item.dn_serviceid === serviceId);
-  const { state, retry } = useServiceDefinition(service?.dn_servicetypecode ?? undefined);
+  const { state, retry, reloadBundledDefinition } = useServiceDefinition(
+    service?.dn_servicetypecode ?? undefined,
+  );
+  const reloadDefinitions = (): void => {
+    if (definitionReloadInFlight.current) {
+      return;
+    }
+    definitionReloadInFlight.current = true;
+    void reloadBundledDefinition()
+      .then((reloaded) => {
+        feedback.show({
+          tone: reloaded ? 'success' : 'error',
+          message: t(
+            reloaded
+              ? 'serviceForm.dev.definitionsReloaded'
+              : 'serviceForm.dev.definitionsReloadFailed',
+          ),
+        });
+      })
+      .finally(() => {
+        definitionReloadInFlight.current = false;
+      });
+  };
   const pleaseSelectLabel = t('serviceForm.pleaseSelect');
   const languageCode = serviceFormLanguageCode(i18n.language);
   const definition = state.status === 'ready' ? state.definition : null;
@@ -237,6 +281,7 @@ export function ServiceFormScreen({
           allocationTypeCode: allocation.type,
           services,
         }}
+        onReloadDefinitions={__DEV__ ? reloadDefinitions : undefined}
       />
     </ServiceFormStoreProvider>
   );
@@ -249,6 +294,7 @@ function ServiceFormBody({
   pleaseSelectLabel,
   preview,
   exitContext,
+  onReloadDefinitions,
 }: {
   form: NormalizedServiceForm;
   phaseNumbers: readonly number[];
@@ -256,6 +302,7 @@ function ServiceFormBody({
   pleaseSelectLabel: string;
   preview: boolean;
   exitContext: ExitContext;
+  onReloadDefinitions?: () => void;
 }) {
   const { t } = useTranslation();
   const router = useRouter();
@@ -341,7 +388,10 @@ function ServiceFormBody({
   );
 
   const scrollRef = useRef<ScrollView>(null);
+  const toolbarScroll = useServiceFormToolbarScroll();
+  // React 19 refs are nullable; ScrollView's innerViewRef type still expects a View.
   const contentRef = useRef<View>(null);
+  const sectionHeaderHeights = useRef(new Map<string, number>());
   const fieldRefs = useRef(new Map<string, View>());
   const inputRefs = useRef(new Map<string, TextInput>());
   const pendingJump = useRef<string | null>(null);
@@ -543,8 +593,17 @@ function ServiceFormBody({
     if (!node || !content) {
       return;
     }
+    const sectionId = visibleSections.find((candidate) =>
+      candidate.fields.some((item) => item.id === fieldId),
+    )?.id;
+    const headerHeight =
+      (sectionId !== undefined ? sectionHeaderHeights.current.get(sectionId) : undefined) ??
+      serviceFormSectionHeaderFallbackHeight;
     node.measureLayout(content, (_x, y) => {
-      scrollRef.current?.scrollTo({ y: Math.max(0, y - spacing.md), animated: true });
+      scrollRef.current?.scrollTo({
+        y: scrollOffsetBelowSectionHeader(y, headerHeight),
+        animated: true,
+      });
       inputRefs.current.get(fieldId)?.focus();
     });
   };
@@ -785,6 +844,156 @@ function ServiceFormBody({
   const details = [service.dn_servicenumber, service.dn_concatlicenseplate].filter(
     (value): value is string => typeof value === 'string' && value !== '',
   );
+  const showQuickComplete = quickViewActive && displayedSections.length === 0;
+  const expandedFlags = displayedSections.map((section) => Boolean(expandedSections[section.id]));
+  const stickyHeaderIndices = serviceFormStickyHeaderIndices(
+    expandedFlags,
+    showQuickComplete ? 2 : 1,
+  );
+  const renderSectionFields = (section: ServiceFormSection): ReactElement => {
+    const licensePlateGroup = findLicensePlateGroupInFields(section.fields);
+    const licensePlateFieldKeys = licensePlateGroup
+      ? new Set(licensePlateGroup.orderedFields.map((field) => field.key))
+      : null;
+    const fieldsWithoutLicensePlate = licensePlateFieldKeys
+      ? section.fields.filter((field) => !licensePlateFieldKeys.has(field.key))
+      : section.fields;
+    const { vehicleFields, otherFields } = licensePlateGroup
+      ? { vehicleFields: [] as typeof section.fields, otherFields: fieldsWithoutLicensePlate }
+      : partitionVehicleRegistrationFields(fieldsWithoutLicensePlate);
+    const fieldGroups = readOnly
+      ? groupSectionFields(otherFields, { readonly: true })
+      : buildAddressEntrySectionRenderItems(otherFields);
+    return (
+      <>
+        {licensePlateGroup ? (
+          <ServiceFormLicensePlateGroup
+            group={licensePlateGroup}
+            answers={answers}
+            errors={errors}
+            pleaseSelectLabel={pleaseSelectLabel}
+            readOnly={readOnly}
+            fetchRdwInfo={fetchRdwInfo}
+            updateAnswer={updateAnswer}
+            updateAnswers={updateAnswers}
+            setFieldsRequired={setFieldsRequired}
+            onFocus={activateField}
+            onBlur={deactivateField}
+            registerFieldRef={registerFieldRef}
+            registerInputRef={registerInputRef}
+            onFieldLayout={handleFieldLayout}
+          />
+        ) : null}
+        {vehicleFields.length > 0 ? (
+          <ServiceFormVehicleRegistrationGroup
+            fields={vehicleFields}
+            answers={answers}
+            errors={errors}
+            pleaseSelectLabel={pleaseSelectLabel}
+            readOnly={readOnly}
+            fetchRdwInfo={fetchRdwInfo}
+            updateAnswer={updateAnswer}
+            updateAnswers={updateAnswers}
+            setFieldsRequired={setFieldsRequired}
+            onFocus={activateField}
+            onBlur={deactivateField}
+            registerFieldRef={registerFieldRef}
+            registerInputRef={registerInputRef}
+            onFieldLayout={handleFieldLayout}
+          />
+        ) : null}
+        {fieldGroups.map((group) =>
+          group.kind === 'readonly' ? (
+            <ReadonlyFieldSummary
+              key={group.fields.map((field) => field.id).join(':')}
+              fields={group.fields}
+              answers={answers}
+            />
+          ) : group.kind === 'address-entry' ? (
+            <ServiceFormAddressGroup
+              key={group.group.anchor.id}
+              group={group.group}
+              answers={answers}
+              errors={errors}
+              pleaseSelectLabel={pleaseSelectLabel}
+              readOnly={readOnly}
+              updateAnswer={updateAnswer}
+              updateAnswers={updateAnswers}
+              onFocus={activateField}
+              onBlur={deactivateField}
+              registerFieldRef={registerFieldRef}
+              registerInputRef={registerInputRef}
+              onFieldLayout={handleFieldLayout}
+            />
+          ) : (
+            <View
+              key={group.field.id}
+              collapsable={false}
+              ref={(node) => registerFieldRef(group.field.id, node)}
+              onLayout={() => handleFieldLayout(group.field.id)}
+            >
+              <ServiceFieldRenderer
+                field={group.field}
+                answer={answers[group.field.key]}
+                error={errors[group.field.key]}
+                dependencyAnswer={
+                  group.field.dependencies?.required
+                    ? answers[group.field.dependencies.required]
+                    : undefined
+                }
+                pleaseSelectLabel={pleaseSelectLabel}
+                onChange={updateAnswer}
+                onAnswersChange={updateAnswers}
+                registerInputRef={registerInputRef}
+                onFocus={activateField}
+                onBlur={deactivateField}
+              />
+            </View>
+          ),
+        )}
+      </>
+    );
+  };
+  const scrollChildren: ReactElement[] = [
+    <View key="section-scroll-inset" style={styles.scrollTopInset} />,
+  ];
+  if (showQuickComplete) {
+    scrollChildren.push(
+      <Text key="quick-complete" style={styles.quickComplete}>
+        {t('serviceForm.actions.quickViewComplete')}
+      </Text>,
+    );
+  }
+  for (const [index, section] of displayedSections.entries()) {
+    const expanded = expandedFlags[index] === true;
+    const sectionProgress = selectServiceFormProgress(
+      section.fields,
+      visibility.visibleFieldIds,
+      answers,
+      { requiredFieldOverrides, hideSignature, noEmailConfirmation },
+    );
+    scrollChildren.push(
+      <ServiceFormSectionHeader
+        key={`${section.id}:header`}
+        title={section.title}
+        expanded={expanded}
+        completed={sectionProgress.completed}
+        total={sectionProgress.total}
+        errorCount={readOnly ? 0 : section.fields.filter((field) => errors[field.key]).length}
+        onToggle={() => toggleSection(section.id)}
+        onLayout={(event) => {
+          sectionHeaderHeights.current.set(section.id, event.nativeEvent.layout.height);
+        }}
+      />,
+    );
+    if (expanded) {
+      scrollChildren.push(
+        <ServiceFormSectionBody key={`${section.id}:body`}>
+          {renderSectionFields(section)}
+        </ServiceFormSectionBody>,
+      );
+    }
+  }
 
   return (
     <SafeAreaView style={styles.safeArea} edges={readOnly ? ['bottom'] : []}>
@@ -793,8 +1002,10 @@ function ServiceFormBody({
         phaseName={form.phaseName}
         progress={progress}
         details={details}
+        onReloadDefinitions={onReloadDefinitions}
       />
       <ServiceFormToolbar
+        visible={toolbarScroll.visible}
         actions={
           preview
             ? undefined
@@ -826,115 +1037,17 @@ function ServiceFormBody({
               }
         }
       />
-      <ScrollView ref={scrollRef} keyboardShouldPersistTaps="handled" bounces={false}>
-        <View ref={contentRef} collapsable={false}>
-          <View style={styles.sections}>
-            {quickViewActive && displayedSections.length === 0 ? (
-              <Text style={styles.quickComplete}>{t('serviceForm.actions.quickViewComplete')}</Text>
-            ) : null}
-            {displayedSections.map((section) => {
-              const sectionProgress = selectServiceFormProgress(
-                section.fields,
-                visibility.visibleFieldIds,
-                answers,
-                { requiredFieldOverrides, hideSignature, noEmailConfirmation },
-              );
-              return (
-                <ServiceFormSection
-                  key={section.id}
-                  title={section.title}
-                  expanded={Boolean(expandedSections[section.id])}
-                  completed={sectionProgress.completed}
-                  total={sectionProgress.total}
-                  errorCount={
-                    readOnly ? 0 : section.fields.filter((field) => errors[field.key]).length
-                  }
-                  onToggle={() => toggleSection(section.id)}
-                >
-                  {(() => {
-                    const { vehicleFields, otherFields } = partitionVehicleRegistrationFields(
-                      section.fields,
-                    );
-                    const fieldGroups = readOnly
-                      ? groupSectionFields(otherFields, { readonly: true })
-                      : buildAddressEntrySectionRenderItems(otherFields);
-                    return (
-                      <>
-                        {vehicleFields.length > 0 ? (
-                          <ServiceFormVehicleRegistrationGroup
-                            fields={vehicleFields}
-                            answers={answers}
-                            errors={errors}
-                            pleaseSelectLabel={pleaseSelectLabel}
-                            readOnly={readOnly}
-                            fetchRdwInfo={fetchRdwInfo}
-                            updateAnswer={updateAnswer}
-                            updateAnswers={updateAnswers}
-                            setFieldsRequired={setFieldsRequired}
-                            onFocus={activateField}
-                            onBlur={deactivateField}
-                            registerFieldRef={registerFieldRef}
-                            registerInputRef={registerInputRef}
-                            onFieldLayout={handleFieldLayout}
-                          />
-                        ) : null}
-                        {fieldGroups.map((group) =>
-                          group.kind === 'readonly' ? (
-                            <ReadonlyFieldSummary
-                              key={group.fields.map((field) => field.id).join(':')}
-                              fields={group.fields}
-                              answers={answers}
-                            />
-                          ) : group.kind === 'address-entry' ? (
-                            <ServiceFormAddressGroup
-                              key={group.group.anchor.id}
-                              group={group.group}
-                              answers={answers}
-                              errors={errors}
-                              pleaseSelectLabel={pleaseSelectLabel}
-                              readOnly={readOnly}
-                              updateAnswer={updateAnswer}
-                              updateAnswers={updateAnswers}
-                              onFocus={activateField}
-                              onBlur={deactivateField}
-                              registerFieldRef={registerFieldRef}
-                              registerInputRef={registerInputRef}
-                              onFieldLayout={handleFieldLayout}
-                            />
-                          ) : (
-                            <View
-                              key={group.field.id}
-                              collapsable={false}
-                              ref={(node) => registerFieldRef(group.field.id, node)}
-                              onLayout={() => handleFieldLayout(group.field.id)}
-                            >
-                              <ServiceFieldRenderer
-                                field={group.field}
-                                answer={answers[group.field.key]}
-                                error={errors[group.field.key]}
-                                dependencyAnswer={
-                                  group.field.dependencies?.required
-                                    ? answers[group.field.dependencies.required]
-                                    : undefined
-                                }
-                                pleaseSelectLabel={pleaseSelectLabel}
-                                onChange={updateAnswer}
-                                onAnswersChange={updateAnswers}
-                                registerInputRef={registerInputRef}
-                                onFocus={activateField}
-                                onBlur={deactivateField}
-                              />
-                            </View>
-                          ),
-                        )}
-                      </>
-                    );
-                  })()}
-                </ServiceFormSection>
-              );
-            })}
-          </View>
-        </View>
+      <ScrollView
+        ref={scrollRef}
+        innerViewRef={contentRef as RefObject<View>}
+        stickyHeaderIndices={stickyHeaderIndices}
+        keyboardShouldPersistTaps="handled"
+        bounces={false}
+        scrollEventThrottle={16}
+        onScroll={toolbarScroll.onScroll}
+        contentContainerStyle={styles.sections}
+      >
+        {scrollChildren}
       </ScrollView>
       {!readOnly ? (
         <ScreenFooter>
@@ -983,9 +1096,15 @@ function ServiceFormBody({
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: 'transparent' },
-  sections: { padding: spacing.md, gap: spacing.md },
+  sections: { marginTop: spacing.md, paddingHorizontal: spacing.md },
+  scrollTopInset: { height: spacing.md },
   ready: { color: colors.success, fontSize: 14, fontWeight: '600', textAlign: 'center' },
-  quickComplete: { color: colors.success, textAlign: 'center', fontWeight: '600' },
+  quickComplete: {
+    color: colors.success,
+    textAlign: 'center',
+    fontWeight: '600',
+    marginBottom: spacing.md,
+  },
   center: {
     flex: 1,
     alignItems: 'center',

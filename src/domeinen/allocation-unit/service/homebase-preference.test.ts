@@ -25,4 +25,15 @@ describe('createHomebasePreference', () => {
 
     expect(await preference.load()).toBeNull();
   });
+
+  it('clears the remembered homebase on sign-out', async () => {
+    const store = createInMemoryStore();
+    const preference = createHomebasePreference(store);
+    await preference.remember('loc-1');
+
+    await preference.clear();
+
+    expect(await preference.load()).toBeNull();
+    expect(store.dump()[REMEMBERED_HOMEBASE_KEY]).toBeUndefined();
+  });
 });

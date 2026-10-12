@@ -60,6 +60,8 @@ export function AppProviders({
     () => ({
       permissions: container.devicePermissions,
       languageSettings: container.languageSettings,
+      permissionDisclosurePreference: container.permissionDisclosurePreference,
+      pushRuntime: container.pushRuntime,
       signOutGuard: container.signOutGuard,
       allocationUnitManagement: container.allocationUnitManagement,
       referenceDataService: container.referenceDataService,

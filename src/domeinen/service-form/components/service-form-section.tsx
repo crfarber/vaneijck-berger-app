@@ -1,18 +1,24 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { ReactNode } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
 import { colors, radius, spacing } from '@/shared/ui/theme';
 import { ProgressCircle } from './progress-circle';
 
-/** One tab of the schema as a collapsible block, with its own progress and error count. */
-export function ServiceFormSection({
+/** Circle plus header padding, used until the header reports its real height. */
+export const serviceFormSectionHeaderFallbackHeight = 36 + spacing.md * 2;
+
+/**
+ * The section header is its own scroll child so the form can pin it with
+ * `stickyHeaderIndices` until the next section header takes its place.
+ */
+export function ServiceFormSectionHeader({
   title,
   expanded,
   completed,
   total,
   errorCount,
   onToggle,
-  children,
+  onLayout,
 }: {
   title: string;
   expanded: boolean;
@@ -20,43 +26,66 @@ export function ServiceFormSection({
   total: number;
   errorCount: number;
   onToggle: () => void;
-  children: ReactNode;
+  onLayout?: (event: LayoutChangeEvent) => void;
 }) {
   return (
-    <View style={styles.section}>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityState={{ expanded }}
-        onPress={onToggle}
-        style={({ pressed }) => [styles.header, pressed && styles.pressed]}
-      >
-        <ProgressCircle completed={completed} total={total} />
-        <Text style={styles.title}>{title}</Text>
-        {errorCount > 0 ? (
-          <View style={styles.errorBadge}>
-            <Text style={styles.errorBadgeText}>{errorCount}</Text>
-          </View>
-        ) : null}
-        <Ionicons
-          name={expanded ? 'chevron-up' : 'chevron-down'}
-          size={20}
-          color={colors.textMuted}
-        />
-      </Pressable>
-      {expanded ? <View style={styles.body}>{children}</View> : null}
+    <View onLayout={onLayout} style={[styles.occluder, !expanded && styles.occluderCollapsed]}>
+      <View style={[styles.header, expanded ? styles.headerExpanded : styles.headerCollapsed]}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityState={{ expanded }}
+          onPress={onToggle}
+          hitSlop={spacing.md}
+          style={({ pressed }) => [styles.headerRow, pressed && styles.pressed]}
+        >
+          <ProgressCircle completed={completed} total={total} />
+          <Text style={styles.title}>{title}</Text>
+          {errorCount > 0 ? (
+            <View style={styles.errorBadge}>
+              <Text style={styles.errorBadgeText}>{errorCount}</Text>
+            </View>
+          ) : null}
+          <Ionicons
+            name={expanded ? 'chevron-up' : 'chevron-down'}
+            size={20}
+            color={colors.textMuted}
+          />
+        </Pressable>
+      </View>
     </View>
   );
 }
 
+/** Field block under a section header. It moves under the pinned header, which covers it. */
+export function ServiceFormSectionBody({ children }: { children: ReactNode }) {
+  return <View style={styles.body}>{children}</View>;
+}
+
 const styles = StyleSheet.create({
-  section: {
+  // Square plate. The sticky header scrolls fields underneath this view; a rounded
+  // background would leave those fields visible in the corners.
+  occluder: {
     backgroundColor: colors.background,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    overflow: 'hidden',
+    zIndex: 2,
+    elevation: 4,
+  },
+  occluderCollapsed: {
+    marginBottom: spacing.md,
   },
   header: {
+    backgroundColor: colors.background,
+    borderColor: colors.border,
+    borderWidth: 1,
+    overflow: 'hidden',
+  },
+  headerExpanded: {
+    borderTopLeftRadius: radius.md,
+    borderTopRightRadius: radius.md,
+  },
+  headerCollapsed: {
+    borderRadius: radius.md,
+  },
+  headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
@@ -74,5 +103,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   errorBadgeText: { color: colors.background, fontSize: 13, fontWeight: '700' },
-  body: { gap: spacing.md, paddingHorizontal: spacing.md, paddingBottom: spacing.md },
+  body: {
+    gap: spacing.md,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+    zIndex: 0,
+    elevation: 0,
+    overflow: 'hidden',
+    backgroundColor: colors.background,
+    borderColor: colors.border,
+    borderLeftWidth: 1,
+    borderRightWidth: 1,
+    borderBottomWidth: 1,
+    borderBottomLeftRadius: radius.md,
+    borderBottomRightRadius: radius.md,
+  },
 });

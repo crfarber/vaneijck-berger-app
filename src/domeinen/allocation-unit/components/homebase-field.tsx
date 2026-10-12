@@ -79,7 +79,7 @@ export function HomebaseField({ picker }: { picker: HomebasePicker }) {
           keyExtractor={(item) => item.location.id}
           keyboardShouldPersistTaps="handled"
           onScrollBeginDrag={Keyboard.dismiss}
-          style={{ maxHeight: height * 0.6 }}
+          style={{ maxHeight: height * 0.6, flexShrink: 1 }}
           initialNumToRender={20}
           ListEmptyComponent={<Text style={styles.empty}>{t('unit.homebase.noResults')}</Text>}
           renderItem={({ item }) => {

@@ -119,7 +119,7 @@ const styles = StyleSheet.create({
     color: colors.text,
     marginBottom: spacing.sm,
   },
-  list: { maxHeight: 360 },
+  list: { flexShrink: 1, maxHeight: 360 },
   item: {
     minHeight: 48,
     justifyContent: 'center',

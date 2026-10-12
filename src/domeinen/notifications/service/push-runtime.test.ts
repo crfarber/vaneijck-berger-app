@@ -91,14 +91,30 @@ describe('createPushRuntime', () => {
   });
 
   it('keeps working when permission is denied and does not register', async () => {
-    const { runtime, register, logger } = setup({ permission: 'denied', token: 'unused' });
+    const { runtime, register, logger, gateway } = setup({
+      permission: 'denied',
+      token: 'unused',
+    });
 
     await expect(runtime.start()).resolves.toBeUndefined();
 
+    // The gateway only reports status; the OS dialog is asked from disclosure / settings.
+    expect(gateway.permission).toHaveBeenCalledOnce();
     expect(register).not.toHaveBeenCalled();
     expect(logger.entries().map((entry) => entry.message)).toContain(
       'Push permission denied; the app keeps working',
     );
+  });
+
+  it('registers on a later start after permission becomes granted', async () => {
+    const { runtime, register, gateway } = setup({ permission: 'denied', token: 'fcm-token-abc' });
+    await runtime.start();
+    expect(register).not.toHaveBeenCalled();
+
+    vi.mocked(gateway.permission).mockResolvedValue('granted');
+    await runtime.start();
+
+    expect(register).toHaveBeenCalledWith('fcm-token-abc');
   });
 
   it('does not register when the device has no token', async () => {
