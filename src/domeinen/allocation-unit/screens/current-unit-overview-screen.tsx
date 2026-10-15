@@ -4,7 +4,7 @@ import { ActivityIndicator, Alert, StyleSheet, Text, View } from 'react-native';
 import { Button } from '@/shared/ui/button';
 import { Screen } from '@/shared/ui/screen';
 import { colors, spacing, type } from '@/shared/ui/theme';
-import { formatActiveUntil } from '@/shared/utils/time';
+import { formatActiveUntil, getDeviceTimeZone } from '@/shared/utils/time';
 import { CurrentAllocationUnitCard } from '../components/current-allocation-unit-card';
 import { useAllocationUnitClock } from '../hooks/allocation-unit-context';
 import { useCurrentUnitOverview } from '../hooks/use-current-unit-overview';
@@ -85,6 +85,7 @@ export function CurrentUnitOverviewScreen({
       today: t('unit.overview.today'),
       tomorrow: t('unit.overview.tomorrow'),
     },
+    getDeviceTimeZone(),
   );
 
   return (
@@ -137,7 +138,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   content: {
-    alignItems: 'center',
     justifyContent: 'center',
   },
 });

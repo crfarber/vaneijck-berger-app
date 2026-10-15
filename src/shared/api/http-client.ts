@@ -45,11 +45,13 @@ export type HttpClient = {
   request(path: string, options?: RequestOptions): Promise<unknown>;
   /** Like `request`, but validates the JSON response against a schema. */
   requestJson<T>(path: string, schema: z.ZodType<T>, options?: RequestOptions): Promise<T>;
+  /** Like `request`, but returns the raw body of a successful answer (images, files). */
+  requestBytes(path: string, options?: Omit<RequestOptions, 'responseType'>): Promise<Uint8Array>;
 };
 
 const DEFAULT_TIMEOUT_MS = 30_000;
 
-type RawResponse = { status: number; ok: boolean; text: string };
+type RawResponse = { status: number; ok: boolean; text: string; bytes: Uint8Array | null };
 
 function buildInit(options: RequestOptions, token: string | null): RequestInit {
   const headers: Record<string, string> = { Accept: 'application/json', ...options.headers };
@@ -98,6 +100,7 @@ export function createHttpClient(deps: HttpClientDeps): HttpClient {
     init: RequestInit,
     timeoutMs: number,
     external: AbortSignal | undefined,
+    readBytes: boolean,
   ): Promise<RawResponse> {
     const controller = new AbortController();
     let timedOut = false;
@@ -115,8 +118,12 @@ export function createHttpClient(deps: HttpClientDeps): HttpClient {
 
     try {
       const response = await deps.fetch(url, { ...init, signal: controller.signal });
+      if (readBytes && response.ok) {
+        const bytes = new Uint8Array(await response.arrayBuffer());
+        return { status: response.status, ok: true, text: '', bytes };
+      }
       const text = await response.text();
-      return { status: response.status, ok: response.ok, text };
+      return { status: response.status, ok: response.ok, text, bytes: null };
     } catch (error) {
       if (timedOut) {
         throw new TimeoutError(timeoutMs, { cause: error });
@@ -131,7 +138,11 @@ export function createHttpClient(deps: HttpClientDeps): HttpClient {
     }
   }
 
-  async function request(path: string, options: RequestOptions = {}): Promise<unknown> {
+  async function send(
+    path: string,
+    options: RequestOptions,
+    readBytes: boolean,
+  ): Promise<RawResponse> {
     const method = options.method ?? 'GET';
     const url = buildUrl(deps.baseUrl, path, options.query);
     const useAuth = options.auth !== false;
@@ -145,12 +156,18 @@ export function createHttpClient(deps: HttpClientDeps): HttpClient {
       }
     }
 
-    let raw = await execute(url, buildInit(options, token), timeoutMs, options.signal);
+    let raw = await execute(url, buildInit(options, token), timeoutMs, options.signal, readBytes);
 
     if (raw.status === 401 && useAuth) {
       deps.logger?.info('http', 'Got 401, refreshing token', { method, path });
       const freshToken = await deps.refreshAccessToken();
-      raw = await execute(url, buildInit(options, freshToken), timeoutMs, options.signal);
+      raw = await execute(
+        url,
+        buildInit(options, freshToken),
+        timeoutMs,
+        options.signal,
+        readBytes,
+      );
     }
 
     if (!raw.ok) {
@@ -164,7 +181,20 @@ export function createHttpClient(deps: HttpClientDeps): HttpClient {
       throw new HttpError(raw.status, problem, raw.text);
     }
 
+    return raw;
+  }
+
+  async function request(path: string, options: RequestOptions = {}): Promise<unknown> {
+    const raw = await send(path, options, false);
     return parseBody(raw.text, options.responseType ?? 'json');
+  }
+
+  async function requestBytes(
+    path: string,
+    options: Omit<RequestOptions, 'responseType'> = {},
+  ): Promise<Uint8Array> {
+    const raw = await send(path, options, true);
+    return raw.bytes ?? new Uint8Array();
   }
 
   async function requestJson<T>(
@@ -182,5 +212,5 @@ export function createHttpClient(deps: HttpClientDeps): HttpClient {
     throw new ResponseParseError(issues);
   }
 
-  return { request, requestJson };
+  return { request, requestJson, requestBytes };
 }

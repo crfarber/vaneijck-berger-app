@@ -66,14 +66,14 @@ describe('decideOnboarding', () => {
     ).toEqual({ step: 'allocations', notice: 'no-valid-unit-continue' });
   });
 
-  it('shows the notice when the shift expired amid active work', () => {
+  it('skips the notice when the shift expired amid active work', () => {
     expect(
       decideOnboarding({
         reregister: { kind: 'not-needed', expiredWithActiveWork: true },
         userType: 'external',
         backendReportedOpenWork: false,
       }),
-    ).toEqual({ step: 'allocations', notice: 'no-valid-unit-continue' });
+    ).toEqual({ step: 'allocations', notice: 'none' });
   });
 
   it('escapes a required registration when the backend reported open work (ACTIVE_INCIDENT)', () => {

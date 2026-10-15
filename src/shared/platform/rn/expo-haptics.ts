@@ -15,5 +15,10 @@ export function createExpoHaptics(): Haptics {
         // Device without a motor, or the call failed — nothing to do.
       });
     },
+    tap() {
+      void ExpoHaptics.impactAsync(ExpoHaptics.ImpactFeedbackStyle.Light).catch(() => {
+        // Device without a motor, or the call failed — nothing to do.
+      });
+    },
   };
 }

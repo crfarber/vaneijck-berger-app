@@ -6,7 +6,7 @@ import { createStatusOverlay } from './status-overlay';
 describe('createStatusOverlay', () => {
   it('shows processing while the task runs, then success', async () => {
     const scheduler = createFakeScheduler();
-    const haptics = { notify: vi.fn() };
+    const haptics = { notify: vi.fn(), tap: vi.fn() };
     const overlay = createStatusOverlay({
       scheduler,
       haptics,
@@ -62,7 +62,7 @@ describe('createStatusOverlay', () => {
 
   it('keeps a queued screen until its duration elapses', async () => {
     const scheduler = createFakeScheduler();
-    const haptics = { notify: vi.fn() };
+    const haptics = { notify: vi.fn(), tap: vi.fn() };
     const overlay = createStatusOverlay({
       scheduler,
       haptics,
@@ -91,7 +91,7 @@ describe('createStatusOverlay', () => {
 
   it('keeps an error screen until dismiss', async () => {
     const scheduler = createFakeScheduler();
-    const haptics = { notify: vi.fn() };
+    const haptics = { notify: vi.fn(), tap: vi.fn() };
     const retry = vi.fn();
     const overlay = createStatusOverlay({ scheduler, haptics, slowMs: 10_000 });
 

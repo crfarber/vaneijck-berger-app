@@ -14,13 +14,19 @@ export function useServicePhotos(serviceId: string) {
   const [busy, setBusy] = useState(false);
 
   const loadDisplayPhotos = useCallback(async (): Promise<DisplayPhoto[]> => {
-    const loaded = await service.listByService(serviceId);
-    return Promise.all(
-      loaded.map(async (photo) => ({
-        ...photo,
-        displayUri: await service.displayUri(photo.filePath),
-      })),
+    const listed = await service.listByService(serviceId);
+    const settled = await Promise.all(
+      listed.map(async (photo) => {
+        try {
+          const displayUri = await service.displayUri(photo.filePath);
+          return { ...photo, displayUri } satisfies DisplayPhoto;
+        } catch {
+          // One undecodable file must not wipe the whole overview (remaining tiles stay visible).
+          return null;
+        }
+      }),
     );
+    return settled.filter((photo): photo is DisplayPhoto => photo !== null);
   }, [service, serviceId]);
 
   const refresh = useCallback(async () => {
@@ -34,9 +40,9 @@ export function useServicePhotos(serviceId: string) {
     useCallback(() => {
       let cancelled = false;
       void loadDisplayPhotos()
-        .then((loaded) => {
+        .then((loadedPhotos) => {
           if (!cancelled) {
-            setPhotos(loaded);
+            setPhotos(loadedPhotos);
             setLoaded(true);
             setLoadFailed(false);
           }
@@ -92,6 +98,15 @@ export function useServicePhotos(serviceId: string) {
       setBusy(true);
       try {
         await service.retry(photoId);
+        await refresh();
+      } finally {
+        setBusy(false);
+      }
+    },
+    async remove(photoId: string): Promise<void> {
+      setBusy(true);
+      try {
+        await service.remove(photoId);
         await refresh();
       } finally {
         setBusy(false);

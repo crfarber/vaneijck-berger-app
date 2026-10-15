@@ -20,7 +20,7 @@ import {
 } from '@/domeinen/services';
 import { Button } from '@/shared/ui/button';
 import { ScreenFooter } from '@/shared/ui/screen-footer';
-import { colors, spacing } from '@/shared/ui/theme';
+import { colors, spacing, type } from '@/shared/ui/theme';
 import { IncidentCard } from '../components/incident-card';
 import { PltrPhaseCard } from '../components/pltr-phase-card';
 import { resolveIncidentCardModel } from '../domain/incident-card';
@@ -32,7 +32,8 @@ import { useServices } from '../hooks/use-services';
 /**
  * One planned transport: the load and the delivery, and a single next step. Ported from
  * `PLTRScreen`. The step opens the same seam as a regular service (accept, the closing screen, or
- * the processing form the team still rebuilds). The old screen only ever used the first service.
+ * the processing form). Opened with `preview` (list swipe Voorbeeld) the footer only offers a
+ * read-only form open via `openPreview`. The old screen only ever used the first service.
  */
 export function PltrScreen({
   allocationId,
@@ -54,7 +55,7 @@ export function PltrScreen({
   const servicesQuery = useServices(incidentId, allocation?.services ?? null);
   const { accept, busyServiceId } = useAcceptService(incidentId);
   const services = servicesQuery.data ?? allocation?.services ?? [];
-  const { open: openService } = useOpenService({
+  const { open: openService, openPreview } = useOpenService({
     allocationId,
     incidentId,
     allocationTypeCode: allocation?.type,
@@ -75,7 +76,10 @@ export function PltrScreen({
   const service = services[0];
   const cards = buildPltrCards({ service, incident: allocation.incident });
   const action = service ? pltrPrimaryAction(service.statuscode) : null;
-  const showFooter = !preview && (Boolean(service?.dn_serviceid) || action !== null);
+  /** Preview (list swipe) keeps a footer to open the form read-only; work actions stay hidden. */
+  const showFooter = preview
+    ? Boolean(service?.dn_serviceid)
+    : action !== null || Boolean(service?.dn_serviceid);
 
   const openMaps = (card: PltrCard): void => {
     if (!card.coordinate) {
@@ -121,7 +125,6 @@ export function PltrScreen({
 
   return (
     <SafeAreaView style={styles.safeArea} edges={showFooter ? [] : ['bottom']}>
-      {toolbar !== undefined ? <View style={styles.toolbar}>{toolbar}</View> : null}
       {servicesQuery.isError ? (
         <View style={styles.center}>
           <Text style={styles.message}>{t('common.somethingWrong')}</Text>
@@ -138,6 +141,7 @@ export function PltrScreen({
               />
             }
           >
+            {toolbar !== undefined ? <View style={styles.toolbar}>{toolbar}</View> : null}
             <Text style={styles.title}>{t('pltr.title')}</Text>
             <IncidentCard
               model={resolveIncidentCardModel(allocation)}
@@ -160,7 +164,13 @@ export function PltrScreen({
           </ScrollView>
           {showFooter ? (
             <ScreenFooter>
-              {action ? (
+              {preview && service?.dn_serviceid ? (
+                <Button
+                  label={t('pltr.viewServicePreview')}
+                  variant="action"
+                  onPress={() => openPreview(service)}
+                />
+              ) : action ? (
                 <Button
                   label={actionLabel(t, action)}
                   onPress={onPrimary}
@@ -200,12 +210,14 @@ type ActionLabelKey =
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: 'transparent' },
   toolbar: {
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.sm,
     paddingBottom: spacing.xs,
   },
   list: { padding: spacing.md, gap: spacing.sm },
-  title: { color: colors.text, fontSize: 20, fontWeight: '700' },
+  title: {
+    ...type.large,
+    color: colors.text,
+    marginBottom: spacing.sm,
+  },
   center: {
     flex: 1,
     alignItems: 'center',
@@ -215,7 +227,7 @@ const styles = StyleSheet.create({
   },
   message: {
     color: colors.textMuted,
-    fontSize: 16,
+    ...type.body,
     textAlign: 'center',
     paddingVertical: spacing.sm,
   },

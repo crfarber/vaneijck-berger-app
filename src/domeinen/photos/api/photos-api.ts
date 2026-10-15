@@ -36,7 +36,18 @@ export type ServerPhotoSummary = {
 export type PhotosApi = {
   upload(input: UploadPhotoInput): Promise<void>;
   list(input: ListServerPhotosInput): Promise<ServerPhotoSummary[]>;
+  /** Bytes of a server photo, or null when the url is not on our API and gets no session. */
+  download(url: string): Promise<Uint8Array | null>;
 };
+
+/** Request path for a photo url on our own API; null for any other host. */
+export function photoApiPath(url: string, apiBaseUrl: string): string | null {
+  if (url.startsWith('/') && !url.startsWith('//')) {
+    return url;
+  }
+  const base = apiBaseUrl.replace(/\/+$/, '');
+  return base !== '' && url.startsWith(`${base}/`) ? url.slice(base.length) : null;
+}
 
 const serverPhotoSummaryDtoSchema = z.looseObject({
   url: z.string().min(1),
@@ -146,7 +157,11 @@ function mapServerPhotoSummary(
  * `POST /api/binary/upload?content=photo` as multipart. Field names match the old
  * `UploadPhotoAndPosition` form (`IncidentId`, `ServiceId`, `ImagePosition`, `isExtra`, …).
  */
-export function createPhotosApi(http: HttpClient, files: MultipartUploadFiles): PhotosApi {
+export function createPhotosApi(
+  http: HttpClient,
+  files: MultipartUploadFiles,
+  apiBaseUrl: string,
+): PhotosApi {
   return {
     async upload(input) {
       const body = new FormData();
@@ -189,6 +204,14 @@ export function createPhotosApi(http: HttpClient, files: MultipartUploadFiles): 
         const mapped = mapServerPhotoSummary(row, input.phase);
         return mapped === null ? [] : [mapped];
       });
+    },
+
+    async download(url) {
+      const path = photoApiPath(url, apiBaseUrl);
+      if (path === null) {
+        return null;
+      }
+      return http.requestBytes(path, { headers: { Accept: 'image/*' }, timeoutMs: 60_000 });
     },
   };
 }

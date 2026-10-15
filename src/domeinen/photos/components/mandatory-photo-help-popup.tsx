@@ -48,7 +48,7 @@ export function MandatoryPhotoHelpPopup({ position, onContinue }: MandatoryPhoto
           </Text>
 
           <View style={styles.board}>
-            <Text style={styles.boardLabel}>{t('photos.front')}</Text>
+            <Text style={styles.boardLabel}>{t('photos.rear')}</Text>
             {Array.from({ length: 9 }).map((_, index) => {
               const active = highlightedIndex === index;
               const vehicle = index === 4;
@@ -66,7 +66,7 @@ export function MandatoryPhotoHelpPopup({ position, onContinue }: MandatoryPhoto
                 </View>
               );
             })}
-            <Text style={styles.boardLabel}>{t('photos.rear')}</Text>
+            <Text style={styles.boardLabel}>{t('photos.front')}</Text>
           </View>
         </View>
         <Button label={t('photos.continue')} onPress={onContinue} />
@@ -153,10 +153,10 @@ const styles = StyleSheet.create({
     width: 70,
     height: 70,
     borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#DADDE1',
+    borderWidth: 2,
+    borderColor: colors.border,
     borderStyle: 'dashed',
-    backgroundColor: '#FAFAFB',
+    backgroundColor: colors.background,
     alignItems: 'center',
     justifyContent: 'center',
   },

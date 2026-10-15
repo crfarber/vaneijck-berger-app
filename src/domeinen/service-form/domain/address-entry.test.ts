@@ -494,6 +494,61 @@ describe('address entry grouping', () => {
       fields.map((item) => ({ kind: 'field', field: item })),
     );
   });
+
+  it('builds a compact address group with only postal code and house number', () => {
+    const markerRaw: ServiceFormField['raw'] = {
+      address_group: {
+        id: 'dn_requesttaxizipcodefrom',
+        fields: {
+          postalCode: 'dn_requesttaxizipcodefrom',
+          houseNumber: 'dn_requesttaxihousenofrom',
+        },
+        confirmAddress: true,
+        allowManual: true,
+        allowForeignManual: true,
+      },
+    };
+    const items = buildAddressEntryRenderItems([
+      field('from-zip', 'dn_requesttaxizipcodefrom', 'string', markerRaw),
+      field('from-house', 'dn_requesttaxihousenofrom', 'number'),
+    ]);
+
+    expect(items).toHaveLength(1);
+    expect(items[0]?.kind).toBe('address-entry');
+    if (items[0]?.kind === 'address-entry') {
+      expect(items[0].group.orderedFields.map((item) => item.key)).toEqual([
+        'dn_requesttaxizipcodefrom',
+        'dn_requesttaxihousenofrom',
+      ]);
+      expect(
+        buildCompactAddressSummary(items[0].group, {
+          dn_requesttaxizipcodefrom: { value: '1234AB', displayValue: '1234AB' },
+          dn_requesttaxihousenofrom: { value: '10', displayValue: '10' },
+        }),
+      ).toBe('1234AB 10');
+    }
+  });
+
+  it('rejects a legacy address_components group without street', () => {
+    const incompleteRaw = {
+      ...addressRaw,
+      address_components: {
+        postalcode: 'dn_postalcode',
+        houseno: 'dn_houseno',
+        city: 'dn_city',
+      },
+    };
+    const fields = [
+      field('address', 'dn_address', 'address', incompleteRaw),
+      field('postalcode', 'dn_postalcode'),
+      field('houseno', 'dn_houseno'),
+      field('city', 'dn_city'),
+    ];
+
+    expect(buildAddressEntryRenderItems(fields)).toEqual(
+      fields.map((item) => ({ kind: 'field', field: item })),
+    );
+  });
 });
 
 const compactGroupFrom = (): AddressEntryGroup => {

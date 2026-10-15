@@ -20,4 +20,9 @@ export {
   type GpsStatus,
 } from './domain/gps-status';
 export { googleMapsSearchUrl } from './domain/maps-url';
+export {
+  LOCATION_ACCURACY,
+  type GetCurrentLocationOptions,
+  type LocationAccuracy,
+} from './domain/location-accuracy';
 export type { LocationReader } from './service/location-reader';

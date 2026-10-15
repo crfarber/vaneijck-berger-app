@@ -1,5 +1,6 @@
 import { ActivityIndicator, Pressable, StyleSheet, Text, type ViewStyle } from 'react-native';
 import { colors, radius, spacing } from './theme';
+import { useGuardedPress } from './use-guarded-press';
 
 type ButtonVariant = 'primary' | 'secondary' | 'action' | 'danger' | 'light' | 'ghost' | 'text';
 
@@ -9,6 +10,8 @@ type ButtonProps = {
   variant?: ButtonVariant;
   loading?: boolean;
   disabled?: boolean;
+  /** Light tap haptic on accepted press. Default true. */
+  haptic?: boolean;
   style?: ViewStyle;
 };
 
@@ -38,9 +41,11 @@ export function Button({
   variant = 'primary',
   loading = false,
   disabled = false,
+  haptic = true,
   style,
 }: ButtonProps) {
   const inactive = disabled || loading;
+  const handlePress = useGuardedPress({ onPress, disabled: inactive, haptic });
 
   if (variant === 'text') {
     return (
@@ -48,7 +53,7 @@ export function Button({
         accessibilityRole="button"
         accessibilityState={{ disabled: inactive, busy: loading }}
         disabled={inactive}
-        onPress={onPress}
+        onPress={handlePress}
         style={({ pressed }) => [
           styles.textButton,
           (pressed || inactive) && styles.textButtonDimmed,
@@ -68,7 +73,7 @@ export function Button({
       accessibilityRole="button"
       accessibilityState={{ disabled: inactive, busy: loading }}
       disabled={inactive}
-      onPress={onPress}
+      onPress={handlePress}
       style={({ pressed }) => [
         styles.base,
         styles[VARIANT_STYLE[variant]],

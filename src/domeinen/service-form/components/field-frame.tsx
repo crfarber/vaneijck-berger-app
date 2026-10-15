@@ -12,6 +12,7 @@ const ERROR_KEYS = {
   'min-value': 'serviceForm.errors.minValue',
   'signature-name-required': 'serviceForm.errors.signatureName',
   'signature-email-required': 'serviceForm.errors.signatureEmail',
+  'terms-required': 'serviceForm.signature.termsRequired',
 } as const;
 
 export function useErrorText(error: ServiceFormError | undefined): string | null {

@@ -260,7 +260,7 @@ describe('loadSelectOptions', () => {
   const byDistance = { orderby: 'distance', direction: 'ascending' };
 
   it('sorts by distance from the device when the field asks for it', async () => {
-    const { service } = setup(
+    const { service, locationReader } = setup(
       { dn_location: depots },
       { isValid: true, latitude: 52, longitude: 5 },
     );
@@ -274,6 +274,7 @@ describe('loadSelectOptions', () => {
         { label: 'Ver', value: 'l-1' },
       ],
     });
+    expect(locationReader.getCurrent).toHaveBeenCalledWith({ accuracy: 'coarse' });
   });
 
   it('keeps the synced order without a position', async () => {

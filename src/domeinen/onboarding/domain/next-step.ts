@@ -38,10 +38,9 @@ export function decideOnboarding(input: {
   }
 
   if (reregister.kind === 'not-needed') {
-    return {
-      step: 'allocations',
-      notice: reregister.expiredWithActiveWork === true ? 'no-valid-unit-continue' : 'none',
-    };
+    // Expired shift with active work still lands here (expiredWithActiveWork); no alert —
+    // the berger is finishing open work and would see it on every cold start otherwise.
+    return { step: 'allocations', notice: 'none' };
   }
 
   // required — unless the backend already confirmed open work (escape hatch from a failing form).

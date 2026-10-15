@@ -315,6 +315,70 @@ export function answerText(answer: ServiceFormAnswer | undefined): string {
   return String(answer?.displayValue ?? answer?.value ?? '').trim();
 }
 
+function isFilledLicensePlateAnswer(
+  answer: ServiceFormAnswer | undefined,
+  pleaseSelectLabel: string,
+): boolean {
+  if (!answer) {
+    return false;
+  }
+  const display = String(answer.displayValue ?? '').trim();
+  if (display === '' || display === pleaseSelectLabel) {
+    return false;
+  }
+  const value = answer.value;
+  return value !== '' && value !== null && value !== undefined;
+}
+
+/**
+ * True when brand (CRM select or RDW text) is already filled — e.g. after a previous apply,
+ * or when reopening a section. Used to skip the "is this vehicle correct?" confirm.
+ */
+export function hasAppliedLicensePlateVehicleAnswers(
+  mapping: LicensePlateFieldMapping,
+  answers: ServiceFormAnswers,
+  pleaseSelectLabel: string,
+): boolean {
+  if (mapping.brand && isFilledLicensePlateAnswer(answers[mapping.brand], pleaseSelectLabel)) {
+    return true;
+  }
+  if (
+    mapping.rdwBrand &&
+    isFilledLicensePlateAnswer(answers[mapping.rdwBrand], pleaseSelectLabel)
+  ) {
+    return true;
+  }
+  return false;
+}
+
+/** True when type (CRM select or RDW text) is already filled. */
+export function hasLicensePlateTypeAnswer(
+  mapping: LicensePlateFieldMapping,
+  answers: ServiceFormAnswers,
+  pleaseSelectLabel: string,
+): boolean {
+  if (mapping.type && isFilledLicensePlateAnswer(answers[mapping.type], pleaseSelectLabel)) {
+    return true;
+  }
+  if (mapping.rdwType && isFilledLicensePlateAnswer(answers[mapping.rdwType], pleaseSelectLabel)) {
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Ask "apply this vehicle?" only on a fresh RDW hit. Skip when the berger already has vehicle
+ * data for this plate (reopened section) or the dialog is already open for that plate.
+ */
+export function shouldConfirmRdwVehicle(input: {
+  confirmVehicle: boolean;
+  alreadyApplied: boolean;
+  pendingPlate: string | null;
+  resultPlate: string;
+}): boolean {
+  return input.confirmVehicle && !input.alreadyApplied && input.pendingPlate !== input.resultPlate;
+}
+
 // --- Pure UI state machine -------------------------------------------------
 
 export const LicensePlatePhase = {
@@ -349,9 +413,17 @@ export type LicensePlateUiEvent =
   | { type: 'openForeign' }
   | { type: 'reset' };
 
+export type InitialLicensePlateStateOptions = {
+  /** Vehicle brand already present in answers (previous apply / reopen). */
+  vehicleApplied?: boolean;
+  /** Type already present; when false with vehicleApplied, show the type gap. */
+  typeFilled?: boolean;
+};
+
 export function initialLicensePlateState(
   reportedPlate: string | null,
   foundPlate = '',
+  options?: InitialLicensePlateStateOptions,
 ): LicensePlateUiState {
   const reported = reportedPlate?.trim() || null;
   const found = foundPlate.trim();
@@ -361,6 +433,14 @@ export function initialLicensePlateState(
       foundPlate: '',
       reportedPlate: reported,
       showTypeGap: false,
+    };
+  }
+  if (found && options?.vehicleApplied) {
+    return {
+      phase: LicensePlatePhase.Summary,
+      foundPlate: found,
+      reportedPlate: reported,
+      showTypeGap: !options.typeFilled,
     };
   }
   return {
@@ -445,8 +525,12 @@ export function nextLicensePlateState(
   }
 }
 
-export function shouldShowManualVehicleFields(state: LicensePlateUiState): boolean {
+export function shouldShowManualVehicleFields(
+  state: LicensePlateUiState,
+  plateCannotBeDutch = false,
+): boolean {
   return (
+    plateCannotBeDutch ||
     state.phase === LicensePlatePhase.Manual ||
     state.phase === LicensePlatePhase.Foreign ||
     (state.phase === LicensePlatePhase.Summary && state.showTypeGap)
@@ -459,4 +543,29 @@ export function shouldShowRdwSummary(state: LicensePlateUiState): boolean {
 
 export function shouldConfirmReported(state: LicensePlateUiState): boolean {
   return state.phase === LicensePlatePhase.ConfirmReported;
+}
+
+/**
+ * Non-yellow plate chrome when the plate cannot be a Dutch sidecode (foreign, military, …),
+ * RDW has no match, or the berger opened foreign mode. A successful RDW hit on a Dutch plate
+ * keeps yellow chrome even if the berger later opens manual brand/type.
+ */
+export function shouldNeutralizeLicensePlateChrome(
+  state: LicensePlateUiState,
+  rdwLookupFailed: boolean,
+  plateCannotBeDutch = false,
+): boolean {
+  return rdwLookupFailed || state.phase === LicensePlatePhase.Foreign || plateCannotBeDutch;
+}
+
+/**
+ * Promote country/brand/type to required when RDW cannot resolve the plate, the plate is not
+ * Dutch-capable, or foreign mode is open. Schema may leave type optional (e.g. Berging).
+ */
+export function shouldRequireManualVehicleFields(
+  state: LicensePlateUiState,
+  rdwLookupFailed: boolean,
+  plateCannotBeDutch = false,
+): boolean {
+  return rdwLookupFailed || state.phase === LicensePlatePhase.Foreign || plateCannotBeDutch;
 }

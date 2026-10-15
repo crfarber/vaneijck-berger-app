@@ -40,7 +40,6 @@ export function ServiceDeclineSheet({
       title={title}
       closeLabel={t('common.cancel')}
       onClose={onClose}
-      height="45%"
       footer={
         state.step === 'choose' ? (
           <View style={styles.actions}>

@@ -30,6 +30,11 @@ export type ServiceFormState = {
   acceptedTermsAndConditions: boolean;
   /** Fixed form-shape fact: does this form contain a transport-conditions field? Not reset. */
   termsAcceptanceRequired: boolean;
+  /**
+   * Bumped on every section or full reset so compact groups (address / license plate) remount
+   * and drop local UI state that is not derived from answers alone.
+   */
+  uiResetEpoch: number;
   initialize: (
     answers: ServiceFormAnswers,
     initialExpandedSectionId?: string,
@@ -49,6 +54,11 @@ export type ServiceFormState = {
   toggleNoEmailConfirmation: (fieldKey: string) => void;
   setAcceptedTermsAndConditions: (accepted: boolean) => void;
   reset: () => void;
+  /**
+   * Restores a subset of fields (typically one section plus cleared dependents) and bumps
+   * `uiResetEpoch`. `answers` is the full next answer map from `buildSectionReset`.
+   */
+  resetSection: (answers: ServiceFormAnswers, fieldKeys: readonly string[]) => void;
   /** Rebuilds answers from a fresh backend baseline without applying a draft. */
   reinitializeToBackend: (
     answers: ServiceFormAnswers,
@@ -69,6 +79,7 @@ const initialState = {
   noEmailConfirmation: {},
   acceptedTermsAndConditions: true,
   termsAcceptanceRequired: false,
+  uiResetEpoch: 0,
 } satisfies Pick<
   ServiceFormState,
   | 'answers'
@@ -82,6 +93,7 @@ const initialState = {
   | 'noEmailConfirmation'
   | 'acceptedTermsAndConditions'
   | 'termsAcceptanceRequired'
+  | 'uiResetEpoch'
 >;
 
 export const createServiceFormStore = () =>
@@ -125,7 +137,8 @@ export const createServiceFormStore = () =>
         const current = state.requiredFieldOverrides;
         const wouldChange = fieldKeys.some((k) => (required ? !current[k] : Boolean(current[k])));
         if (!wouldChange) {
-          return {};
+          // Same reference — Zustand skips notify. `return {}` would still replace state.
+          return state;
         }
         const requiredFieldOverrides = { ...current };
         fieldKeys.forEach((fieldKey) => {
@@ -186,7 +199,19 @@ export const createServiceFormStore = () =>
         delete errors[fieldKey];
         return { noEmailConfirmation, errors };
       }),
-    setAcceptedTermsAndConditions: (accepted) => set({ acceptedTermsAndConditions: accepted }),
+    setAcceptedTermsAndConditions: (accepted) =>
+      set((state) => {
+        if (accepted) {
+          const errors = { ...state.errors };
+          for (const [fieldKey, error] of Object.entries(errors)) {
+            if (error.code === 'terms-required') {
+              delete errors[fieldKey];
+            }
+          }
+          return { acceptedTermsAndConditions: true, errors };
+        }
+        return { acceptedTermsAndConditions: false };
+      }),
     reset: () =>
       set((state) => ({
         answers: cloneServiceFormAnswers(state.initialAnswers),
@@ -198,7 +223,32 @@ export const createServiceFormStore = () =>
         hideSignature: {},
         noEmailConfirmation: {},
         acceptedTermsAndConditions: !state.termsAcceptanceRequired,
+        uiResetEpoch: state.uiResetEpoch + 1,
       })),
+    resetSection: (answers, fieldKeys) =>
+      set((state) => {
+        const touched = { ...state.touched };
+        const errors = { ...state.errors };
+        const hideSignature = { ...state.hideSignature };
+        const noEmailConfirmation = { ...state.noEmailConfirmation };
+        const requiredFieldOverrides = { ...state.requiredFieldOverrides };
+        for (const key of fieldKeys) {
+          delete touched[key];
+          delete errors[key];
+          delete hideSignature[key];
+          delete noEmailConfirmation[key];
+          delete requiredFieldOverrides[key];
+        }
+        return {
+          answers: cloneServiceFormAnswers(answers),
+          touched,
+          errors,
+          hideSignature,
+          noEmailConfirmation,
+          requiredFieldOverrides,
+          uiResetEpoch: state.uiResetEpoch + 1,
+        };
+      }),
     reinitializeToBackend: (answers, initialExpandedSectionId, requiresTermsAcceptance = false) =>
       set({
         answers: cloneServiceFormAnswers(answers),

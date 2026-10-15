@@ -67,8 +67,8 @@ const readAddressGroupMetadata = (raw: Record<string, unknown>): ServiceFormAddr
   const postalCode = readString(fields.postalCode);
   const houseNumber = readString(fields.houseNumber);
   const addition = readString(fields.addition) ?? undefined;
-  const street = readString(fields.street);
-  const city = readString(fields.city);
+  const street = readString(fields.street) ?? undefined;
+  const city = readString(fields.city) ?? undefined;
   const country = readString(fields.country) ?? undefined;
   const confirmAddress = readBoolean(addressGroup.confirmAddress);
   const allowManual = readBoolean(addressGroup.allowManual);
@@ -78,8 +78,6 @@ const readAddressGroupMetadata = (raw: Record<string, unknown>): ServiceFormAddr
     !id ||
     !postalCode ||
     !houseNumber ||
-    !street ||
-    !city ||
     confirmAddress === null ||
     allowManual === null ||
     allowForeignManual === null
@@ -173,7 +171,13 @@ const buildGroup = (
   if (!config || !mapping) {
     return null;
   }
-  if (REQUIRED_COMPONENTS.some((component) => !mapping[component])) {
+  const isCompact = Boolean(addressGroup);
+  // Compact address_group only requires postal code + house number (taxi route).
+  // Legacy address_components keep requiring street and city.
+  const requiredComponents: readonly (keyof AddressComponentMapping)[] = isCompact
+    ? ['postalcode', 'houseno']
+    : REQUIRED_COMPONENTS;
+  if (requiredComponents.some((component) => !mapping[component])) {
     return null;
   }
 
@@ -188,11 +192,11 @@ const buildGroup = (
     return [field];
   });
   const availableKeys = new Set(orderedFields.map((field) => field.key));
-  if (REQUIRED_COMPONENTS.some((component) => !availableKeys.has(mapping[component] ?? ''))) {
+  if (requiredComponents.some((component) => !availableKeys.has(mapping[component] ?? ''))) {
     return null;
   }
 
-  return { anchor, mapping, config, orderedFields, isCompactAddressGroup: Boolean(addressGroup) };
+  return { anchor, mapping, config, orderedFields, isCompactAddressGroup: isCompact };
 };
 
 export function buildAddressEntryRenderItems(fields: ServiceFormField[]): AddressEntryRenderItem[] {
@@ -311,15 +315,24 @@ export function buildCompactAddressSummary(
 ): string | null {
   const street = answerDisplay(answers, group.mapping.street);
   const city = answerDisplay(answers, group.mapping.city);
-  if (street === '' && city === '') {
-    return null;
-  }
-
   const houseNumber = answerDisplay(answers, group.mapping.houseno);
   const houseNumberAddition = answerDisplay(answers, group.mapping.housenoadd);
   const postalCode = answerDisplay(answers, group.mapping.postalcode);
   const country = answerDisplay(answers, group.mapping.country);
   const housePart = `${houseNumber}${houseNumberAddition}`.trim();
+
+  // Postal-only groups (no street/city roles): fall back to postcode + house number.
+  if (!group.mapping.street && !group.mapping.city) {
+    const parts = [[postalCode, housePart].filter((part) => part !== '').join(' '), country].filter(
+      (part) => part !== '',
+    );
+    return parts.length > 0 ? parts.join(', ') : null;
+  }
+
+  if (street === '' && city === '') {
+    return null;
+  }
+
   const streetLine = [street, housePart].filter((part) => part !== '').join(' ');
   const cityLine = [postalCode, city].filter((part) => part !== '').join(' ');
   const parts = [streetLine, cityLine, country].filter((part) => part !== '');

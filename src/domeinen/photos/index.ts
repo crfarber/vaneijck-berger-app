@@ -34,6 +34,7 @@ export {
   toImagePosition,
 } from './domain/photo-type';
 export { standGridIndex, isOnVehicleSubject } from './domain/stand-grid-index';
+export { matchLocalCopies } from './domain/local-copies';
 export {
   ANDROID_ZOOM_2X,
   androidZoomPresets,

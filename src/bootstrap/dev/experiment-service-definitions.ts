@@ -3,7 +3,6 @@ import afgifte from '../../../docs/diensten/experiment/Afgifte.json';
 import assistance from '../../../docs/diensten/experiment/Assistance.json';
 import belastingdienst from '../../../docs/diensten/experiment/Belastingdienst.json';
 import berging from '../../../docs/diensten/experiment/Berging.json';
-import bergingTest from '../../../docs/diensten/experiment/Berging_Test.json';
 import directTransport from '../../../docs/diensten/experiment/Direct_transport.json';
 import incidentManagement from '../../../docs/diensten/experiment/Incident_management.json';
 import ontruiming from '../../../docs/diensten/experiment/Ontruiming.json';
@@ -27,7 +26,6 @@ export const experimentServiceDefinitions: readonly unknown[] = [
   assistance,
   belastingdienst,
   berging,
-  bergingTest,
   directTransport,
   incidentManagement,
   ontruiming,

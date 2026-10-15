@@ -7,10 +7,22 @@ export type PhotoFiles = {
   persist(sourceUri: string, photoId: string): Promise<string>;
   /** Bytes for the multipart body. */
   readBytes(filePath: string): Promise<Uint8Array>;
+  /**
+   * URI suitable for `<Image source={{ uri }}>`. Prefer a short `file://` cache path over a giant
+   * base64 data URI so the overview can load many tiles quickly.
+   */
   displayUri(filePath: string): Promise<string>;
+  /** False when the stored file was wiped (reinstall, container move, manual delete). */
+  exists(filePath: string): Promise<boolean>;
   remove(filePath: string): Promise<void>;
   removeLegacy(): Promise<void>;
   clearKey(): Promise<void>;
+  /** Display URI of a downloaded server photo of one allocation, or null when not stored yet. */
+  remoteDisplayUri(scope: string, url: string): Promise<string | null>;
+  /** Stores a downloaded server photo encrypted and returns its display URI. */
+  storeRemote(scope: string, url: string, bytes: Uint8Array): Promise<string>;
+  /** Removes downloaded server photos of one allocation, or all of them without a scope. */
+  clearRemote(scope?: string): Promise<void>;
 };
 
 /** In-memory stand-in for tests. `persist` copies from `seed` when the uri matches a key. */
@@ -35,6 +47,9 @@ export function createInMemoryPhotoFiles(
     async displayUri(filePath) {
       return filePath;
     },
+    async exists(filePath) {
+      return files.has(filePath);
+    },
     async remove(filePath) {
       files.delete(filePath);
     },
@@ -46,6 +61,23 @@ export function createInMemoryPhotoFiles(
       }
     },
     async clearKey() {},
+    async remoteDisplayUri(scope, url) {
+      const path = `/remote/${scope}/${encodeURIComponent(url)}`;
+      return files.has(path) ? path : null;
+    },
+    async storeRemote(scope, url, bytes) {
+      const path = `/remote/${scope}/${encodeURIComponent(url)}`;
+      files.set(path, bytes);
+      return path;
+    },
+    async clearRemote(scope) {
+      const prefix = scope === undefined ? '/remote/' : `/remote/${scope}/`;
+      for (const path of [...files.keys()]) {
+        if (path.startsWith(prefix)) {
+          files.delete(path);
+        }
+      }
+    },
     dump: () => Object.fromEntries(files),
   };
 }

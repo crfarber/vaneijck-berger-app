@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { keyboardOverlap, sheetSizeAboveKeyboard } from './sheet-keyboard';
+import { keyboardOverlap, sheetSizeAboveKeyboard, sheetSizeToPixels } from './sheet-keyboard';
+
+describe('sheetSizeToPixels', () => {
+  it('keeps pixel sizes and resolves percentages against the window', () => {
+    expect(sheetSizeToPixels(200, 800)).toBe(200);
+    expect(sheetSizeToPixels('50%', 800)).toBe(400);
+  });
+});
 
 describe('keyboardOverlap', () => {
   it('measures how far the keyboard covers the bottom of the window', () => {

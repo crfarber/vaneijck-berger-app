@@ -75,8 +75,8 @@ export type PhotoPosition =
 
 /**
  * One photo on a service. `isExtra` is never stored: it is decided when the upload form is built
- * (`isExtraForUpload`). Coordinates may be missing until the device has a fix — the queue waits
- * instead of throwing the file away.
+ * (`isExtraForUpload`). Coordinates stay null at capture and are stamped at submit via
+ * `attachLocation`; the upload queue still retries if a fix is missing.
  */
 export type Photo = {
   readonly id: string;

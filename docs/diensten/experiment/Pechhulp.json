@@ -454,7 +454,8 @@
                   "readonly": false,
                   "optional": false,
                   "autocomplete": true,
-                  "value": "_dn_locationid_value"
+                  "value": "_dn_locationid_value",
+                  "quickPicks": 3
                 },
                 "requiredvisibility": {
                   "property": "dn_breakdownsettlementcode",
@@ -600,6 +601,32 @@
                   "houseno": "dn_deliveryhouseno",
                   "city": "dn_deliverycity",
                   "street": "dn_deliverystreet"
+                },
+                "address_group": {
+                  "id": "dn_deliverypostalcode",
+                  "label": [
+                    {
+                      "language-code": 1043,
+                      "value": "Afleveradres"
+                    },
+                    {
+                      "language-code": 1044,
+                      "value": "Delivery address"
+                    }
+                  ],
+                  "fields": {
+                    "postalCode": "dn_deliverypostalcode",
+                    "houseNumber": "dn_deliveryhouseno",
+                    "addition": "dn_deliveryhousenoaddition",
+                    "street": "dn_deliverystreet",
+                    "city": "dn_deliverycity",
+                    "country": "_dn_deliverycountryid_value",
+                    "name": "dn_deliveryname"
+                  },
+                  "flow": "nl_postal_lookup",
+                  "confirmAddress": true,
+                  "allowManual": true,
+                  "allowForeignManual": true
                 }
               },
               {
@@ -1420,6 +1447,31 @@
                   "houseno": "dn_driverhouseno",
                   "city": "dn_drivercity",
                   "street": "dn_driverstreet"
+                },
+                "address_group": {
+                  "id": "dn_driverpostalcode",
+                  "label": [
+                    {
+                      "language-code": 1043,
+                      "value": "Adres bestuurder"
+                    },
+                    {
+                      "language-code": 1044,
+                      "value": "Driver address"
+                    }
+                  ],
+                  "fields": {
+                    "postalCode": "dn_driverpostalcode",
+                    "houseNumber": "dn_driverhouseno",
+                    "addition": "dn_driverhousenoaddition",
+                    "street": "dn_driverstreet",
+                    "city": "dn_drivercity",
+                    "country": "_dn_drivercountryid_value"
+                  },
+                  "flow": "nl_postal_lookup",
+                  "confirmAddress": true,
+                  "allowManual": true,
+                  "allowForeignManual": true
                 }
               },
               {
@@ -1813,6 +1865,31 @@
                   "houseno": "dn_registrationownerhouseno",
                   "city": "dn_registrationownercity",
                   "street": "dn_registrationownerstreet"
+                },
+                "address_group": {
+                  "id": "dn_registrationownerpostalcode",
+                  "label": [
+                    {
+                      "language-code": 1043,
+                      "value": "Adres kentekenhouder"
+                    },
+                    {
+                      "language-code": 1044,
+                      "value": "Registration owner address"
+                    }
+                  ],
+                  "fields": {
+                    "postalCode": "dn_registrationownerpostalcode",
+                    "houseNumber": "dn_registrationownerhouseno",
+                    "addition": "dn_registrationownerhousenoaddition",
+                    "street": "dn_registrationownerstreet",
+                    "city": "dn_registrationownercity",
+                    "country": "_dn_registrationownercountryid_value"
+                  },
+                  "flow": "nl_postal_lookup",
+                  "confirmAddress": true,
+                  "allowManual": true,
+                  "allowForeignManual": true
                 }
               },
               {
@@ -2202,6 +2279,31 @@
                   "houseno": "dn_licenseholderhouseno",
                   "city": "dn_licenseholdercity",
                   "street": "dn_licenseholderstreet"
+                },
+                "address_group": {
+                  "id": "dn_insurerpostalcode",
+                  "label": [
+                    {
+                      "language-code": 1043,
+                      "value": "Adres verzekeringsnemer"
+                    },
+                    {
+                      "language-code": 1044,
+                      "value": "Insurer address"
+                    }
+                  ],
+                  "fields": {
+                    "postalCode": "dn_insurerpostalcode",
+                    "houseNumber": "dn_insurerhouseno",
+                    "addition": "dn_insurerhousenoaddition",
+                    "street": "dn_insurerstreet",
+                    "city": "dn_insurercity",
+                    "country": "_dn_insurercountryid_value"
+                  },
+                  "flow": "nl_postal_lookup",
+                  "confirmAddress": true,
+                  "allowManual": true,
+                  "allowForeignManual": true
                 }
               },
               {
@@ -2450,6 +2552,27 @@
                 "requiredvisibility": {
                   "property": "dn_requesttaxi",
                   "value": true
+                },
+                "address_group": {
+                  "id": "dn_requesttaxizipcodefrom",
+                  "label": [
+                    {
+                      "language-code": 1043,
+                      "value": "Taxi vanaf"
+                    },
+                    {
+                      "language-code": 1044,
+                      "value": "Taxi from"
+                    }
+                  ],
+                  "fields": {
+                    "postalCode": "dn_requesttaxizipcodefrom",
+                    "houseNumber": "dn_requesttaxihousenofrom"
+                  },
+                  "flow": "nl_postal_lookup",
+                  "confirmAddress": true,
+                  "allowManual": true,
+                  "allowForeignManual": true
                 }
               },
               {
@@ -2496,6 +2619,27 @@
                 "requiredvisibility": {
                   "property": "dn_requesttaxi",
                   "value": true
+                },
+                "address_group": {
+                  "id": "dn_requesttaxizipcodeto",
+                  "label": [
+                    {
+                      "language-code": 1043,
+                      "value": "Taxi naar"
+                    },
+                    {
+                      "language-code": 1044,
+                      "value": "Taxi to"
+                    }
+                  ],
+                  "fields": {
+                    "postalCode": "dn_requesttaxizipcodeto",
+                    "houseNumber": "dn_requesttaxihousenoto"
+                  },
+                  "flow": "nl_postal_lookup",
+                  "confirmAddress": true,
+                  "allowManual": true,
+                  "allowForeignManual": true
                 }
               },
               {
@@ -3216,7 +3360,8 @@
                   "readonly": false,
                   "optional": false,
                   "autocomplete": true,
-                  "value": "_dn_locationid_value"
+                  "value": "_dn_locationid_value",
+                  "quickPicks": 3
                 },
                 "requiredvisibility": {
                   "property": "dn_breakdownsettlementcode",
@@ -3362,6 +3507,32 @@
                   "houseno": "dn_deliveryhouseno",
                   "city": "dn_deliverycity",
                   "street": "dn_deliverystreet"
+                },
+                "address_group": {
+                  "id": "dn_deliverypostalcode",
+                  "label": [
+                    {
+                      "language-code": 1043,
+                      "value": "Afleveradres"
+                    },
+                    {
+                      "language-code": 1044,
+                      "value": "Delivery address"
+                    }
+                  ],
+                  "fields": {
+                    "postalCode": "dn_deliverypostalcode",
+                    "houseNumber": "dn_deliveryhouseno",
+                    "addition": "dn_deliveryhousenoaddition",
+                    "street": "dn_deliverystreet",
+                    "city": "dn_deliverycity",
+                    "country": "_dn_deliverycountryid_value",
+                    "name": "dn_deliveryname"
+                  },
+                  "flow": "nl_postal_lookup",
+                  "confirmAddress": true,
+                  "allowManual": true,
+                  "allowForeignManual": true
                 }
               },
               {
@@ -4182,6 +4353,31 @@
                   "houseno": "dn_driverhouseno",
                   "city": "dn_drivercity",
                   "street": "dn_driverstreet"
+                },
+                "address_group": {
+                  "id": "dn_driverpostalcode",
+                  "label": [
+                    {
+                      "language-code": 1043,
+                      "value": "Adres bestuurder"
+                    },
+                    {
+                      "language-code": 1044,
+                      "value": "Driver address"
+                    }
+                  ],
+                  "fields": {
+                    "postalCode": "dn_driverpostalcode",
+                    "houseNumber": "dn_driverhouseno",
+                    "addition": "dn_driverhousenoaddition",
+                    "street": "dn_driverstreet",
+                    "city": "dn_drivercity",
+                    "country": "_dn_drivercountryid_value"
+                  },
+                  "flow": "nl_postal_lookup",
+                  "confirmAddress": true,
+                  "allowManual": true,
+                  "allowForeignManual": true
                 }
               },
               {
@@ -4575,6 +4771,31 @@
                   "houseno": "dn_registrationownerhouseno",
                   "city": "dn_registrationownercity",
                   "street": "dn_registrationownerstreet"
+                },
+                "address_group": {
+                  "id": "dn_registrationownerpostalcode",
+                  "label": [
+                    {
+                      "language-code": 1043,
+                      "value": "Adres kentekenhouder"
+                    },
+                    {
+                      "language-code": 1044,
+                      "value": "Registration owner address"
+                    }
+                  ],
+                  "fields": {
+                    "postalCode": "dn_registrationownerpostalcode",
+                    "houseNumber": "dn_registrationownerhouseno",
+                    "addition": "dn_registrationownerhousenoaddition",
+                    "street": "dn_registrationownerstreet",
+                    "city": "dn_registrationownercity",
+                    "country": "_dn_registrationownercountryid_value"
+                  },
+                  "flow": "nl_postal_lookup",
+                  "confirmAddress": true,
+                  "allowManual": true,
+                  "allowForeignManual": true
                 }
               },
               {
@@ -4964,6 +5185,31 @@
                   "houseno": "dn_licenseholderhouseno",
                   "city": "dn_licenseholdercity",
                   "street": "dn_licenseholderstreet"
+                },
+                "address_group": {
+                  "id": "dn_insurerpostalcode",
+                  "label": [
+                    {
+                      "language-code": 1043,
+                      "value": "Adres verzekeringsnemer"
+                    },
+                    {
+                      "language-code": 1044,
+                      "value": "Insurer address"
+                    }
+                  ],
+                  "fields": {
+                    "postalCode": "dn_insurerpostalcode",
+                    "houseNumber": "dn_insurerhouseno",
+                    "addition": "dn_insurerhousenoaddition",
+                    "street": "dn_insurerstreet",
+                    "city": "dn_insurercity",
+                    "country": "_dn_insurercountryid_value"
+                  },
+                  "flow": "nl_postal_lookup",
+                  "confirmAddress": true,
+                  "allowManual": true,
+                  "allowForeignManual": true
                 }
               },
               {
@@ -5212,6 +5458,27 @@
                 "requiredvisibility": {
                   "property": "dn_requesttaxi",
                   "value": true
+                },
+                "address_group": {
+                  "id": "dn_requesttaxizipcodefrom",
+                  "label": [
+                    {
+                      "language-code": 1043,
+                      "value": "Taxi vanaf"
+                    },
+                    {
+                      "language-code": 1044,
+                      "value": "Taxi from"
+                    }
+                  ],
+                  "fields": {
+                    "postalCode": "dn_requesttaxizipcodefrom",
+                    "houseNumber": "dn_requesttaxihousenofrom"
+                  },
+                  "flow": "nl_postal_lookup",
+                  "confirmAddress": true,
+                  "allowManual": true,
+                  "allowForeignManual": true
                 }
               },
               {
@@ -5258,6 +5525,27 @@
                 "requiredvisibility": {
                   "property": "dn_requesttaxi",
                   "value": true
+                },
+                "address_group": {
+                  "id": "dn_requesttaxizipcodeto",
+                  "label": [
+                    {
+                      "language-code": 1043,
+                      "value": "Taxi naar"
+                    },
+                    {
+                      "language-code": 1044,
+                      "value": "Taxi to"
+                    }
+                  ],
+                  "fields": {
+                    "postalCode": "dn_requesttaxizipcodeto",
+                    "houseNumber": "dn_requesttaxihousenoto"
+                  },
+                  "flow": "nl_postal_lookup",
+                  "confirmAddress": true,
+                  "allowManual": true,
+                  "allowForeignManual": true
                 }
               },
               {

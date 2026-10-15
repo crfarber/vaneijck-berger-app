@@ -376,6 +376,47 @@ describe('request: timeout and abort', () => {
   });
 });
 
+describe('requestBytes', () => {
+  it('returns the binary body with the bearer token', async () => {
+    const { client, fetchMock, lastHeaders } = setup();
+    fetchMock.mockResolvedValueOnce(new Response(new Uint8Array([1, 2, 3]), { status: 200 }));
+
+    await expect(
+      client.requestBytes('/photos/1', { headers: { Accept: 'image/*' } }),
+    ).resolves.toEqual(new Uint8Array([1, 2, 3]));
+    expect(fetchMock.mock.calls[0]?.[0]).toBe('https://api.test/photos/1');
+    expect(lastHeaders()).toMatchObject({ Accept: 'image/*', Authorization: 'Bearer token-1' });
+  });
+
+  it('refreshes once on a 401 and retries with the new token', async () => {
+    const { client, fetchMock, refreshAccessToken, lastHeaders } = setup();
+    fetchMock
+      .mockResolvedValueOnce(new Response(null, { status: 401 }))
+      .mockResolvedValueOnce(new Response(new Uint8Array([9]), { status: 200 }));
+
+    await expect(client.requestBytes('/photos/1')).resolves.toEqual(new Uint8Array([9]));
+    expect(refreshAccessToken).toHaveBeenCalledTimes(1);
+    expect(lastHeaders(1).Authorization).toBe('Bearer token-2');
+  });
+
+  it('throws HttpError with the problem details of the backend', async () => {
+    const { client, fetchMock } = setup();
+    fetchMock.mockResolvedValueOnce(problemResponse(404, { title: 'Not found' }));
+
+    await expect(client.requestBytes('/photos/1')).rejects.toMatchObject({
+      status: 404,
+      problem: { title: 'Not found' },
+    });
+  });
+
+  it('wraps a failing fetch in NetworkError', async () => {
+    const { client, fetchMock } = setup();
+    fetchMock.mockRejectedValueOnce(new TypeError('Network request failed'));
+
+    await expect(client.requestBytes('/photos/1')).rejects.toBeInstanceOf(NetworkError);
+  });
+});
+
 describe('requestJson', () => {
   const thing = z.object({ id: z.number(), name: z.string() });
 

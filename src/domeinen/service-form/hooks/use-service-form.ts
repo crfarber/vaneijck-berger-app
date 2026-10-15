@@ -34,6 +34,10 @@ export function useServiceForm(form: NormalizedServiceForm, pleaseSelectLabel: s
   const setFieldsRequired = useServiceFormStore((state) => state.setFieldsRequired);
   const hideSignature = useServiceFormStore((state) => state.hideSignature);
   const noEmailConfirmation = useServiceFormStore((state) => state.noEmailConfirmation);
+  const termsAcceptanceRequired = useServiceFormStore((state) => state.termsAcceptanceRequired);
+  const acceptedTermsAndConditions = useServiceFormStore(
+    (state) => state.acceptedTermsAndConditions,
+  );
 
   const fields = useMemo(() => form.sections.flatMap((section) => section.fields), [form.sections]);
   const visibility = useMemo(() => evaluateServiceFormVisibility(form, answers), [answers, form]);
@@ -47,13 +51,17 @@ export function useServiceForm(form: NormalizedServiceForm, pleaseSelectLabel: s
         requiredFieldOverrides,
         hideSignature,
         noEmailConfirmation,
+        termsAcceptanceRequired,
+        acceptedTermsAndConditions,
       }),
     [
+      acceptedTermsAndConditions,
       answers,
       fields,
       hideSignature,
       noEmailConfirmation,
       requiredFieldOverrides,
+      termsAcceptanceRequired,
       visibility.visibleFieldIds,
     ],
   );
@@ -63,13 +71,17 @@ export function useServiceForm(form: NormalizedServiceForm, pleaseSelectLabel: s
         requiredFieldOverrides,
         hideSignature,
         noEmailConfirmation,
+        termsAcceptanceRequired,
+        acceptedTermsAndConditions,
       }),
     [
+      acceptedTermsAndConditions,
       answers,
       fields,
       hideSignature,
       noEmailConfirmation,
       requiredFieldOverrides,
+      termsAcceptanceRequired,
       visibility.visibleFieldIds,
     ],
   );
@@ -77,6 +89,7 @@ export function useServiceForm(form: NormalizedServiceForm, pleaseSelectLabel: s
   const updateAnswers = (answerUpdates: ServiceFormAnswers): void => {
     setAnswers(answerUpdates);
     const nextAnswers = { ...store.getState().answers, ...answerUpdates };
+    const state = store.getState();
     Object.keys(answerUpdates).forEach((fieldKey) => {
       if (!errors[fieldKey] && !touched[fieldKey]) {
         return;
@@ -88,9 +101,13 @@ export function useServiceForm(form: NormalizedServiceForm, pleaseSelectLabel: s
           validateServiceFormField(
             field,
             nextAnswers,
-            requiredFieldOverrides,
-            hideSignature,
-            noEmailConfirmation,
+            state.requiredFieldOverrides,
+            state.hideSignature,
+            state.noEmailConfirmation,
+            {
+              termsAcceptanceRequired: state.termsAcceptanceRequired,
+              acceptedTermsAndConditions: state.acceptedTermsAndConditions,
+            },
           ),
         );
       }
@@ -103,26 +120,36 @@ export function useServiceForm(form: NormalizedServiceForm, pleaseSelectLabel: s
 
   const blurField = (field: ServiceFormField): void => {
     touchField(field.key);
+    const state = store.getState();
     setFieldError(
       field.key,
       validateServiceFormField(
         field,
-        store.getState().answers,
-        store.getState().requiredFieldOverrides,
-        store.getState().hideSignature,
-        store.getState().noEmailConfirmation,
+        state.answers,
+        state.requiredFieldOverrides,
+        state.hideSignature,
+        state.noEmailConfirmation,
+        {
+          termsAcceptanceRequired: state.termsAcceptanceRequired,
+          acceptedTermsAndConditions: state.acceptedTermsAndConditions,
+        },
       ),
     );
   };
 
   const validateForm = (): boolean => {
+    const state = store.getState();
     const nextErrors = validateVisibleServiceForm(
       fields,
       visibility.visibleFieldIds,
-      answers,
-      requiredFieldOverrides,
-      hideSignature,
-      noEmailConfirmation,
+      state.answers,
+      state.requiredFieldOverrides,
+      state.hideSignature,
+      state.noEmailConfirmation,
+      {
+        termsAcceptanceRequired: state.termsAcceptanceRequired,
+        acceptedTermsAndConditions: state.acceptedTermsAndConditions,
+      },
     );
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;

@@ -1,16 +1,24 @@
 import { Redirect, router, useLocalSearchParams, useNavigation } from 'expo-router';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
-import { ExtendShiftScreen } from '@/domeinen/allocation-unit/ui';
+import {
+  ExtendShiftScreen,
+  matchLastUnitSnapshot,
+  useAllocationUnitService,
+  useLastUnitPreference,
+} from '@/domeinen/allocation-unit/ui';
+import type { LastUnitSnapshot } from '@/domeinen/allocation-unit';
 import { hasActiveAllocations } from '@/domeinen/allocations';
 import { AllocationsScreen, useAllocations } from '@/domeinen/allocations/ui';
 import { useSession } from '@/domeinen/auth/ui';
 import { usePermissionDisclosureGate } from '@/domeinen/settings/ui';
+import { useWorker } from '@/domeinen/worker/ui';
 import { colors } from '@/shared/ui/theme';
 import { AllocationsToolbar } from '../components/allocations-toolbar';
+import { RegisterUnitPromptSheet } from '../components/register-unit-prompt-sheet';
 import { clearNoValidUnitContinueNotice } from '../domain/no-valid-unit-continue-notice';
-import { clearRegisterUnitNotice } from '../domain/register-unit-notice';
+import { claimRegisterUnitNotice, clearRegisterUnitNotice } from '../domain/register-unit-notice';
 import {
   noValidUnitContinueAlertTexts,
   showNoValidUnitContinueAlert,
@@ -35,6 +43,10 @@ export function OnboardingGateScreen() {
   const userType = useSession((state) => state.userType);
   const { sections } = useAllocations();
   const activeWork = hasActiveAllocations(sections);
+  const lastUnitPreference = useLastUnitPreference();
+  const unitService = useAllocationUnitService();
+  const { data: worker } = useWorker();
+  const [reuseSnapshot, setReuseSnapshot] = useState<LastUnitSnapshot | null>(null);
   const step = gate.status === 'ready' ? gate.step : null;
   const notice = gate.status === 'ready' ? gate.notice : 'none';
 
@@ -45,6 +57,12 @@ export function OnboardingGateScreen() {
         ? t('unit.extendShiftTitle')
         : t('unit.registerTitle'),
   );
+
+  const reuseSnapshotStale =
+    userType === null || (disclosure === 'done' && gate.status === 'ready' && notice === 'none');
+  if (reuseSnapshotStale && reuseSnapshot !== null) {
+    setReuseSnapshot(null);
+  }
 
   useEffect(() => {
     if (userType === null) {
@@ -64,15 +82,41 @@ export function OnboardingGateScreen() {
       return;
     }
     if (notice === 'register-unit') {
-      showRegisterUnitAlert(registerUnitAlertTexts(t), () => {
-        router.push('/unit?mode=onboarding');
-      });
+      if (worker === undefined) {
+        return;
+      }
+      void (async () => {
+        const stored = await lastUnitPreference.load();
+        let fleetTruckIds: ReadonlySet<string> | undefined;
+        if (userType === 'internal') {
+          const fleet = await unitService.getFleet();
+          fleetTruckIds = new Set(fleet.map((vehicle) => vehicle.id));
+        }
+        const matched =
+          worker === null
+            ? null
+            : matchLastUnitSnapshot(stored, {
+                workerId: worker.dn_workerid,
+                userType,
+                fleetTruckIds,
+              });
+        if (matched !== null) {
+          if (!claimRegisterUnitNotice()) {
+            return;
+          }
+          setReuseSnapshot(matched);
+          return;
+        }
+        showRegisterUnitAlert(registerUnitAlertTexts(t), () => {
+          router.push('/unit?mode=onboarding');
+        });
+      })();
       return;
     }
     if (notice === 'no-valid-unit-continue') {
       showNoValidUnitContinueAlert(noValidUnitContinueAlertTexts(t));
     }
-  }, [disclosure, gate.status, notice, t, userType]);
+  }, [disclosure, gate.status, lastUnitPreference, notice, t, unitService, userType, worker]);
 
   if (disclosure === 'checking' || gate.status === 'checking') {
     return (
@@ -86,17 +130,38 @@ export function OnboardingGateScreen() {
     return <Redirect href="/permission-disclosure" />;
   }
 
+  const closeReuseSheet = (): void => {
+    setReuseSnapshot(null);
+  };
+
   switch (gate.step) {
     case 'allocations':
       return (
-        <AllocationsScreen
-          toolbar={
-            <AllocationsToolbar
-              hasActiveAllocations={activeWork}
-              canReportIssue={userType === 'internal'}
+        <>
+          <AllocationsScreen
+            toolbar={
+              <AllocationsToolbar
+                hasActiveAllocations={activeWork}
+                canReportIssue={userType === 'internal'}
+              />
+            }
+          />
+          {reuseSnapshot !== null ? (
+            <RegisterUnitPromptSheet
+              visible
+              snapshot={reuseSnapshot}
+              onUseThis={() => {
+                closeReuseSheet();
+                router.push('/unit?mode=onboarding&reuse=last');
+              }}
+              onChooseOther={() => {
+                closeReuseSheet();
+                router.push('/unit?mode=onboarding');
+              }}
+              onDismiss={closeReuseSheet}
             />
-          }
-        />
+          ) : null}
+        </>
       );
     case 'register-external-unit':
     case 'register-internal-unit':

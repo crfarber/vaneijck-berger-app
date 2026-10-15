@@ -48,6 +48,8 @@ export type RawServiceFormAutoform = {
   readonly?: boolean;
   optional?: boolean;
   autocomplete?: boolean;
+  /** Show the first N options as quick-pick chips (e.g. nearest depots). */
+  quickPicks?: number;
   requiredwhen?: ServiceFormRequiredWhen;
   validations?: RawServiceFormValidation[];
   copyfrom?: string[];
@@ -81,8 +83,10 @@ export type ServiceFormAddressGroupFields = {
   postalCode: string;
   houseNumber: string;
   addition?: string;
-  street: string;
-  city: string;
+  /** Optional for postal-only blocks such as a taxi route. */
+  street?: string;
+  /** Optional for postal-only blocks such as a taxi route. */
+  city?: string;
   country?: string;
 };
 
@@ -117,6 +121,29 @@ export type ServiceFormLicensePlateGroup = {
   allowForeignManual?: boolean;
 };
 
+export type ServiceFormPersonGroupFields = {
+  lastName: string;
+  salutation?: string;
+  initials?: string;
+  firstName?: string;
+  middleName?: string;
+  phone1?: string;
+  phone2?: string;
+  email?: string;
+  company?: string;
+};
+
+export type ServiceFormPersonGroup = {
+  id: string;
+  label?: LocalizedServiceFormValue[];
+  fields: ServiceFormPersonGroupFields;
+  flow: 'person_v1';
+  confirmName?: boolean;
+  gate?: string;
+  addressGroupId?: string | null;
+  copyFrom?: string | null;
+};
+
 export type RawServiceFormField = {
   name?: string;
   label?: LocalizedServiceFormValue[];
@@ -129,6 +156,7 @@ export type RawServiceFormField = {
   subFields?: ServiceFormSignatureSubFields;
   address_group?: ServiceFormAddressGroup;
   license_plate_group?: ServiceFormLicensePlateGroup;
+  person_group?: ServiceFormPersonGroup;
   [key: string]: unknown;
 };
 
@@ -178,6 +206,8 @@ export type ServiceFormField = {
   readOnly: boolean;
   optional: boolean;
   autocomplete: boolean;
+  /** First N options as quick-pick chips; undefined when unset or invalid. */
+  quickPicks?: number;
   autoformValue?: string;
   sortOptions?: ServiceFormSortOptions;
   dependencies?: ServiceFormDependencies;
@@ -235,7 +265,8 @@ export type ServiceFormErrorCode =
   | 'min-value'
   | 'required'
   | 'signature-email-required'
-  | 'signature-name-required';
+  | 'signature-name-required'
+  | 'terms-required';
 
 export type ServiceFormError = {
   code: ServiceFormErrorCode;

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { isDutchLicensePlate, normalizeLicensePlate } from '@/domeinen/allocation-unit';
 import type { LookupRow, RdwInfo } from '@/domeinen/rdw';
 import {
+  hasAppliedLicensePlateVehicleAnswers,
   LEGACY_LICENSE_PLATE_MAPPING,
   type LicensePlateFieldMapping,
 } from '../domain/license-plate-entry';
@@ -11,6 +12,18 @@ import type { FetchRdwInfo } from './service-form-context';
 import { useServiceFormService } from './service-form-context';
 
 export type { FetchRdwInfo };
+
+export type RdwLookupResult = {
+  plate: string;
+  info: RdwInfo | null;
+  typeMatched: boolean;
+  failed: boolean;
+  /**
+   * Vehicle fields were already filled before this lookup wrote anything (reopened section,
+   * or same-plate refresh). Callers should skip the "apply vehicle?" confirm.
+   */
+  alreadyApplied: boolean;
+};
 
 export type UseRdwVehicleRegistrationParams = {
   pleaseSelectLabel: string;
@@ -22,13 +35,13 @@ export type UseRdwVehicleRegistrationParams = {
   setFieldsRequired: (fieldKeys: string[], required: boolean) => void;
   /** Role → CRM key map; defaults to legacy Van Eijck field names. */
   mapping?: LicensePlateFieldMapping;
+  /**
+   * Extra signal to make country/brand/type required (e.g. foreign plate mode).
+   * Combined with a failed RDW lookup.
+   */
+  forceManualVehicleRequired?: boolean;
   /** Called after a successful or failed lookup with match details. */
-  onLookupResult?: (result: {
-    plate: string;
-    info: RdwInfo | null;
-    typeMatched: boolean;
-    failed: boolean;
-  }) => void;
+  onLookupResult?: (result: RdwLookupResult) => void;
 };
 
 /**
@@ -43,6 +56,7 @@ export function useRdwVehicleRegistration({
   updateAnswers,
   setFieldsRequired,
   mapping = LEGACY_LICENSE_PLATE_MAPPING,
+  forceManualVehicleRequired = false,
   onLookupResult,
 }: UseRdwVehicleRegistrationParams) {
   const service = useServiceFormService();
@@ -147,6 +161,15 @@ export function useRdwVehicleRegistration({
             const overwrite =
               lastSuccessfulPlateRef.current !== null &&
               lastSuccessfulPlateRef.current !== requestedPlate;
+            // Check before autofill: apply fills empty fields, so a post-check would always
+            // look "applied" and skip the first-time confirm dialog.
+            const alreadyApplied =
+              !overwrite &&
+              hasAppliedLicensePlateVehicleAnswers(
+                mappingRef.current,
+                getAnswersRef.current(),
+                pleaseSelectLabel,
+              );
             lastSuccessfulPlateRef.current = requestedPlate;
             setRdwInfo(response);
             setRdwLookupFailed(false);
@@ -156,6 +179,7 @@ export function useRdwVehicleRegistration({
               info: response,
               typeMatched: match.typeMatched,
               failed: false,
+              alreadyApplied,
             });
             return;
           }
@@ -170,6 +194,7 @@ export function useRdwVehicleRegistration({
             info: null,
             typeMatched: false,
             failed: true,
+            alreadyApplied: false,
           });
         })
         .catch(() => {
@@ -186,6 +211,7 @@ export function useRdwVehicleRegistration({
             info: null,
             typeMatched: false,
             failed: true,
+            alreadyApplied: false,
           });
         })
         .finally(() => {
@@ -242,11 +268,15 @@ export function useRdwVehicleRegistration({
     }
   }, [fetchRdwInfo, loadRdwForPlate, rdwInfo, rdwLookupFailed]);
 
+  // Depend only on the required flag — not `fieldKeys`/`mapping` identity. Those are often new
+  // objects each parent render; putting them in deps + cleanup(false)/set(true) loops forever
+  // ("Maximum update depth exceeded") when foreign plate or RDW-fail turns required on.
   useEffect(() => {
     const keys = autofillKeys();
-    setFieldsRequired(keys, Boolean(fetchRdwInfo && rdwLookupFailed));
+    const required = Boolean(fetchRdwInfo && (rdwLookupFailed || forceManualVehicleRequired));
+    setFieldsRequired(keys, required);
     return () => setFieldsRequired(keys, false);
-  }, [fetchRdwInfo, fieldKeys, mapping, rdwLookupFailed, setFieldsRequired]);
+  }, [fetchRdwInfo, forceManualVehicleRequired, rdwLookupFailed, setFieldsRequired]);
 
   return {
     rdwInfo,

@@ -8,6 +8,7 @@ import {
   findBooleanSelectRow,
   optionLabel,
   optionValue,
+  pickQuickOptions,
   selectedOptionAnswer,
   sortCountryOptions,
   sortOptionsByDistance,
@@ -245,6 +246,31 @@ describe('filterSelectOptions', () => {
 
   it('shows everything for a single character', () => {
     expect(filterSelectOptions(options, 'x')).toEqual(options);
+  });
+});
+
+describe('pickQuickOptions', () => {
+  const options = [
+    { label: 'Utrecht', value: 'loc-near' },
+    { label: 'Amsterdam', value: 'loc-mid' },
+    { label: 'Groningen', value: 'loc-far' },
+    { label: 'Maastricht', value: 'loc-south' },
+  ];
+
+  it('returns the first N options', () => {
+    expect(pickQuickOptions(options, 3, undefined)).toEqual(options.slice(0, 3));
+  });
+
+  it('appends the selected option when it falls outside the first N', () => {
+    expect(pickQuickOptions(options, 2, 'loc-south')).toEqual([options[0], options[1], options[3]]);
+  });
+
+  it('does not duplicate the selected option when it is already in the head', () => {
+    expect(pickQuickOptions(options, 3, 'loc-near')).toEqual(options.slice(0, 3));
+  });
+
+  it('returns an empty list for a non-positive count', () => {
+    expect(pickQuickOptions(options, 0, 'loc-near')).toEqual([]);
   });
 });
 

@@ -63,14 +63,17 @@ describe('getVehicleSectionFieldOrder', () => {
 });
 
 describe('applyRdwVehicleAutofill', () => {
-  it('fills country, brand and type from RDW when empty', () => {
+  it('fills country, brand, type and RDW text fields from RDW when empty', () => {
     const updates = applyRdwVehicleAutofill({
-      rdwInfo: { model: 'Nissan', tradeName: 'Nissan Juke' },
+      rdwInfo: { model: 'Nissan', tradeName: 'Nissan Juke', primaryColor: 'Zwart' },
       answers: {},
       fieldKeys: new Set([
         '_dn_vehiclecountryoforiginid_value',
         '_dn_vehiclebrandid_value',
         '_dn_vehicletypeid_value',
+        'dn_vehiclebrand',
+        'dn_vehicletradename',
+        'dn_vwe_vehicleinformationid.vwe_rdw_kleur1',
       ]),
       countries: [{ dn_name: 'Nederland', dn_countryid: 'nl', dn_iso2code: 'NL' }],
       vehicleBrands: [{ dn_name: 'Nissan', dn_vehiclebrandid: 'brand-1' }],
@@ -88,6 +91,9 @@ describe('applyRdwVehicleAutofill', () => {
       _dn_vehiclecountryoforiginid_value: { value: 'nl', displayValue: 'Nederland' },
       _dn_vehiclebrandid_value: { value: 'brand-1', displayValue: 'Nissan' },
       _dn_vehicletypeid_value: { value: 'type-1', displayValue: 'Juke' },
+      dn_vehiclebrand: { value: 'Nissan', displayValue: 'Nissan' },
+      dn_vehicletradename: { value: 'Nissan Juke', displayValue: 'Nissan Juke' },
+      'dn_vwe_vehicleinformationid.vwe_rdw_kleur1': { value: 'Zwart', displayValue: 'Zwart' },
     });
   });
 
@@ -130,6 +136,23 @@ describe('clearRdwAutofillAnswers', () => {
   it('clears only autofill keys that exist', () => {
     expect(clearRdwAutofillAnswers(new Set(['_dn_vehiclebrandid_value']), PLEASE_SELECT)).toEqual({
       _dn_vehiclebrandid_value: { value: '', displayValue: PLEASE_SELECT },
+    });
+  });
+
+  it('clears RDW text fields to empty strings', () => {
+    expect(
+      clearRdwAutofillAnswers(
+        new Set([
+          'dn_vehiclebrand',
+          'dn_vehicletradename',
+          'dn_vwe_vehicleinformationid.vwe_rdw_kleur1',
+        ]),
+        PLEASE_SELECT,
+      ),
+    ).toEqual({
+      dn_vehiclebrand: { value: '', displayValue: '' },
+      dn_vehicletradename: { value: '', displayValue: '' },
+      'dn_vwe_vehicleinformationid.vwe_rdw_kleur1': { value: '', displayValue: '' },
     });
   });
 });

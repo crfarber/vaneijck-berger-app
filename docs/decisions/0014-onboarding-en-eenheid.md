@@ -55,9 +55,11 @@ dus elke interne eenheid — hoe geldig ook — werd behandeld als "geen voertui
 - **Externe en interne bergers werken nu, allebei handmatig.** Interne bergers kiezen een trekker
   (verplicht) en optioneel een aanhanger uit de vloot; daarna dezelfde beschikbaarheids- en
   eindtijdstap als extern. Alleen de QR-sneltoets ontbreekt nog (cameratoegang, roadmap slice 8/10).
-- **"Vorig voertuig onthouden"** (de sneltoetskaart in de oude `SelectTransport` en het automatisch
-  invullen in `getSavedVehicleIfAvailable`) is bewust niet overgenomen: een nicetohave, geen kernfunctie.
-  Elke keer opnieuw kiezen uit de vloot is de huidige situatie.
+- **"Vorig voertuig onthouden"** is later alsnog gebouwd, anders dan de oude sneltoetskaart: na een
+  geslaagde registratie bewaart de app `allocationUnit.lastUnitSnapshot` (overleeft uitloggen/
+  cancel). Bij opnieuw inloggen zonder eenheid toont de gate een sheet met die unit; beschikbaarheid,
+  eindtijd en startlocatie worden opnieuw gekozen. Match op `dn_workerid` (en intern: truck nog in
+  de vloot).
 - **"Afmelden" (`POST /api/allocation-units/{id}/cancel`) gebeurt bij vrijwillig uitloggen.** Het
   id-veld is `id` op `AllocationUnitInfo` (zelfde als de oude app). `SignOutGuard` cancelleert de
   eenheid vóór de sessie te wissen; mislukt cancel, dan blijft de berger ingelogd. Er is geen aparte

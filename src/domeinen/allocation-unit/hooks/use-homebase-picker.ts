@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert } from 'react-native';
-import { resolveCurrentPosition } from '@/domeinen/location';
+import { LOCATION_ACCURACY, resolveCurrentPosition } from '@/domeinen/location';
 import { useLocationReader } from '@/domeinen/location/ui';
 import {
   pickInitialHomebase,
@@ -33,7 +33,7 @@ export function useHomebasePicker({ enabled }: { enabled: boolean }) {
     void Promise.all([
       service.getHomebaseLocations(),
       preference.load(),
-      locationReader.getCurrent(),
+      locationReader.getCurrent({ accuracy: LOCATION_ACCURACY.coarse }),
     ]).then(([loaded, rememberedId, current]) => {
       if (cancelled) {
         return;

@@ -1,5 +1,13 @@
 export type SheetSize = number | `${number}%`;
 
+/** Resolves a sheet size to pixels of the window (percentages are of `windowHeight`). */
+export function sheetSizeToPixels(size: SheetSize, windowHeight: number): number {
+  if (typeof size === 'number') {
+    return size;
+  }
+  return (Number.parseFloat(size) / 100) * windowHeight;
+}
+
 /**
  * How far the keyboard covers the bottom of the window.
  * Zero when there is no keyboard, or when the window already ends at the keyboard
@@ -40,9 +48,7 @@ export function sheetSizeAboveKeyboard(input: {
   const requestedPx =
     input.requested === undefined
       ? input.windowHeight * 0.8
-      : typeof input.requested === 'number'
-        ? input.requested
-        : (Number.parseFloat(input.requested) / 100) * input.windowHeight;
+      : sheetSizeToPixels(input.requested, input.windowHeight);
 
   if (!Number.isFinite(requestedPx)) {
     return available;

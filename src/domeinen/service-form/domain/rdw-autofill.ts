@@ -135,10 +135,13 @@ export type ApplyRdwAutofillResult = {
   typeMatched: boolean;
 };
 
+function textAnswer(value: string): ServiceFormAnswer {
+  return { value, displayValue: value };
+}
+
 /**
- * Builds answer patches for country / brand / type from an RDW hit. Only keys that exist in
- * `fieldKeys` are updated. Readonly RDW display (model/tradeName/color) is not stored here —
- * the vehicle group reads those from `rdwInfo` directly.
+ * Builds answer patches from an RDW hit: CRM country/brand/type selects plus RDW text fields
+ * (model / trade name / color) when those keys exist in `fieldKeys`.
  */
 export function applyRdwVehicleAutofill(params: ApplyRdwAutofillParams): ServiceFormAnswers {
   return applyRdwVehicleAutofillWithMatch(params).updates;
@@ -152,6 +155,9 @@ export function applyRdwVehicleAutofillWithMatch(
   const countryKey = mapping.country ?? LEGACY_LICENSE_PLATE_MAPPING.country;
   const brandKey = mapping.brand ?? LEGACY_LICENSE_PLATE_MAPPING.brand;
   const typeKey = mapping.type ?? LEGACY_LICENSE_PLATE_MAPPING.type;
+  const rdwBrandKey = mapping.rdwBrand ?? LEGACY_LICENSE_PLATE_MAPPING.rdwBrand;
+  const rdwTypeKey = mapping.rdwType ?? LEGACY_LICENSE_PLATE_MAPPING.rdwType;
+  const rdwColorKey = mapping.rdwColor ?? LEGACY_LICENSE_PLATE_MAPPING.rdwColor;
 
   const updates: ServiceFormAnswers = {};
   const shouldFill = (key: string) =>
@@ -213,24 +219,47 @@ export function applyRdwVehicleAutofillWithMatch(
     );
   }
 
+  const model = params.rdwInfo.model?.trim();
+  if (model && shouldFill(rdwBrandKey)) {
+    updates[rdwBrandKey] = textAnswer(model);
+  }
+  const tradeName = params.rdwInfo.tradeName?.trim();
+  if (tradeName && shouldFill(rdwTypeKey)) {
+    updates[rdwTypeKey] = textAnswer(tradeName);
+  }
+  const primaryColor = params.rdwInfo.primaryColor?.trim();
+  if (primaryColor && shouldFill(rdwColorKey)) {
+    updates[rdwColorKey] = textAnswer(primaryColor);
+  }
+
   return { updates, brandMatched, typeMatched };
 }
 
-/** Empty select answers for the autofill keys (used when RDW fails or the plate changes). */
+/** Clears CRM selects and RDW text fields (used when RDW fails or the plate changes). */
 export function clearRdwAutofillAnswers(
   fieldKeys: ReadonlySet<string>,
   pleaseSelectLabel: string,
   mapping: LicensePlateFieldMapping = LEGACY_LICENSE_PLATE_MAPPING,
 ): ServiceFormAnswers {
   const updates: ServiceFormAnswers = {};
-  const keys = [
+  const selectKeys = [
     mapping.country ?? LEGACY_LICENSE_PLATE_MAPPING.country,
     mapping.brand ?? LEGACY_LICENSE_PLATE_MAPPING.brand,
     mapping.type ?? LEGACY_LICENSE_PLATE_MAPPING.type,
   ];
-  for (const key of keys) {
+  for (const key of selectKeys) {
     if (fieldKeys.has(key)) {
       updates[key] = { value: '', displayValue: pleaseSelectLabel };
+    }
+  }
+  const textKeys = [
+    mapping.rdwBrand ?? LEGACY_LICENSE_PLATE_MAPPING.rdwBrand,
+    mapping.rdwType ?? LEGACY_LICENSE_PLATE_MAPPING.rdwType,
+    mapping.rdwColor ?? LEGACY_LICENSE_PLATE_MAPPING.rdwColor,
+  ];
+  for (const key of textKeys) {
+    if (fieldKeys.has(key)) {
+      updates[key] = { value: '', displayValue: '' };
     }
   }
   return updates;

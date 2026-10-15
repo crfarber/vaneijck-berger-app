@@ -8,6 +8,7 @@ import {
 import type { NotificationSource, PushGateway, RemoteMessage } from '@/domeinen/notifications';
 import { decideOnboarding } from '@/domeinen/onboarding';
 import { createInMemoryPhotoFiles, type PhotoFiles } from '@/domeinen/photos';
+import { pickQuickOptions } from '@/domeinen/service-form';
 import type { DevicePermissions } from '@/domeinen/settings';
 import { AuthExpiredError, TokenRefreshError } from '@/shared/api/errors';
 import type { RuntimeConfig } from '@/shared/config/runtime-config';
@@ -524,6 +525,12 @@ describe('when the session cannot be kept', () => {
     await container.endDatePreference.remember(new Date(NOW + 3 * 60 * 60 * 1000));
     await container.homebasePreference.remember('loc-1');
     await container.recentTruckPreference.remember('truck-1');
+    await container.lastUnitPreference.remember({
+      kind: 'external',
+      workerId: 'w1',
+      userType: 'external',
+      plate: 'AB12CD',
+    });
     await container.languageSettings.choose('en');
 
     await container.authService.signOut();
@@ -539,6 +546,12 @@ describe('when the session cannot be kept', () => {
     expect(keyValueStore.dump()['allocationUnit.rememberedEndDate']).toBeUndefined();
     expect(keyValueStore.dump()['allocationUnit.rememberedHomebaseLocationId']).toBeUndefined();
     expect(keyValueStore.dump()['allocationUnit.recentTruckIds']).toBeUndefined();
+    expect(await container.lastUnitPreference.load()).toEqual({
+      kind: 'external',
+      workerId: 'w1',
+      userType: 'external',
+      plate: 'AB12CD',
+    });
     expect(keyValueStore.dump()['settings.language']).toBe('en');
   });
 });
@@ -1057,6 +1070,11 @@ describe('service form', () => {
         { label: 'Groningen', value: 'loc-far' },
       ],
     });
+    if (depots.kind === 'options') {
+      expect(pickQuickOptions(depots.options, 1, undefined)).toEqual([
+        { label: 'Utrecht', value: 'loc-near' },
+      ]);
+    }
 
     const result = await container.serviceFormService.submit({
       serviceId: 'svc-1',

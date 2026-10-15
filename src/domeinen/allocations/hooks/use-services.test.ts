@@ -2,17 +2,16 @@ import { QueryClient } from '@tanstack/react-query';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { RdwApi } from '@/domeinen/rdw';
 import type { AllocationsApi } from '../api/allocations-api';
+import { allocationQueryStaleTime } from '../domain/query-keys';
 import type { Service } from '../domain/types';
 import { createServicesQueryOptions } from './use-services';
-
-const NAVIGATION_CACHE_TIME = 5 * 60_000;
 
 afterEach(() => {
   vi.useRealTimers();
 });
 
 describe('services query options', () => {
-  it('reuses services when navigating back within five minutes', async () => {
+  it('reuses services when navigating back within the stale window', async () => {
     vi.useFakeTimers();
     const getServicesByIncidentId = vi.fn(async () => []);
     const options = createServicesQueryOptions(
@@ -29,7 +28,7 @@ describe('services query options', () => {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
 
     await client.fetchQuery(options);
-    vi.advanceTimersByTime(NAVIGATION_CACHE_TIME - 1);
+    vi.advanceTimersByTime(allocationQueryStaleTime - 1);
     await client.fetchQuery(options);
     expect(getServicesByIncidentId).toHaveBeenCalledTimes(1);
 

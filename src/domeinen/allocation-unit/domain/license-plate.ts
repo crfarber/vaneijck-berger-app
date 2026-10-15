@@ -141,6 +141,21 @@ export function isDutchLicensePlate(value: string): boolean {
   return LAYOUTS.some((layout) => fitsFully(raw, layout));
 }
 
+/**
+ * True when empty or the characters so far can still become one of the 14 NL layouts
+ * (while typing a Dutch plate). False for military / foreign patterns that cannot.
+ */
+export function canBeDutchLicensePlate(value: string): boolean {
+  const raw = normalizeLicensePlate(value);
+  if (raw.length === 0) {
+    return true;
+  }
+  if (raw.length > PLATE_LENGTH) {
+    return false;
+  }
+  return LAYOUTS.some((layout) => fitsAsPrefix(raw, layout));
+}
+
 export type LicensePlateInput = {
   /** What to show in the field, with hyphens. */
   formatted: string;

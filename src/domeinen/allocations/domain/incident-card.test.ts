@@ -262,13 +262,24 @@ describe('resolveIncidentCardModel', () => {
 });
 
 describe('formatIncidentClock', () => {
-  it('formats date and clock time like the old card', () => {
-    const clock = formatIncidentClock('2026-09-22T07:15:00.000');
-    expect(clock).toEqual({ date: '22/09/2026', time: '7:15' });
+  it('formats Dutch summer time from UTC like the old card', () => {
+    // 05:15Z = 07:15 in Europe/Amsterdam (CEST, UTC+2)
+    expect(formatIncidentClock('2026-09-22T05:15:00.000Z', 'Europe/Amsterdam')).toEqual({
+      date: '22/09/2026',
+      time: '7:15',
+    });
+  });
+
+  it('formats British summer time from the same UTC instant', () => {
+    // 05:15Z = 06:15 in Europe/London (BST, UTC+1)
+    expect(formatIncidentClock('2026-09-22T05:15:00.000Z', 'Europe/London')).toEqual({
+      date: '22/09/2026',
+      time: '6:15',
+    });
   });
 
   it('hides invalid dates', () => {
-    expect(formatIncidentClock('not-a-date')).toBeUndefined();
+    expect(formatIncidentClock('not-a-date', 'UTC')).toBeUndefined();
   });
 });
 

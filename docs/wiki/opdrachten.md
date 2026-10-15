@@ -1,7 +1,7 @@
 # Opdrachten
 
-> Gecontroleerd op: `ba1383c` (2026-09-23)
-> Bronnen: `src/domeinen/allocations/`, `src/domeinen/worker/`, `src/domeinen/outbox/`, `src/app/(app)/allocations/`, `src/bootstrap/container.ts`
+> Gecontroleerd op: `4cf3132b` (2026-10-13; werkboom, tijdzone op kaarten)
+> Bronnen: `src/domeinen/allocations/`, `src/domeinen/worker/`, `src/domeinen/outbox/`, `src/shared/utils/time.ts`, `src/app/(app)/allocations/`, `src/bootstrap/container.ts`
 > Zie ook: [ADR 0015](../decisions/0015-opdrachtenlijst-acties.md), [ADR 0018](../decisions/0018-verwerken-naad-en-overdragen.md), [flows](../functioneel/flows.md#2-opdrachtenlijst-werkt), [statussen](../functioneel/statussen.md#opdrachten-allocations)
 
 ## Waarvoor
@@ -52,6 +52,7 @@ API; alleen retrybare mutatiefouten worden als opdracht in de outbox bewaard.
 | OPDR-15 | Als de toewijzingen van één voertuigafgiftelocatie niet laden, verdwijnt alleen die locatie en blijven de overige locaties zichtbaar.                                | `src/domeinen/allocations/api/allocations-api.ts`                                                                                                           | `src/domeinen/allocations/api/allocations-api.test.ts`                                                                        |
 | OPDR-16 | Een opdrachtkaart toont “wacht op verbinding” zolang voor die opdracht een queued outbox-item bestaat.                                                               | `src/domeinen/allocations/components/allocation-row.tsx`, `src/domeinen/outbox/domain/pending.ts`                                                           | —                                                                                                                             |
 | OPDR-17 | Overdragen verstuurt `POST /api/incidents/{incidentId}/reassign/{colleagueId}` en ververst na succes de opdrachtenquery.                                             | `src/domeinen/allocations/hooks/use-reassign.ts`, `src/domeinen/allocations/service/reassign-service.ts`, `src/domeinen/allocations/api/allocations-api.ts` | `src/domeinen/allocations/service/reassign-service.test.ts`, `src/domeinen/allocations/api/allocations-api.test.ts`           |
+| OPDR-18 | Datum en klok op de incidentkaart tonen UTC-tijdstempels in de tijdzone van het apparaat (of een expliciet doorgegeven zone).                                        | `src/domeinen/allocations/domain/incident-card.ts`, `src/shared/utils/time.ts`                                                                              | `src/domeinen/allocations/domain/incident-card.test.ts`, `src/shared/utils/time.test.ts`                                      |
 
 ## Randgevallen en bewuste keuzes
 

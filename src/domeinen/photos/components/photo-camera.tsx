@@ -1,11 +1,13 @@
 import { CameraView, useCameraPermissions, type FlashMode } from 'expo-camera';
 import * as Device from 'expo-device';
 import * as ImagePicker from 'expo-image-picker';
+import { useFocusEffect } from 'expo-router';
 import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
   Alert,
+  AppState,
   Linking,
   Platform,
   Pressable,
@@ -29,6 +31,8 @@ import {
   iosZoomPresetsFromLenses,
   type CameraZoomPreset,
 } from '../domain/camera-zoom';
+import { usePhotoLogger } from '../hooks/photos-context';
+import { createPhotoCapture, photoCaptureErrorType, type PhotoCaptureStage } from './photo-capture';
 import { PhotoZoomControls } from './photo-zoom-controls';
 
 type PhotoCameraProps = {
@@ -39,8 +43,17 @@ type PhotoCameraProps = {
 /** Full-screen capture surface with a slot for flow-specific camera guidance. */
 export function PhotoCamera({ onCapture, overlay }: PhotoCameraProps) {
   const { t } = useTranslation();
+  const logger = usePhotoLogger();
+  const useLibrary = !Device.isDevice;
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraView>(null);
+  const [captureSession] = useState(() => createPhotoCapture(useLibrary));
+  const [cameraReady, setCameraReady] = useState(false);
+  const [cameraFocused, setCameraFocused] = useState(false);
+  const [cameraGeneration, setCameraGeneration] = useState(0);
+  const [appActive, setAppActive] = useState(
+    AppState.currentState !== 'background' && AppState.currentState !== 'inactive',
+  );
   const [capturing, setCapturing] = useState(false);
   const [flash, setFlash] = useState<FlashMode>('off');
   const [zoom, setZoom] = useState(0);
@@ -53,7 +66,31 @@ export function PhotoCamera({ onCapture, overlay }: PhotoCameraProps) {
   );
   const zoomRef = useRef(0);
   const pinchStartRef = useRef(0);
-  const useLibrary = !Device.isDevice;
+
+  useFocusEffect(
+    useCallback(() => {
+      setCameraFocused(true);
+      setCameraGeneration((current) => current + 1);
+      captureSession.setReady(useLibrary);
+      return () => {
+        captureSession.setReady(false);
+        setCameraReady(false);
+        setCameraFocused(false);
+      };
+    }, [captureSession, useLibrary]),
+  );
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (state) => {
+      captureSession.setReady(state === 'active' && useLibrary);
+      setCameraReady(false);
+      setAppActive(state === 'active');
+      if (state === 'active') {
+        setCameraGeneration((current) => current + 1);
+      }
+    });
+    return () => subscription.remove();
+  }, [captureSession, useLibrary]);
 
   useEffect(() => {
     zoomRef.current = zoom;
@@ -77,22 +114,27 @@ export function PhotoCamera({ onCapture, overlay }: PhotoCameraProps) {
     });
   }, []);
 
-  const deliverCapture = async (uri: string): Promise<void> => {
-    setCapturing(true);
-    try {
-      await onCapture(uri);
-    } catch {
-      Alert.alert(t('common.somethingWrong'));
-    } finally {
-      setCapturing(false);
+  const showCaptureError = (error: unknown, stage: PhotoCaptureStage | 'initialize'): void => {
+    const errorType = photoCaptureErrorType(error);
+    logger?.warn('photos', 'Photo operation failed', { stage, errorType });
+    if (stage === 'capture' && errorType === 'CameraNotReadyException') {
+      captureSession.setReady(false);
+      setCameraReady(false);
+      setCameraGeneration((current) => current + 1);
     }
+    const errorKeys = {
+      initialize: 'photos.cameraStartFailed',
+      capture: 'photos.captureFailed',
+      save: 'photos.saveFailed',
+    } as const;
+    Alert.alert(t(errorKeys[stage]), t('photos.errorType', { type: errorType }));
   };
 
-  const pickFromLibrary = async (): Promise<void> => {
+  const pickFromLibrary = async (): Promise<string | null> => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permissionResult.granted) {
       Alert.alert(t('photos.libraryPermissionDenied'));
-      return;
+      return null;
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -100,31 +142,33 @@ export function PhotoCamera({ onCapture, overlay }: PhotoCameraProps) {
       quality: 0.7,
     });
     if (result.canceled || result.assets.length === 0) {
-      return;
+      return null;
     }
     const uri = result.assets[0]?.uri;
     if (!uri) {
-      Alert.alert(t('common.somethingWrong'));
-      return;
+      throw new Error('Library returned no photo URI');
     }
-    await deliverCapture(uri);
+    return uri;
   };
 
   const takePicture = async (): Promise<void> => {
-    if (useLibrary) {
-      await pickFromLibrary();
-      return;
-    }
-
-    const picture = await cameraRef.current?.takePictureAsync({ quality: 0.7 });
-    if (!picture?.uri) {
-      Alert.alert(t('common.somethingWrong'));
-      return;
-    }
-    await deliverCapture(picture.uri);
+    await captureSession.run({
+      capture: async () => {
+        if (useLibrary) return pickFromLibrary();
+        const picture = await cameraRef.current?.takePictureAsync({ quality: 0.7 });
+        if (!picture?.uri) {
+          throw new Error('Camera returned no photo URI');
+        }
+        return picture.uri;
+      },
+      onCapture,
+      onBusyChange: setCapturing,
+      onError: showCaptureError,
+    });
   };
 
   const selectPreset = (preset: CameraZoomPreset): void => {
+    if (capturing || !cameraReady) return;
     setActivePresetLabel(preset.label);
     setZoom(preset.zoom);
     if (preset.lens) {
@@ -174,11 +218,13 @@ export function PhotoCamera({ onCapture, overlay }: PhotoCameraProps) {
   }
 
   const flashOn = flash === 'on';
+  const captureDisabled =
+    capturing || !cameraFocused || !appActive || (!useLibrary && !cameraReady);
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['bottom']}>
       <PinchGestureHandler
-        enabled={!useLibrary}
+        enabled={!useLibrary && !captureDisabled}
         onGestureEvent={onPinchGestureEvent}
         onHandlerStateChange={onPinchHandlerStateChange}
       >
@@ -187,8 +233,9 @@ export function PhotoCamera({ onCapture, overlay }: PhotoCameraProps) {
             <View style={styles.simulatorPreview}>
               <Text style={styles.simulatorHint}>{t('photos.simulatorLibraryHint')}</Text>
             </View>
-          ) : (
+          ) : cameraFocused && appActive ? (
             <CameraView
+              key={cameraGeneration}
               ref={cameraRef}
               style={styles.preview}
               facing="back"
@@ -196,13 +243,36 @@ export function PhotoCamera({ onCapture, overlay }: PhotoCameraProps) {
               zoom={zoom}
               selectedLens={selectedLens}
               onCameraReady={() => {
-                void cameraRef.current?.getAvailableLensesAsync().then(applyLenses);
+                if (
+                  AppState.currentState === 'background' ||
+                  AppState.currentState === 'inactive'
+                ) {
+                  return;
+                }
+                captureSession.setReady(true);
+                setCameraReady(true);
+                if (Platform.OS === 'ios') {
+                  void cameraRef.current
+                    ?.getAvailableLensesAsync()
+                    .then(applyLenses)
+                    .catch((error: unknown) => {
+                      logger?.warn('photos', 'Could not discover camera lenses', {
+                        stage: 'lenses',
+                        errorType: photoCaptureErrorType(error),
+                      });
+                    });
+                }
+              }}
+              onMountError={({ message }) => {
+                captureSession.setReady(false);
+                setCameraReady(false);
+                showCaptureError(new Error(message), 'initialize');
               }}
               onAvailableLensesChanged={({ lenses }) => {
                 applyLenses(lenses);
               }}
             />
-          )}
+          ) : null}
           {overlay ? (
             <View pointerEvents="none" style={styles.overlay}>
               {overlay}
@@ -224,7 +294,8 @@ export function PhotoCamera({ onCapture, overlay }: PhotoCameraProps) {
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={flashOn ? t('photos.flashOn') : t('photos.flashOff')}
-              accessibilityState={{ selected: flashOn }}
+              accessibilityState={{ selected: flashOn, disabled: captureDisabled }}
+              disabled={captureDisabled}
               onPress={() => setFlash((current) => (current === 'on' ? 'off' : 'on'))}
               style={[styles.sideButton, flashOn && styles.sideButtonActive]}
             >
@@ -240,8 +311,8 @@ export function PhotoCamera({ onCapture, overlay }: PhotoCameraProps) {
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={useLibrary ? t('photos.pickFromLibrary') : t('photos.take')}
-            accessibilityState={{ busy: capturing, disabled: capturing }}
-            disabled={capturing}
+            accessibilityState={{ busy: capturing, disabled: captureDisabled }}
+            disabled={captureDisabled}
             onPress={() => void takePicture()}
             style={[styles.captureButton, Platform.OS === 'android' && styles.captureButtonAndroid]}
           >

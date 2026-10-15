@@ -52,6 +52,23 @@ describe('createServiceFormStore', () => {
     expect(store.getState().requiredFieldOverrides).toEqual({});
   });
 
+  it('does not notify subscribers when setFieldsRequired is a no-op', () => {
+    const store = createServiceFormStore();
+    store.getState().initialize({ dn_name: answer }, 'section-1');
+    store.getState().setFieldsRequired(['dn_type'], true);
+
+    let notifications = 0;
+    const unsubscribe = store.subscribe(() => {
+      notifications += 1;
+    });
+    store.getState().setFieldsRequired(['dn_type'], true);
+    store.getState().setFieldsRequired(['dn_other'], false);
+    unsubscribe();
+
+    expect(notifications).toBe(0);
+    expect(store.getState().requiredFieldOverrides).toEqual({ dn_type: true });
+  });
+
   it('toggles signature hide/no-email state and resets it', () => {
     const store = createServiceFormStore();
     store.getState().initialize({ dn_name: answer }, 'section-1');
@@ -103,6 +120,22 @@ describe('createServiceFormStore', () => {
     store.getState().reset();
     expect(store.getState().termsAcceptanceRequired).toBe(true);
     expect(store.getState().acceptedTermsAndConditions).toBe(false);
+  });
+
+  it('clears terms-required field errors when terms are accepted', () => {
+    const store = createServiceFormStore();
+    store.getState().initialize({}, 'section-1', true);
+    store.getState().setErrors({
+      signature_receiver: {
+        code: 'terms-required',
+        message: 'Accepteer eerst de voorwaarden.',
+      },
+    });
+
+    store.getState().setAcceptedTermsAndConditions(true);
+
+    expect(store.getState().acceptedTermsAndConditions).toBe(true);
+    expect(store.getState().errors.signature_receiver).toBeUndefined();
   });
 
   it('defaults acceptedTermsAndConditions to true when terms acceptance is not required', () => {
@@ -166,5 +199,52 @@ describe('createServiceFormStore', () => {
 
     store.getState().reset();
     expect(store.getState().answers.dn_name?.value).toBe('A');
+  });
+
+  it('bumps uiResetEpoch on full reset', () => {
+    const store = createServiceFormStore();
+    store.getState().initialize({ dn_name: answer }, 'section-1');
+    expect(store.getState().uiResetEpoch).toBe(0);
+
+    store.getState().reset();
+    expect(store.getState().uiResetEpoch).toBe(1);
+    store.getState().reset();
+    expect(store.getState().uiResetEpoch).toBe(2);
+  });
+
+  it('resetSection replaces answers for the given keys and clears their transient flags', () => {
+    const store = createServiceFormStore();
+    store.getState().initialize(
+      {
+        dn_name: answer,
+        dn_notes: { value: 'CRM', displayValue: 'CRM' },
+      },
+      'section-1',
+    );
+    store.getState().setAnswer('dn_name', { value: 'B', displayValue: 'B' });
+    store.getState().setAnswer('dn_notes', { value: 'typed', displayValue: 'typed' });
+    store.getState().touchField('dn_notes');
+    store.getState().setFieldError('dn_notes', { code: 'required', message: 'required' });
+    store.getState().toggleHideSignature('dn_notes');
+    store.getState().setFieldsRequired(['dn_notes'], true);
+
+    store.getState().resetSection(
+      {
+        dn_name: { value: 'B', displayValue: 'B' },
+        dn_notes: { value: 'CRM', displayValue: 'CRM' },
+      },
+      ['dn_notes'],
+    );
+
+    expect(store.getState().answers).toEqual({
+      dn_name: { value: 'B', displayValue: 'B' },
+      dn_notes: { value: 'CRM', displayValue: 'CRM' },
+    });
+    expect(store.getState().touched.dn_notes).toBeUndefined();
+    expect(store.getState().errors.dn_notes).toBeUndefined();
+    expect(store.getState().hideSignature.dn_notes).toBeUndefined();
+    expect(store.getState().requiredFieldOverrides.dn_notes).toBeUndefined();
+    expect(store.getState().uiResetEpoch).toBe(1);
+    expect(store.getState().initialAnswers.dn_name?.value).toBe('A');
   });
 });

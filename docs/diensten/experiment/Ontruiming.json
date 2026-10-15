@@ -411,7 +411,8 @@
                   "readonly": false,
                   "optional": false,
                   "autocomplete": true,
-                  "value": "_dn_locationid_value"
+                  "value": "_dn_locationid_value",
+                  "quickPicks": 3
                 }
               },
               {
@@ -971,7 +972,8 @@
                   "readonly": false,
                   "optional": false,
                   "autocomplete": true,
-                  "value": "_dn_locationid_value"
+                  "value": "_dn_locationid_value",
+                  "quickPicks": 3
                 }
               },
               {

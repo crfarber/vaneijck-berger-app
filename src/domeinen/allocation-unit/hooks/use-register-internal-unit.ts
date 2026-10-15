@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useWorkerApi } from '@/domeinen/worker/ui';
 import { useStatusOverlay } from '@/shared/ui/status-overlay-host';
 import { DEFAULT_AVAILABILITY, type UnitAvailability } from '../domain/availability';
 import {
@@ -8,10 +9,12 @@ import {
   VEHICLE_TYPE_CODE_TRUCK,
   type FleetVehicle,
 } from '../domain/fleet';
+import type { UnitReuseIntent } from '../domain/last-unit-snapshot';
 import { validateEndDate } from '../domain/working-hours';
 import {
   useAllocationUnitService,
   useEndDatePreference,
+  useLastUnitPreference,
   useRecentTruckPreference,
 } from './allocation-unit-context';
 import { noUnitDispatchAlertTexts, showNoUnitDispatchAlert } from './show-no-unit-dispatch-alert';
@@ -24,16 +27,25 @@ export type InternalFleetSheet = 'truck' | 'trailer';
  * fleet, then set availability and end of shift on the same screen. Sheets open on the plates.
  */
 export function useRegisterInternalUnit(
-  options: { isOnboarding?: boolean; onOpenWork?: () => void; isInternal?: boolean } = {},
+  options: {
+    isOnboarding?: boolean;
+    onOpenWork?: () => void;
+    isInternal?: boolean;
+    reuse?: UnitReuseIntent | null;
+  } = {},
 ) {
   const isOnboarding = options.isOnboarding ?? true;
   const onOpenWork = options.onOpenWork;
+  const reuse = options.reuse ?? null;
   const { t } = useTranslation();
   const service = useAllocationUnitService();
   const endDatePreference = useEndDatePreference();
   const recentTruckPreference = useRecentTruckPreference();
+  const lastUnitPreference = useLastUnitPreference();
+  const workerApi = useWorkerApi();
   const statusOverlay = useStatusOverlay();
   const homebase = useHomebasePicker({ enabled: options.isInternal ?? true });
+  const appliedReuse = useRef(false);
 
   const [loading, setLoading] = useState(true);
   const [fleet, setFleet] = useState<FleetVehicle[]>([]);
@@ -60,12 +72,28 @@ export function useRegisterInternalUnit(
       setFleet(loadedFleet);
       setRecentTruckIds(loadedRecentTruckIds);
       setEndDate(proposedEndDate);
+      if (!appliedReuse.current && reuse?.kind === 'internal') {
+        appliedReuse.current = true;
+        const reusedTruck = loadedFleet.find((vehicle) => vehicle.id === reuse.truckId);
+        if (reusedTruck !== undefined && reusedTruck.typeCode === VEHICLE_TYPE_CODE_TRUCK) {
+          setTruck(reusedTruck);
+          if (reuse.trailerId !== null) {
+            const reusedTrailer = loadedFleet.find((vehicle) => vehicle.id === reuse.trailerId);
+            if (
+              reusedTrailer !== undefined &&
+              reusedTrailer.typeCode === VEHICLE_TYPE_CODE_TRAILER
+            ) {
+              setTrailer(reusedTrailer);
+            }
+          }
+        }
+      }
       setLoading(false);
     });
     return () => {
       cancelled = true;
     };
-  }, [service, endDatePreference, recentTruckPreference, isOnboarding]);
+  }, [service, endDatePreference, recentTruckPreference, isOnboarding, reuse]);
 
   const selectTruck = (vehicle: FleetVehicle): void => {
     setTruck(vehicle);
@@ -138,6 +166,20 @@ export function useRegisterInternalUnit(
           recentTruckPreference.remember(truck.id),
           homebase.remember(),
         ]);
+        const worker = await workerApi.get();
+        if (worker !== null) {
+          await lastUnitPreference.remember({
+            kind: 'internal',
+            workerId: worker.dn_workerid,
+            userType: 'internal',
+            truckId: truck.id,
+            trailerId: trailer?.id ?? null,
+            vehicleName: truck.name,
+            vehicleNumber: truck.vehicleNumber,
+            trailerName: trailer?.name ?? null,
+            trailerNumber: trailer?.vehicleNumber ?? null,
+          });
+        }
         saved = true;
         return { tone: 'none' as const };
       });

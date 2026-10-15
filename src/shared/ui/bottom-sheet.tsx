@@ -11,7 +11,12 @@ import {
   type KeyboardEvent,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { keyboardOverlap, sheetSizeAboveKeyboard, type SheetSize } from './sheet-keyboard';
+import {
+  keyboardOverlap,
+  sheetSizeAboveKeyboard,
+  sheetSizeToPixels,
+  type SheetSize,
+} from './sheet-keyboard';
 import { colors, radius, spacing } from './theme';
 
 /**
@@ -78,6 +83,8 @@ export function BottomSheet({
   children,
   footer,
   height,
+  maxHeight = '80%',
+  fitContent = false,
 }: {
   visible: boolean;
   title: string;
@@ -88,6 +95,13 @@ export function BottomSheet({
   children: ReactNode;
   footer?: ReactNode;
   height?: SheetSize;
+  /** Cap for content-sized sheets (`fitContent`) and sheets without a fixed `height`. */
+  maxHeight?: SheetSize;
+  /**
+   * Size the panel to its content (capped by `maxHeight` and keyboard space) instead of a
+   * fixed height. Keyboard open does not stretch the sheet; it only lifts it.
+   */
+  fitContent?: boolean;
 }) {
   const { height: windowHeight } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -100,8 +114,25 @@ export function BottomSheet({
     topInset: insets.top,
     requested: height,
   });
-  const sized = height !== undefined;
-  const fill = sized || aboveKeyboard;
+  const sized = height !== undefined && !fitContent;
+  const fill = sized || (!fitContent && aboveKeyboard);
+  const topInset = Math.max(0, insets.top);
+  const bottomInset = Math.max(0, insets.bottom);
+  /** Space the sheet may occupy without covering the top notch / status bar (or keyboard). */
+  const availableForSheet = Math.max(
+    0,
+    windowHeight - topInset - (aboveKeyboard ? keyboardInset : 0),
+  );
+  const contentMaxHeightPx = Math.min(
+    sheetSizeToPixels(maxHeight, windowHeight),
+    availableForSheet,
+  );
+  const contentMaxHeight =
+    fitContent || !fill
+      ? aboveKeyboard || fitContent
+        ? contentMaxHeightPx
+        : maxHeight
+      : undefined;
 
   return (
     <Modal
@@ -122,12 +153,14 @@ export function BottomSheet({
         <SafeAreaView
           style={[
             styles.sheet,
-            aboveKeyboard ? { marginBottom: keyboardInset, overflow: 'hidden' } : null,
-            fill ? { height: limit, maxHeight: limit } : styles.maxHeight,
+            aboveKeyboard ? { marginBottom: keyboardInset } : null,
+            // Explicit bottom inset (Modal + overflow:hidden); keep rows above the home indicator.
+            { paddingBottom: aboveKeyboard ? spacing.sm : bottomInset, overflow: 'hidden' },
+            fill ? { height: limit, maxHeight: limit } : { maxHeight: contentMaxHeight },
           ]}
-          edges={aboveKeyboard ? [] : ['bottom']}
+          edges={[]}
         >
-          <View style={fill ? styles.sheetColumn : undefined}>
+          <View style={fill ? styles.sheetColumn : styles.fitContentColumn}>
             <View style={styles.sheetHeader}>
               <View style={styles.titleBlock}>
                 <Text style={styles.sheetTitle}>{title}</Text>
@@ -143,7 +176,9 @@ export function BottomSheet({
                 <Text style={styles.closeLabel}>{closeLabel}</Text>
               </Pressable>
             </View>
-            <View style={[styles.body, fill && styles.bodySized]}>{children}</View>
+            <View style={[styles.body, fill ? styles.bodySized : styles.bodyFitContent]}>
+              {children}
+            </View>
             {footer !== undefined ? <View style={styles.footer}>{footer}</View> : null}
           </View>
         </SafeAreaView>
@@ -164,7 +199,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   sheetColumn: { flex: 1 },
-  maxHeight: { maxHeight: '80%' },
+  fitContentColumn: { flexGrow: 0, flexShrink: 1, minHeight: 0 },
   sheetHeader: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -178,5 +213,6 @@ const styles = StyleSheet.create({
   closeLabel: { color: colors.textMuted, fontSize: 16, fontWeight: '600', marginTop: 2 },
   body: { flexShrink: 1, minHeight: 0 },
   bodySized: { flex: 1, minHeight: 0 },
+  bodyFitContent: { flexGrow: 0, flexShrink: 1, minHeight: 0 },
   footer: { paddingVertical: spacing.md, gap: spacing.sm },
 });

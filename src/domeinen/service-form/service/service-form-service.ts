@@ -1,5 +1,5 @@
 import type { LocationReader } from '@/domeinen/location';
-import { resolveCurrentPosition } from '@/domeinen/location';
+import { LOCATION_ACCURACY, resolveCurrentPosition } from '@/domeinen/location';
 import type { ReferenceDataService } from '@/domeinen/reference-data';
 import { isSubmitAllowed } from '@/domeinen/services';
 import { HttpError, isRetryable } from '@/shared/api/errors';
@@ -230,7 +230,9 @@ export function createServiceFormService(deps: ServiceFormServiceDeps): ServiceF
       const rows = request.table ? await loadTable(request.table) : [];
       const currentPosition =
         request.sortOptions?.orderby === 'distance'
-          ? resolveCurrentPosition(await locationReader.getCurrent())
+          ? resolveCurrentPosition(
+              await locationReader.getCurrent({ accuracy: LOCATION_ACCURACY.coarse }),
+            )
           : null;
       return buildSelectOptions(rows, { ...request, currentPosition });
     },

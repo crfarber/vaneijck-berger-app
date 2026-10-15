@@ -3,10 +3,11 @@ import { useTranslation } from 'react-i18next';
 import { Alert, Pressable, SectionList, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { colors, radius, spacing } from '@/shared/ui/theme';
 import { systemClock } from '@/shared/platform/ports';
+import { colors, radius, spacing } from '@/shared/ui/theme';
 import { Toolbar, ToolbarSlot } from '@/shared/ui/toolbar';
 import { ToolbarButton } from '@/shared/ui/toolbar-button';
+import { formatInstantTime } from '@/shared/utils/time';
 import {
   filterByTab,
   groupByDay,
@@ -31,10 +32,11 @@ const TABS = [
  * In-app list of received push messages. Incident types open the allocation; others only mark read.
  */
 export function NotificationsScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const history = useNotificationHistoryApi();
   const notifications = useNotificationHistory((state) => state.notifications);
   const [tab, setTab] = useState<NotificationFilterTab>(NOTIFICATION_FILTER_TAB.all);
+  const locale = i18n.resolvedLanguage ?? i18n.language;
 
   const sections = useMemo(() => {
     const filtered = filterByTab(notifications, tab);
@@ -109,7 +111,7 @@ export function NotificationsScreen() {
               >
                 {item.title || t('notifications.untitled')}
               </Text>
-              <Text style={styles.rowTime}>{new Date(item.receivedAt).toLocaleTimeString()}</Text>
+              <Text style={styles.rowTime}>{formatInstantTime(item.receivedAt, locale)}</Text>
             </View>
             {item.body !== '' ? <Text style={styles.rowBody}>{item.body}</Text> : null}
           </Pressable>

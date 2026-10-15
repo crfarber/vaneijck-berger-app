@@ -6,12 +6,17 @@ import {
   buildLicensePlateRenderItems,
   buildLicensePlateSummary,
   findLicensePlateGroupInFields,
+  hasAppliedLicensePlateVehicleAnswers,
+  hasLicensePlateTypeAnswer,
   initialLicensePlateState,
   LicensePlatePhase,
   nextLicensePlateState,
   readLicensePlateGroup,
   resolveLegacyLicensePlateMapping,
   shouldConfirmReported,
+  shouldConfirmRdwVehicle,
+  shouldNeutralizeLicensePlateChrome,
+  shouldRequireManualVehicleFields,
   shouldShowManualVehicleFields,
   shouldShowRdwSummary,
   toLicensePlateFieldMapping,
@@ -202,6 +207,98 @@ describe('buildLicensePlateSummary / cleared answers', () => {
   });
 });
 
+describe('hasAppliedLicensePlateVehicleAnswers / shouldConfirmRdwVehicle', () => {
+  const mapping = toLicensePlateFieldMapping(validGroupRaw.license_plate_group.fields);
+  const pleaseSelect = 'Selecteer';
+
+  it('detects applied vehicle data from CRM brand or RDW brand text', () => {
+    expect(hasAppliedLicensePlateVehicleAnswers(mapping, {}, pleaseSelect)).toBe(false);
+    expect(
+      hasAppliedLicensePlateVehicleAnswers(
+        mapping,
+        { _dn_vehiclebrandid_value: { value: '', displayValue: pleaseSelect } },
+        pleaseSelect,
+      ),
+    ).toBe(false);
+    expect(
+      hasAppliedLicensePlateVehicleAnswers(
+        mapping,
+        { _dn_vehiclebrandid_value: { value: 'brand-1', displayValue: 'Volkswagen' } },
+        pleaseSelect,
+      ),
+    ).toBe(true);
+    expect(
+      hasAppliedLicensePlateVehicleAnswers(
+        mapping,
+        { dn_vehiclebrand: { value: 'Volkswagen', displayValue: 'Volkswagen' } },
+        pleaseSelect,
+      ),
+    ).toBe(true);
+  });
+
+  it('detects a filled type answer for the type gap on restore', () => {
+    expect(hasLicensePlateTypeAnswer(mapping, {}, pleaseSelect)).toBe(false);
+    expect(
+      hasLicensePlateTypeAnswer(
+        mapping,
+        { _dn_vehicletypeid_value: { value: 'type-1', displayValue: 'Golf' } },
+        pleaseSelect,
+      ),
+    ).toBe(true);
+  });
+
+  it('skips the apply-vehicle confirm when data was already applied or the dialog is pending', () => {
+    expect(
+      shouldConfirmRdwVehicle({
+        confirmVehicle: true,
+        alreadyApplied: false,
+        pendingPlate: null,
+        resultPlate: 'AB123C',
+      }),
+    ).toBe(true);
+    expect(
+      shouldConfirmRdwVehicle({
+        confirmVehicle: true,
+        alreadyApplied: true,
+        pendingPlate: null,
+        resultPlate: 'AB123C',
+      }),
+    ).toBe(false);
+    expect(
+      shouldConfirmRdwVehicle({
+        confirmVehicle: true,
+        alreadyApplied: false,
+        pendingPlate: 'AB123C',
+        resultPlate: 'AB123C',
+      }),
+    ).toBe(false);
+    expect(
+      shouldConfirmRdwVehicle({
+        confirmVehicle: false,
+        alreadyApplied: false,
+        pendingPlate: null,
+        resultPlate: 'AB123C',
+      }),
+    ).toBe(false);
+  });
+
+  it('restores summary when reopening a section with applied vehicle answers', () => {
+    const restored = initialLicensePlateState(null, 'AB123C', {
+      vehicleApplied: true,
+      typeFilled: true,
+    });
+    expect(restored.phase).toBe(LicensePlatePhase.Summary);
+    expect(shouldShowRdwSummary(restored)).toBe(true);
+
+    const typeGap = initialLicensePlateState(null, 'AB123C', {
+      vehicleApplied: true,
+      typeFilled: false,
+    });
+    expect(typeGap.phase).toBe(LicensePlatePhase.Summary);
+    expect(shouldShowManualVehicleFields(typeGap)).toBe(true);
+  });
+});
+
 describe('nextLicensePlateState', () => {
   it('starts in confirm-reported when a reported plate is known and found is empty', () => {
     const state = initialLicensePlateState('AB-123-C');
@@ -300,5 +397,52 @@ describe('nextLicensePlateState', () => {
       foundPlate: 'XY99Z',
       showTypeGap: false,
     });
+  });
+
+  it('neutralizes NL plate chrome when RDW fails, foreign, or plate cannot be Dutch', () => {
+    const afterFail = nextLicensePlateState(initialLicensePlateState(null, 'AB123C'), {
+      type: 'lookupFailed',
+    });
+    expect(shouldNeutralizeLicensePlateChrome(afterFail, true)).toBe(true);
+
+    const foreign = nextLicensePlateState(initialLicensePlateState(null), {
+      type: 'openForeign',
+    });
+    expect(shouldNeutralizeLicensePlateChrome(foreign, false)).toBe(true);
+
+    const entering = initialLicensePlateState(null, 'A1B2C3');
+    expect(shouldNeutralizeLicensePlateChrome(entering, false, true)).toBe(true);
+    expect(shouldShowManualVehicleFields(entering, true)).toBe(true);
+
+    const afterSuccess = nextLicensePlateState(initialLicensePlateState(null, 'AB123C'), {
+      type: 'lookupSucceeded',
+      typeMatched: true,
+    });
+    expect(shouldNeutralizeLicensePlateChrome(afterSuccess, false)).toBe(false);
+
+    const manualAfterSuccess = nextLicensePlateState(afterSuccess, { type: 'openManual' });
+    expect(shouldNeutralizeLicensePlateChrome(manualAfterSuccess, false)).toBe(false);
+  });
+
+  it('requires brand and type when RDW has no match or the plate is foreign', () => {
+    const afterFail = nextLicensePlateState(initialLicensePlateState(null, 'AB123C'), {
+      type: 'lookupFailed',
+    });
+    expect(shouldRequireManualVehicleFields(afterFail, true)).toBe(true);
+
+    const foreign = nextLicensePlateState(initialLicensePlateState(null), {
+      type: 'openForeign',
+    });
+    expect(shouldRequireManualVehicleFields(foreign, false)).toBe(true);
+
+    const afterSuccess = nextLicensePlateState(initialLicensePlateState(null, 'AB123C'), {
+      type: 'lookupSucceeded',
+      typeMatched: true,
+    });
+    expect(shouldRequireManualVehicleFields(afterSuccess, false)).toBe(false);
+
+    // "Niet correct?" after a successful RDW hit does not promote type on its own.
+    const manualAfterSuccess = nextLicensePlateState(afterSuccess, { type: 'openManual' });
+    expect(shouldRequireManualVehicleFields(manualAfterSuccess, false)).toBe(false);
   });
 });

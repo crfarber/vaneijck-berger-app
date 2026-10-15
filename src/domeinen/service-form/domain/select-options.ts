@@ -182,6 +182,29 @@ export function filterSelectOptions(
   return options.filter((option) => option.label.toUpperCase().includes(needle));
 }
 
+/**
+ * First `count` options for quick-pick chips. The currently selected option is always included,
+ * appended when it falls outside the first N (options are already sorted by the caller).
+ */
+export function pickQuickOptions(
+  options: readonly SelectOption[],
+  count: number,
+  selectedValue: unknown,
+): SelectOption[] {
+  if (count <= 0 || options.length === 0) {
+    return [];
+  }
+  const head = options.slice(0, count);
+  if (selectedValue === null || selectedValue === undefined || selectedValue === '') {
+    return [...head];
+  }
+  if (head.some((option) => option.value === selectedValue)) {
+    return [...head];
+  }
+  const selected = options.find((option) => option.value === selectedValue);
+  return selected ? [...head, selected] : [...head];
+}
+
 export function selectedOptionAnswer(
   option: SelectOption,
   table: string | undefined,

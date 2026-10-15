@@ -37,7 +37,8 @@ de app. Voortgang en resultaat blokkeren niet.
 - **ToastQueue** in `shared/feedback`: Zustand-store, één toast tegelijk, auto-dismiss via de
   `Scheduler`-poort, tril via de `Haptics`-poort. De host hangt in de root-layout zodat hij navigatie
   overleeft.
-- **Haptics** als poort (`notify('success' | 'warning' | 'error')`), met `expo-haptics` als adapter.
+- **Haptics** als poort (`notify('success' | 'warning' | 'error')` voor uitkomsten, `tap()` voor
+  knopfeedback), met `expo-haptics` als adapter.
 
 ## Gevolgen
 

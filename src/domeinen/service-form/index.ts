@@ -25,6 +25,23 @@ export type {
   LicensePlateGroupConfig,
 } from './domain/license-plate-entry';
 export {
+  buildPersonNameRenderItems,
+  findPersonNameGroupInFields,
+  partitionFieldsAroundPersonNameGroups,
+  readPersonNameGroup,
+} from './domain/person-name-entry';
+export type {
+  PersonNameEntryGroup,
+  PersonNameFieldMapping,
+  PersonNameGroupConfig,
+} from './domain/person-name-entry';
+export {
+  formatPersonNamePreview,
+  matchSalutationOption,
+  parsePersonName,
+} from './domain/parse-person-name';
+export type { ParsedPersonName, PersonSalutationKey } from './domain/parse-person-name';
+export {
   buildAddressPlaceAnswers,
   readAddressComponentMapping,
   resolveCountryAnswer,
@@ -56,8 +73,10 @@ export {
   buildBooleanSelectAnswer,
   buildSelectOptions,
   filterSelectOptions,
+  pickQuickOptions,
   selectedOptionAnswer,
 } from './domain/select-options';
+export { serviceFormSelectOptionsQueryKey } from './domain/select-options-query-key';
 export type { OptionRow, SelectOption, SelectOptionsResult } from './domain/select-options';
 export type { ServiceFormVisibility } from './domain/conditions';
 export {
@@ -74,6 +93,12 @@ export {
   selectVisibleServiceFormSections,
   isServiceFormDirty,
 } from './domain/selectors';
+export {
+  buildSectionReset,
+  isSectionDirty,
+  selectDirtyResetSections,
+} from './domain/section-reset';
+export type { SectionResetResult } from './domain/section-reset';
 export type {
   QuickViewContext,
   ServiceFormProgress,

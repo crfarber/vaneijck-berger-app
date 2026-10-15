@@ -3,6 +3,8 @@ export {
   AllocationUnitProvider,
   useAllocationUnitService,
   useEndDatePreference,
+  useHomebasePreference,
+  useLastUnitPreference,
   useRecentTruckPreference,
 } from './hooks/allocation-unit-context';
 export type { AllocationUnitContextValue } from './hooks/allocation-unit-context';
@@ -12,6 +14,8 @@ export {
   UnitRegistrationFlowProvider,
   useUnitRegistrationFlow,
 } from './hooks/unit-registration-flow-context';
+export { matchLastUnitSnapshot, toUnitReuseIntent } from './domain/last-unit-snapshot';
+export type { LastUnitSnapshot, UnitReuseIntent } from './domain/last-unit-snapshot';
 export {
   noUnitDispatchAlertTexts,
   showNoUnitDispatchAlert,
@@ -31,3 +35,8 @@ export { ExternalUnitEndDateScreen } from './screens/external-unit-end-date-scre
 export { CurrentUnitOverviewScreen } from './screens/current-unit-overview-screen';
 export { allocationUnitKeys, useCurrentUnitOverview } from './hooks/use-current-unit-overview';
 export { NumberPlate } from './components/number-plate';
+export { CurrentAllocationUnitCard } from './components/current-allocation-unit-card';
+export type {
+  CurrentAllocationUnitCardProps,
+  CurrentAllocationUnitOverview,
+} from './components/current-allocation-unit-card';

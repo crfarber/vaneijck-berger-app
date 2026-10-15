@@ -3,13 +3,13 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View, type TextInput } from 'react-native';
 import { hasSignatureInk } from '@/domeinen/signatures';
 import { TextField } from '@/shared/ui/text-field';
+import { Toggle } from '@/shared/ui/toggle';
 import { colors, spacing } from '@/shared/ui/theme';
 import type { ServiceFormAnswer, ServiceFormError, ServiceFormField } from '../domain/types';
 import { useServiceFormStore } from '../store/service-form-store-provider';
-import { FieldFrame, useErrorText } from './field-frame';
+import { FieldFrame } from './field-frame';
 import { SignatureCaptureSheet } from './signature-capture-sheet';
 import { SignatureThumbnail } from './signature-thumbnail';
-import { Toggle } from '@/shared/ui/toggle';
 
 export function SignatureInputField({
   field,
@@ -29,7 +29,6 @@ export function SignatureInputField({
   onBlur: (field: ServiceFormField) => void;
 }) {
   const { t } = useTranslation();
-  const errorText = useErrorText(error);
   const [open, setOpen] = useState(false);
   const hideSignature = useServiceFormStore((state) => state.hideSignature);
   const noEmailConfirmation = useServiceFormStore((state) => state.noEmailConfirmation);
@@ -44,6 +43,11 @@ export function SignatureInputField({
   const hasInk = hasSignatureInk(answer?.value);
   const capturedLabel = t('serviceForm.signature.captured');
 
+  const nameInvalid = error?.code === 'signature-name-required';
+  const emailInvalid = error?.code === 'signature-email-required';
+  const inkInvalid = error?.code === 'required';
+  const termsInvalid = error?.code === 'terms-required';
+
   const patch = (partial: Partial<ServiceFormAnswer>): void => {
     onChange(field.key, {
       value: answer?.value ?? '',
@@ -55,7 +59,7 @@ export function SignatureInputField({
   };
 
   return (
-    <FieldFrame label={field.label} optional={field.optional} error={error}>
+    <FieldFrame label={field.label} optional={field.optional}>
       <View style={styles.stack}>
         <Toggle
           label={
@@ -82,7 +86,7 @@ export function SignatureInputField({
               onChangeText={(signatureName) => patch({ signatureName })}
               onFocus={() => onFocus?.(field)}
               onBlur={() => onBlur(field)}
-              error={error?.code === 'signature-name-required' ? errorText : null}
+              error={nameInvalid ? '' : null}
             />
             <Toggle
               label={
@@ -108,18 +112,7 @@ export function SignatureInputField({
                 onChangeText={(email) => patch({ email })}
                 onFocus={() => onFocus?.(field)}
                 onBlur={() => onBlur(field)}
-                error={error?.code === 'signature-email-required' ? errorText : null}
-              />
-            ) : null}
-            {requiresTerms ? (
-              <Toggle
-                label={
-                  acceptedTerms
-                    ? t('serviceForm.signature.termsAccepted')
-                    : t('serviceForm.signature.termsRejected')
-                }
-                value={acceptedTerms}
-                onValueChange={setAcceptedTerms}
+                error={emailInvalid ? '' : null}
               />
             ) : null}
             <Pressable
@@ -128,9 +121,13 @@ export function SignatureInputField({
                 onFocus?.(field);
                 setOpen(true);
               }}
-              style={({ pressed }) => [styles.capture, pressed && styles.pressed]}
+              style={({ pressed }) => [
+                styles.capture,
+                inkInvalid && styles.captureError,
+                pressed && styles.pressed,
+              ]}
             >
-              <Text style={styles.captureText}>
+              <Text style={[styles.captureText, inkInvalid && styles.captureTextError]}>
                 {hasInk ? t('serviceForm.signature.replace') : t('serviceForm.signature.capture')}
               </Text>
             </Pressable>
@@ -141,6 +138,22 @@ export function SignatureInputField({
               </>
             ) : null}
           </>
+        ) : null}
+        {requiresTerms ? (
+          <Toggle
+            label={
+              acceptedTerms
+                ? t('serviceForm.signature.termsAccepted')
+                : t('serviceForm.signature.termsRejected')
+            }
+            value={acceptedTerms}
+            invalid={termsInvalid}
+            onValueChange={(next) => {
+              onFocus?.(field);
+              setAcceptedTerms(next);
+              onBlur(field);
+            }}
+          />
         ) : null}
       </View>
       <SignatureCaptureSheet
@@ -164,8 +177,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     borderRadius: 10,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.brand,
+  },
+  captureError: {
+    borderColor: colors.danger,
+    backgroundColor: colors.background,
   },
   captureText: { color: colors.brandText, fontWeight: '700', fontSize: 16 },
+  captureTextError: { color: colors.danger },
   captured: { color: colors.success, fontSize: 14 },
   pressed: { opacity: 0.7 },
 });

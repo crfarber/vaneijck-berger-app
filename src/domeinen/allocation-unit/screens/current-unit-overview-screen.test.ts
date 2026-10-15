@@ -17,4 +17,9 @@ describe('current unit overview screen', () => {
     expect(source).toContain('onPress={changeEndDate}');
     expect(source).toContain('onUseLastVehicle={changeEndDate}');
   });
+
+  it('formats the end time in the device timezone', () => {
+    expect(source).toContain('getDeviceTimeZone()');
+    expect(source).toContain('formatActiveUntil(');
+  });
 });

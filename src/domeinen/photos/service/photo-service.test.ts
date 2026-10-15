@@ -27,7 +27,9 @@ function setup(
   options: {
     upload?: PhotosApi['upload'];
     list?: PhotosApi['list'];
+    download?: PhotosApi['download'];
     locationValid?: boolean;
+    locationReader?: LocationReader;
   } = {},
 ) {
   const clock = createFakeClock();
@@ -48,19 +50,103 @@ function setup(
         return [];
       }),
   );
-  const api: PhotosApi = { upload, list };
+  const download = vi.fn(options.download ?? (async () => new Uint8Array([7, 7])));
+  const api: PhotosApi = { upload, list, download };
   const repository = createPhotoRepository(store);
   const service = createPhotoService({
     api,
     files,
     repository,
-    locationReader: locationReader(options.locationValid !== false),
+    locationReader: options.locationReader ?? locationReader(options.locationValid !== false),
     clock,
     scheduler,
   });
   service.start();
-  return { service, upload, list, files, store, scheduler, clock, repository };
+  return { service, upload, list, download, files, store, scheduler, clock, repository };
 }
+
+describe('server photos without a local copy', () => {
+  const url = 'https://api.test/api/binary/photo/1';
+
+  it('downloads once and serves the stored copy afterwards', async () => {
+    const { service, download, files } = setup();
+
+    const first = await service.serverPhotoUri({ allocationId: 'alloc-1', url });
+    const second = await service.serverPhotoUri({ allocationId: 'alloc-1', url });
+
+    expect(download).toHaveBeenCalledTimes(1);
+    expect(second).toBe(first);
+    expect(files.dump()[first]).toEqual(new Uint8Array([7, 7]));
+  });
+
+  it('shares one download between simultaneous requests', async () => {
+    const bytes = deferred<Uint8Array | null>();
+    const { service, download } = setup({ download: () => bytes.promise });
+
+    const first = service.serverPhotoUri({ allocationId: 'alloc-1', url });
+    const second = service.serverPhotoUri({ allocationId: 'alloc-1', url });
+    bytes.resolve(new Uint8Array([1]));
+
+    expect(await first).toBe(await second);
+    expect(download).toHaveBeenCalledTimes(1);
+  });
+
+  it('uses a non-API url as-is without storing anything', async () => {
+    const { service, files } = setup({ download: async () => null });
+
+    await expect(service.serverPhotoUri({ allocationId: 'alloc-1', url })).resolves.toBe(url);
+    expect(Object.keys(files.dump()).filter((path) => path.startsWith('/remote/'))).toEqual([]);
+  });
+
+  it('tries again after a failed download', async () => {
+    const download = vi
+      .fn<PhotosApi['download']>()
+      .mockRejectedValueOnce(new NetworkError())
+      .mockResolvedValue(new Uint8Array([3]));
+    const { service } = setup({ download });
+
+    await expect(service.serverPhotoUri({ allocationId: 'alloc-1', url })).rejects.toBeInstanceOf(
+      NetworkError,
+    );
+    await expect(service.serverPhotoUri({ allocationId: 'alloc-1', url })).resolves.toContain(
+      '/remote/alloc-1/',
+    );
+    expect(download).toHaveBeenCalledTimes(2);
+  });
+
+  it('removes downloaded copies when the allocation is finished', async () => {
+    const { service, files } = setup();
+    await service.serverPhotoUri({ allocationId: 'alloc-1', url });
+    await service.serverPhotoUri({ allocationId: 'alloc-2', url });
+
+    await service.clearForAllocation('alloc-1');
+
+    const remote = Object.keys(files.dump()).filter((path) => path.startsWith('/remote/'));
+    expect(remote.map((path) => path.split('/')[2])).toEqual(['alloc-2']);
+  });
+
+  it('removes all downloaded copies on clearAll', async () => {
+    const { service, files } = setup();
+    await service.serverPhotoUri({ allocationId: 'alloc-1', url });
+
+    await service.clearAll();
+
+    expect(Object.keys(files.dump()).filter((path) => path.startsWith('/remote/'))).toEqual([]);
+  });
+
+  it('does not keep a download that finishes after the allocation was cleared', async () => {
+    const bytes = deferred<Uint8Array | null>();
+    const { service, files } = setup({ download: () => bytes.promise });
+
+    const loading = service.serverPhotoUri({ allocationId: 'alloc-1', url });
+    await flushPromises();
+    await service.clearForAllocation('alloc-1');
+    bytes.resolve(new Uint8Array([1]));
+
+    await expect(loading).resolves.toBe(url);
+    expect(Object.keys(files.dump()).filter((path) => path.startsWith('/remote/'))).toEqual([]);
+  });
+});
 
 describe('photo service queue', () => {
   it('keeps the first position when its upload completes during the next capture', async () => {
@@ -387,6 +473,116 @@ describe('photo service queue', () => {
     expect(files.dump()[replacement.filePath]).toBeDefined();
   });
 
+  it('defers GPS until attachLocation so capture does not wait on the location reader', async () => {
+    const getCurrent = vi.fn(async () => ({
+      isValid: true as const,
+      latitude: 52.1,
+      longitude: 5.1,
+    }));
+    const { service } = setup({ locationReader: { getCurrent } });
+
+    await service.capture({
+      serviceId: 'svc-1',
+      incidentId: 'inc-1',
+      allocationId: 'alloc-1',
+      phase: 'load',
+      position: { category: 'DASHBOARD' },
+      sourceUri: 'file:///camera/shot.jpg',
+    });
+
+    expect(getCurrent).not.toHaveBeenCalled();
+    expect((await service.listByService('svc-1'))[0]?.coordinate).toBeNull();
+
+    await expect(service.attachLocation({ serviceId: 'svc-1', phase: 'load' })).resolves.toBe(true);
+    expect(getCurrent).toHaveBeenCalledOnce();
+    expect((await service.listByService('svc-1'))[0]?.coordinate).toEqual({
+      latitude: 52.1,
+      longitude: 5.1,
+    });
+  });
+
+  it('rejects attachLocation when GPS is unavailable for drafts that need it', async () => {
+    const { service } = setup({ locationValid: false });
+    await service.capture({
+      serviceId: 'svc-1',
+      incidentId: 'inc-1',
+      allocationId: 'alloc-1',
+      phase: 'load',
+      position: { category: 'DASHBOARD' },
+      sourceUri: 'file:///camera/shot.jpg',
+    });
+
+    await expect(service.attachLocation({ serviceId: 'svc-1', phase: 'load' })).resolves.toBe(
+      false,
+    );
+    expect((await service.listByService('svc-1'))[0]?.coordinate).toBeNull();
+  });
+
+  it('removes a local draft and its file', async () => {
+    const { service, files } = setup();
+    const photo = await service.capture({
+      serviceId: 'svc-1',
+      incidentId: 'inc-1',
+      allocationId: 'alloc-1',
+      phase: 'load',
+      role: 'additional',
+      position: { category: 'EXTERIOR', angle: 'links-voor' },
+      sourceUri: 'file:///camera/shot.jpg',
+    });
+
+    await service.remove(photo.id);
+
+    expect(await service.listByService('svc-1')).toEqual([]);
+    expect(files.dump()[photo.filePath]).toBeUndefined();
+  });
+
+  it('prunes metadata when the photo file is gone so the overview can still load', async () => {
+    const { service, files, repository } = setup();
+    const keep = await service.capture({
+      serviceId: 'svc-1',
+      incidentId: 'inc-1',
+      allocationId: 'alloc-1',
+      phase: 'load',
+      position: { category: 'EXTERIOR', angle: 'rechts-voor' },
+      sourceUri: 'file:///camera/shot.jpg',
+    });
+    const orphan = await service.capture({
+      serviceId: 'svc-1',
+      incidentId: 'inc-1',
+      allocationId: 'alloc-1',
+      phase: 'load',
+      position: { category: 'EXTERIOR', angle: 'links-voor' },
+      sourceUri: 'file:///camera/shot.jpg',
+    });
+    await files.remove(orphan.filePath);
+
+    const listed = await service.listByService('svc-1');
+
+    expect(listed.map((photo) => photo.id)).toEqual([keep.id]);
+    expect((await repository.load()).map((photo) => photo.id)).toEqual([keep.id]);
+  });
+
+  it('does not remove a sent photo', async () => {
+    const { service, files } = setup();
+    const photo = await service.capture({
+      serviceId: 'svc-1',
+      incidentId: 'inc-1',
+      allocationId: 'alloc-1',
+      phase: 'load',
+      role: 'additional',
+      position: { category: 'ROOF' },
+      sourceUri: 'file:///camera/shot.jpg',
+    });
+    await service.submitBatch('svc-1', 'load');
+
+    await service.remove(photo.id);
+
+    expect(await service.listByService('svc-1')).toEqual([
+      expect.objectContaining({ id: photo.id, status: PHOTO_STATUS.sent }),
+    ]);
+    expect(files.dump()[photo.filePath]).toBeDefined();
+  });
+
   it('keeps the file and retries after a temporary failure', async () => {
     const upload = vi
       .fn()
@@ -597,7 +793,7 @@ describe('photos api multipart', () => {
     const request = vi.fn(async () => undefined);
     const http = { request, requestJson: vi.fn() } as unknown as HttpClient;
     const { files, remove } = createUploadFiles();
-    const api = createPhotosApi(http, files);
+    const api = createPhotosApi(http, files, 'https://api.test');
 
     await api.upload({
       incidentId: 'inc-1',
@@ -656,6 +852,7 @@ describe('photos api multipart', () => {
           return undefined;
         },
         requestJson: vi.fn(),
+        requestBytes: vi.fn(),
       };
       vi.stubGlobal(
         'Blob',
@@ -666,7 +863,7 @@ describe('photos api multipart', () => {
         },
       );
       try {
-        const uploading = createPhotosApi(http, files).upload({
+        const uploading = createPhotosApi(http, files, 'https://api.test').upload({
           incidentId: 'inc-1',
           serviceId: 'svc-1',
           coordinate: { latitude: 1, longitude: 2 },
@@ -715,7 +912,7 @@ describe('photos api list', () => {
       ]),
     );
     const http = { request: vi.fn(), requestJson } as unknown as HttpClient;
-    const api = createPhotosApi(http, createUploadFiles().files);
+    const api = createPhotosApi(http, createUploadFiles().files, 'https://api.test');
 
     const listed = await api.list({
       incidentId: 'inc/1',

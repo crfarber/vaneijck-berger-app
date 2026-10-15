@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   applyLicensePlateInput,
+  canBeDutchLicensePlate,
   displayVehicleRegistration,
   formatLicensePlate,
   isDutchLicensePlate,
@@ -48,6 +49,21 @@ describe('isDutchLicensePlate', () => {
       expect(isDutchLicensePlate(plate)).toBe(false);
     },
   );
+});
+
+describe('canBeDutchLicensePlate', () => {
+  it('allows empty and valid NL prefixes while typing', () => {
+    expect(canBeDutchLicensePlate('')).toBe(true);
+    expect(canBeDutchLicensePlate('AB')).toBe(true);
+    expect(canBeDutchLicensePlate('AB12')).toBe(true);
+    expect(canBeDutchLicensePlate('AB-12-CD')).toBe(true);
+  });
+
+  it('rejects patterns that cannot become a Dutch sidecode (e.g. military)', () => {
+    expect(canBeDutchLicensePlate('A1B2C3')).toBe(false);
+    expect(canBeDutchLicensePlate('ABCDEF')).toBe(false);
+    expect(canBeDutchLicensePlate('1234567')).toBe(false);
+  });
 });
 
 describe('formatLicensePlate', () => {

@@ -32,9 +32,11 @@ export function AvailabilityFields({
         ]}
       >
         <RadioButton selected={fullyAvailable} accessibilityLabel={t('unit.fullyAvailable')} />
-        <Text style={styles.choiceLabel}>{t('unit.fullyAvailable')}</Text>
+        <Text style={[styles.choiceLabel, fullyAvailable && styles.choiceLabelSelected]}>
+          {t('unit.fullyAvailable')}
+        </Text>
       </Pressable>
-      <View style={styles.card}>
+      <View style={[styles.card, hasRestrictions && styles.cardSelected]}>
         <Pressable
           accessibilityRole="radio"
           accessibilityState={{ checked: hasRestrictions }}
@@ -50,7 +52,9 @@ export function AvailabilityFields({
           ]}
         >
           <RadioButton selected={hasRestrictions} accessibilityLabel={t('unit.withRestrictions')} />
-          <Text style={styles.choiceLabel}>{t('unit.withRestrictions')}</Text>
+          <Text style={[styles.choiceLabel, hasRestrictions && styles.choiceLabelSelected]}>
+            {t('unit.withRestrictions')}
+          </Text>
         </Pressable>
         {AVAILABILITY_OPTIONS.map((key, index) => {
           const on = availability[key];
@@ -96,9 +100,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.md,
     marginBottom: spacing.sm,
+    backgroundColor: colors.background,
   },
-  choiceSelected: { borderColor: colors.text, borderWidth: 2 },
+  choiceSelected: { borderColor: colors.text, backgroundColor: colors.brandAction },
   choiceLabel: { color: colors.text, fontSize: 18, fontWeight: '700' },
+  choiceLabelSelected: { color: colors.brandLight },
   card: {
     backgroundColor: colors.background,
     borderRadius: radius.lg,
@@ -116,7 +122,8 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.border,
   },
-  cardHeaderSelected: { backgroundColor: colors.surface },
+  cardHeaderSelected: { backgroundColor: colors.brandAction },
+  cardSelected: { borderColor: colors.text },
   row: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -8,6 +8,8 @@ type ToggleProps = {
   label?: string;
   accessibilityLabel?: string;
   disabled?: boolean;
+  /** Marks the control as invalid (red label) without requiring error copy. */
+  invalid?: boolean;
   style?: StyleProp<ViewStyle>;
 };
 
@@ -17,6 +19,7 @@ export function Toggle({
   label,
   accessibilityLabel,
   disabled = false,
+  invalid = false,
   style,
 }: ToggleProps) {
   return (
@@ -33,8 +36,10 @@ export function Toggle({
         disabled && styles.disabled,
       ]}
     >
-      {label ? <Text style={[type.label, styles.label]}>{label}</Text> : null}
-      <View style={[styles.track, value && styles.trackOn]}>
+      {label ? (
+        <Text style={[type.label, styles.label, invalid && styles.labelError]}>{label}</Text>
+      ) : null}
+      <View style={[styles.track, value && styles.trackOn, invalid && styles.trackError]}>
         <View style={[styles.thumb, value && styles.thumbOn]} />
       </View>
     </Pressable>
@@ -54,6 +59,7 @@ const styles = StyleSheet.create({
     minHeight: 44,
   },
   label: { flex: 1, color: colors.text },
+  labelError: { color: colors.danger },
   track: {
     width: TRACK_W,
     height: TRACK_H,
@@ -63,6 +69,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: PAD,
   },
   trackOn: { backgroundColor: colors.text }, // ink
+  trackError: { borderWidth: 1, borderColor: colors.danger },
   thumb: {
     width: THUMB,
     height: THUMB,

@@ -1,6 +1,6 @@
 # PLTR
 
-> Gecontroleerd op: `ba1383c` (2026-09-23)
+> Gecontroleerd op: `4cf3132b` (2026-10-13; werkboom, PLTR-14 preview)
 > Bronnen: `src/domeinen/services/domain/pltr.ts`, `src/domeinen/services/domain/service-types.ts`, `src/domeinen/allocations/screens/pltr-screen.tsx`, `src/domeinen/allocations/screens/allocation-detail-screen.tsx`, `src/domeinen/allocations/hooks/`, `src/app/(app)/allocations/`
 > Zie ook: [ADR 0019](../decisions/0019-pltr.md), [flows](../functioneel/flows.md#3-een-opdracht-uitvoeren-regels-klaar-schermen-volgen), [statussen](../functioneel/statussen.md#types-dn_servicetypecode-van-de-eerste-dienst)
 
@@ -48,7 +48,7 @@ dienststatus kiest de primaire actie en welke locatiekaart actueel of afgerond i
 | PLTR-11 | Accepteren vanuit het PLTR-scherm gebruikt dezelfde nabijheidscontrole, API-mutatie en tijdelijke-fout-outbox als een gewone dienst.                      | `src/domeinen/allocations/screens/pltr-screen.tsx`, `src/domeinen/allocations/hooks/use-accept-service.ts`, `src/domeinen/allocations/service/service-actions-service.ts` | —                                                                                               |
 | PLTR-12 | Starten met laden of afleveren opent het serviceformulier; afronden bij status `875920005` opent het afsluitscherm.                                       | `src/domeinen/allocations/screens/pltr-screen.tsx`, `src/domeinen/allocations/hooks/use-open-service.ts`                                                                  | —                                                                                               |
 | PLTR-13 | Na de laadfase keert de exit-flow terug naar het PLTR-scherm; afronden vanaf het afsluitscherm keert voor beide PLTR-typen terug naar de opdrachtenlijst. | `src/domeinen/services/domain/exit-target.ts`                                                                                                                             | `src/domeinen/services/domain/pltr.test.ts`, `src/domeinen/services/domain/exit-target.test.ts` |
-| PLTR-14 | Preview verbergt de primaire actie en de fotoknop en opent geen wijzigingsflow vanuit het PLTR-scherm.                                                    | `src/domeinen/allocations/screens/pltr-screen.tsx`, `src/domeinen/allocations/components/pltr-phase-card.tsx`                                                             | —                                                                                               |
+| PLTR-14 | Preview (via swipe Voorbeeld op de lijst) verbergt werkacties en navigeren; de footer toont “Dienstvoorbeeld bekijken” en opent het formulier read-only.  | `src/domeinen/allocations/screens/pltr-screen.tsx`, `src/domeinen/allocations/components/pltr-phase-card.tsx`, `src/domeinen/allocations/hooks/use-open-service.ts`       | —                                                                                               |
 
 ## Randgevallen en bewuste keuzes
 

@@ -1,19 +1,35 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useWorkerApi } from '@/domeinen/worker/ui';
 import { useStatusOverlay } from '@/shared/ui/status-overlay-host';
 import { applyLicensePlateInput, type LicensePlateInput } from '../domain/license-plate';
+import type { UnitReuseIntent } from '../domain/last-unit-snapshot';
 import { validateEndDate } from '../domain/working-hours';
 import { DEFAULT_AVAILABILITY, type UnitAvailability } from '../domain/availability';
-import { useAllocationUnitService, useEndDatePreference } from './allocation-unit-context';
+import {
+  useAllocationUnitService,
+  useEndDatePreference,
+  useLastUnitPreference,
+} from './allocation-unit-context';
 import { noUnitDispatchAlertTexts, showNoUnitDispatchAlert } from './show-no-unit-dispatch-alert';
 
-export function useRegisterUnit(options: { isOnboarding?: boolean; onOpenWork?: () => void } = {}) {
+export function useRegisterUnit(
+  options: {
+    isOnboarding?: boolean;
+    onOpenWork?: () => void;
+    reuse?: UnitReuseIntent | null;
+  } = {},
+) {
   const isOnboarding = options.isOnboarding ?? true;
   const onOpenWork = options.onOpenWork;
+  const reuse = options.reuse ?? null;
   const { t } = useTranslation();
   const service = useAllocationUnitService();
   const endDatePreference = useEndDatePreference();
+  const lastUnitPreference = useLastUnitPreference();
+  const workerApi = useWorkerApi();
   const statusOverlay = useStatusOverlay();
+  const appliedReuse = useRef(false);
 
   const [plate, setPlate] = useState<LicensePlateInput>(() => applyLicensePlateInput(''));
   const [availability, setAvailability] = useState<UnitAvailability>(DEFAULT_AVAILABILITY);
@@ -35,6 +51,14 @@ export function useRegisterUnit(options: { isOnboarding?: boolean; onOpenWork?: 
       cancelled = true;
     };
   }, [endDatePreference, isOnboarding]);
+
+  useEffect(() => {
+    if (appliedReuse.current || reuse?.kind !== 'external') {
+      return;
+    }
+    appliedReuse.current = true;
+    setPlate(applyLicensePlateInput(reuse.plate));
+  }, [reuse]);
 
   const changePlate = (text: string): void => {
     setPlate(applyLicensePlateInput(text));
@@ -87,6 +111,15 @@ export function useRegisterUnit(options: { isOnboarding?: boolean; onOpenWork?: 
           return { tone: 'error' as const, message: t('unit.errors.submitFailed') };
         }
         await endDatePreference.remember(endDate);
+        const worker = await workerApi.get();
+        if (worker !== null) {
+          await lastUnitPreference.remember({
+            kind: 'external',
+            workerId: worker.dn_workerid,
+            userType: 'external',
+            plate: plate.raw,
+          });
+        }
         saved = true;
         return { tone: 'none' as const };
       });

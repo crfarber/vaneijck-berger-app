@@ -62,6 +62,8 @@ import {
   serviceFormSectionHeaderFallbackHeight,
 } from '../components/service-form-section';
 import { ServiceFormLicensePlateGroup } from '../components/service-form-license-plate-group';
+import { ServiceFormPersonNameGroup } from '../components/service-form-person-name-group';
+import { ServiceFormResetSheet } from '../components/service-form-reset-sheet';
 import { ServiceFormVehicleRegistrationGroup } from '../components/service-form-vehicle-registration-group';
 import { buildAddressEntrySectionRenderItems } from '../domain/address-entry';
 import { groupSectionFields } from '../domain/field-kind';
@@ -71,6 +73,7 @@ import {
   serviceFormPhaseForStatus,
 } from '../domain/form-context';
 import { findLicensePlateGroupInFields } from '../domain/license-plate-entry';
+import { partitionFieldsAroundPersonNameGroups } from '../domain/person-name-entry';
 import { resolveServiceFormLoadState } from '../domain/load-state';
 import { areServicePhotosUploaded, needsPhotoConfirmation } from '../domain/photos-confirm';
 import { partitionVehicleRegistrationFields } from '../domain/rdw-autofill';
@@ -79,6 +82,7 @@ import {
   scrollOffsetBelowSectionHeader,
   serviceFormStickyHeaderIndices,
 } from '../domain/section-scroll';
+import { buildSectionReset, selectDirtyResetSections } from '../domain/section-reset';
 import { createServiceFormScenario } from '../domain/scenario-export';
 import {
   isServiceFormDirty,
@@ -345,7 +349,9 @@ function ServiceFormBody({
     (state) => state.acceptedTermsAndConditions,
   );
   const termsAcceptanceRequired = useServiceFormStore((state) => state.termsAcceptanceRequired);
+  const uiResetEpoch = useServiceFormStore((state) => state.uiResetEpoch);
   const [submitting, setSubmitting] = useState(false);
+  const [resetSheetVisible, setResetSheetVisible] = useState(false);
   const [quickViewActive, setQuickViewActive] = useState(false);
   const [overviewActive, setOverviewActive] = useState(false);
   const [focusedFieldId, setFocusedFieldId] = useState<string | null>(null);
@@ -369,11 +375,14 @@ function ServiceFormBody({
             requiredFieldOverrides,
             hideSignature,
             noEmailConfirmation,
+            termsAcceptanceRequired,
+            acceptedTermsAndConditions,
             initialAnswers,
             focusedFieldId,
           })
         : visibleSections,
     [
+      acceptedTermsAndConditions,
       answers,
       focusedFieldId,
       hideSignature,
@@ -382,6 +391,7 @@ function ServiceFormBody({
       quickViewActive,
       readOnly,
       requiredFieldOverrides,
+      termsAcceptanceRequired,
       visibility.visibleFieldIds,
       visibleSections,
     ],
@@ -554,38 +564,82 @@ function ServiceFormBody({
     t,
   ]);
 
+  const dirtyResetSections = useMemo(
+    () => selectDirtyResetSections(visibleSections, initialAnswers, answers),
+    [answers, initialAnswers, visibleSections],
+  );
+
+  const persistDraftAfterSectionReset = useCallback(async (): Promise<void> => {
+    const state = storeApi.getState();
+    if (!isServiceFormDirty(state.initialAnswers, state.answers)) {
+      await drafts.clear(exitContext.allocationId, exitContext.serviceId);
+      return;
+    }
+    await drafts.save(
+      exitContext.allocationId,
+      exitContext.serviceId,
+      createServiceFormDraft(state),
+    );
+  }, [drafts, exitContext.allocationId, exitContext.serviceId, storeApi]);
+
+  const resetFullForm = useCallback(async (): Promise<void> => {
+    const accepted = await confirm({
+      title: t('serviceForm.reset.title'),
+      message: t('serviceForm.reset.message'),
+      confirmLabel: t('serviceForm.reset.action'),
+      cancelLabel: t('common.cancel'),
+      destructive: true,
+    });
+    if (!accepted) {
+      return;
+    }
+    try {
+      await drafts.clear(exitContext.allocationId, exitContext.serviceId);
+      storeApi.getState().reset();
+      setQuickViewActive(false);
+      setOverviewActive(false);
+    } catch {
+      Alert.alert(t('common.somethingWrong'));
+    }
+  }, [drafts, exitContext.allocationId, exitContext.serviceId, storeApi, t]);
+
+  const resetFormSection = useCallback(
+    async (section: ServiceFormSection): Promise<void> => {
+      const accepted = await confirm({
+        title: t('serviceForm.reset.sectionTitle', { title: section.title }),
+        message: t('serviceForm.reset.sectionMessage'),
+        confirmLabel: t('serviceForm.reset.sectionAction'),
+        cancelLabel: t('common.cancel'),
+        destructive: true,
+      });
+      if (!accepted) {
+        return;
+      }
+      try {
+        const state = storeApi.getState();
+        const result = buildSectionReset(
+          section,
+          fields,
+          state.initialAnswers,
+          state.answers,
+          pleaseSelectLabel,
+        );
+        state.resetSection(result.answers, result.fieldKeys);
+        await persistDraftAfterSectionReset();
+      } catch {
+        Alert.alert(t('common.somethingWrong'));
+      }
+    },
+    [fields, persistDraftAfterSectionReset, pleaseSelectLabel, storeApi, t],
+  );
+
   useEffect(() => {
     navigation.setOptions({
       headerRight: preview
         ? () => null
-        : () => (
-            <ResetFormHeaderButton
-              onPress={() => {
-                void (async () => {
-                  const accepted = await confirm({
-                    title: t('serviceForm.reset.title'),
-                    message: t('serviceForm.reset.message'),
-                    confirmLabel: t('serviceForm.reset.action'),
-                    cancelLabel: t('common.cancel'),
-                    destructive: true,
-                  });
-                  if (!accepted) {
-                    return;
-                  }
-                  try {
-                    await drafts.clear(exitContext.allocationId, exitContext.serviceId);
-                    storeApi.getState().reset();
-                    setQuickViewActive(false);
-                    setOverviewActive(false);
-                  } catch {
-                    Alert.alert(t('common.somethingWrong'));
-                  }
-                })();
-              }}
-            />
-          ),
+        : () => <ResetFormHeaderButton onPress={() => setResetSheetVisible(true)} />,
     });
-  }, [drafts, exitContext.allocationId, exitContext.serviceId, navigation, preview, storeApi, t]);
+  }, [navigation, preview]);
 
   const scrollToField = (fieldId: string): void => {
     const node = fieldRefs.current.get(fieldId);
@@ -684,6 +738,7 @@ function ServiceFormBody({
         requiredFieldOverrides,
         hideSignature,
         noEmailConfirmation,
+        { termsAcceptanceRequired, acceptedTermsAndConditions },
       );
       jumpToField(fields.find((field) => invalid[field.key] !== undefined));
       return;
@@ -726,11 +781,6 @@ function ServiceFormBody({
       noEmailConfirmation,
       phaseNumbers,
     });
-    if (termsAcceptanceRequired && !acceptedTermsAndConditions) {
-      logger.warn('serviceForm', 'Service form submit stopped', { stage: 'terms-acceptance' });
-      Alert.alert(t('serviceForm.signature.termsRequired'));
-      return;
-    }
     setSubmitting(true);
     let shouldExit = false;
     let wasBlocked = false;
@@ -861,13 +911,66 @@ function ServiceFormBody({
     const { vehicleFields, otherFields } = licensePlateGroup
       ? { vehicleFields: [] as typeof section.fields, otherFields: fieldsWithoutLicensePlate }
       : partitionVehicleRegistrationFields(fieldsWithoutLicensePlate);
-    const fieldGroups = readOnly
-      ? groupSectionFields(otherFields, { readonly: true })
-      : buildAddressEntrySectionRenderItems(otherFields);
+    const personNameBlocks = partitionFieldsAroundPersonNameGroups(otherFields);
+    const renderFieldGroups = (fields: typeof section.fields) => {
+      const fieldGroups = readOnly
+        ? groupSectionFields(fields, { readonly: true })
+        : buildAddressEntrySectionRenderItems(fields);
+      return fieldGroups.map((group) =>
+        group.kind === 'readonly' ? (
+          <ReadonlyFieldSummary
+            key={group.fields.map((field) => field.id).join(':')}
+            fields={group.fields}
+            answers={answers}
+          />
+        ) : group.kind === 'address-entry' ? (
+          <ServiceFormAddressGroup
+            key={`address:${group.group.anchor.id}:${uiResetEpoch}`}
+            group={group.group}
+            answers={answers}
+            errors={errors}
+            pleaseSelectLabel={pleaseSelectLabel}
+            readOnly={readOnly}
+            updateAnswer={updateAnswer}
+            updateAnswers={updateAnswers}
+            onFocus={activateField}
+            onBlur={deactivateField}
+            registerFieldRef={registerFieldRef}
+            registerInputRef={registerInputRef}
+            onFieldLayout={handleFieldLayout}
+          />
+        ) : (
+          <View
+            key={group.field.id}
+            collapsable={false}
+            ref={(node) => registerFieldRef(group.field.id, node)}
+            onLayout={() => handleFieldLayout(group.field.id)}
+          >
+            <ServiceFieldRenderer
+              field={group.field}
+              answer={answers[group.field.key]}
+              error={errors[group.field.key]}
+              dependencyAnswer={
+                group.field.dependencies?.required
+                  ? answers[group.field.dependencies.required]
+                  : undefined
+              }
+              pleaseSelectLabel={pleaseSelectLabel}
+              onChange={updateAnswer}
+              onAnswersChange={updateAnswers}
+              registerInputRef={registerInputRef}
+              onFocus={activateField}
+              onBlur={deactivateField}
+            />
+          </View>
+        ),
+      );
+    };
     return (
       <>
         {licensePlateGroup ? (
           <ServiceFormLicensePlateGroup
+            key={`license-plate:${licensePlateGroup.anchor.id}:${uiResetEpoch}`}
             group={licensePlateGroup}
             answers={answers}
             errors={errors}
@@ -902,17 +1005,11 @@ function ServiceFormBody({
             onFieldLayout={handleFieldLayout}
           />
         ) : null}
-        {fieldGroups.map((group) =>
-          group.kind === 'readonly' ? (
-            <ReadonlyFieldSummary
-              key={group.fields.map((field) => field.id).join(':')}
-              fields={group.fields}
-              answers={answers}
-            />
-          ) : group.kind === 'address-entry' ? (
-            <ServiceFormAddressGroup
-              key={group.group.anchor.id}
-              group={group.group}
+        {personNameBlocks.map((block, blockIndex) =>
+          block.kind === 'person-name' ? (
+            <ServiceFormPersonNameGroup
+              key={`person-name:${block.group.anchor.id}:${uiResetEpoch}`}
+              group={block.group}
               answers={answers}
               errors={errors}
               pleaseSelectLabel={pleaseSelectLabel}
@@ -926,28 +1023,8 @@ function ServiceFormBody({
               onFieldLayout={handleFieldLayout}
             />
           ) : (
-            <View
-              key={group.field.id}
-              collapsable={false}
-              ref={(node) => registerFieldRef(group.field.id, node)}
-              onLayout={() => handleFieldLayout(group.field.id)}
-            >
-              <ServiceFieldRenderer
-                field={group.field}
-                answer={answers[group.field.key]}
-                error={errors[group.field.key]}
-                dependencyAnswer={
-                  group.field.dependencies?.required
-                    ? answers[group.field.dependencies.required]
-                    : undefined
-                }
-                pleaseSelectLabel={pleaseSelectLabel}
-                onChange={updateAnswer}
-                onAnswersChange={updateAnswers}
-                registerInputRef={registerInputRef}
-                onFocus={activateField}
-                onBlur={deactivateField}
-              />
+            <View key={`fields:${blockIndex}:${block.fields.map((field) => field.id).join(':')}`}>
+              {renderFieldGroups(block.fields)}
             </View>
           ),
         )}
@@ -970,7 +1047,13 @@ function ServiceFormBody({
       section.fields,
       visibility.visibleFieldIds,
       answers,
-      { requiredFieldOverrides, hideSignature, noEmailConfirmation },
+      {
+        requiredFieldOverrides,
+        hideSignature,
+        noEmailConfirmation,
+        termsAcceptanceRequired,
+        acceptedTermsAndConditions,
+      },
     );
     scrollChildren.push(
       <ServiceFormSectionHeader
@@ -1090,13 +1173,28 @@ function ServiceFormBody({
           onConfirm={() => void confirmDecline()}
         />
       ) : null}
+      {!preview ? (
+        <ServiceFormResetSheet
+          visible={resetSheetVisible}
+          dirtySections={dirtyResetSections}
+          onClose={() => setResetSheetVisible(false)}
+          onSelectSection={(section) => {
+            setResetSheetVisible(false);
+            void resetFormSection(section);
+          }}
+          onSelectFullForm={() => {
+            setResetSheetVisible(false);
+            void resetFullForm();
+          }}
+        />
+      ) : null}
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: 'transparent' },
-  sections: { marginTop: spacing.md, paddingHorizontal: spacing.md },
+  sections: {},
   scrollTopInset: { height: spacing.md },
   ready: { color: colors.success, fontSize: 14, fontWeight: '600', textAlign: 'center' },
   quickComplete: {

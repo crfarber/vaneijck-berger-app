@@ -10,7 +10,11 @@ import {
   resolveFieldKind,
   type FieldKind,
 } from '../domain/field-kind';
-import { booleanSelectState, buildBooleanSelectAnswer } from '../domain/select-options';
+import {
+  booleanSelectState,
+  buildBooleanSelectAnswer,
+  selectedOptionAnswer,
+} from '../domain/select-options';
 import {
   buildAddressPlaceAnswers,
   readAddressComponentMapping,
@@ -22,6 +26,7 @@ import type {
   ServiceFormField,
 } from '../domain/types';
 import { useServiceFormService } from '../hooks/service-form-context';
+import { useServiceFormQuickOptions } from '../hooks/use-service-form-quick-options';
 import { useServiceFormSelectOption } from '../hooks/use-service-form-select-option';
 import { BooleanToggle } from './boolean-toggle';
 import { FieldFrame, fieldStyles, useErrorText } from './field-frame';
@@ -121,6 +126,7 @@ function SelectInputField({
   onFocus,
   onBlur,
 }: FieldRendererProps) {
+  const { t: translate } = useTranslation();
   const select = useServiceFormSelectOption({
     field,
     dependencyValue: dependencyAnswer?.value,
@@ -129,41 +135,95 @@ function SelectInputField({
       onBlur(field);
     },
   });
+  const { quickOptions } = useServiceFormQuickOptions({
+    field,
+    dependencyValue: dependencyAnswer?.value,
+    selectedValue: answer?.value,
+  });
   const shown = text(answer?.displayValue);
   const empty = shown === '' || shown === pleaseSelectLabel;
+  const showQuickPicks = !field.readOnly && quickOptions.length > 0;
+
+  const openSheet = (): void => {
+    if (field.readOnly) {
+      return;
+    }
+    if (!field.autocomplete) {
+      Keyboard.dismiss();
+    }
+    onFocus?.(field);
+    void select.open();
+  };
 
   return (
     <FieldFrame label={field.label} optional={field.optional} error={error}>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={formatServiceFormFieldLabel(field.label, field.optional)}
-        accessibilityValue={{ text: empty ? pleaseSelectLabel : shown }}
-        disabled={field.readOnly}
-        onPress={() => {
-          if (field.readOnly) {
-            return;
-          }
-          if (!field.autocomplete) {
-            Keyboard.dismiss();
-          }
-          onFocus?.(field);
-          void select.open();
-        }}
-        style={({ pressed }) => [
-          fieldStyles.box,
-          styles.selectBox,
-          field.readOnly && fieldStyles.readonlyBox,
-          error && fieldStyles.boxError,
-          pressed && !field.readOnly && styles.pressed,
-        ]}
-      >
-        <Text style={[styles.grow, empty ? fieldStyles.placeholder : fieldStyles.value]}>
-          {empty ? pleaseSelectLabel : shown}
-        </Text>
-        {field.readOnly ? null : (
-          <Ionicons name="chevron-down" size={20} color={colors.textMuted} />
-        )}
-      </Pressable>
+      {showQuickPicks ? (
+        <View style={styles.quickPicks}>
+          {quickOptions.map((option) => {
+            const selected = option.value === answer?.value;
+            return (
+              <Pressable
+                key={`${option.label}-${String(option.value)}`}
+                accessibilityRole="button"
+                accessibilityState={{ selected }}
+                onPress={() => {
+                  onFocus?.(field);
+                  onChange(field.key, selectedOptionAnswer(option, field.table));
+                  onBlur(field);
+                }}
+                style={({ pressed }) => [
+                  styles.quickPickChip,
+                  selected && styles.quickPickChipSelected,
+                  pressed && styles.pressed,
+                ]}
+              >
+                <Text
+                  style={[styles.quickPickLabel, selected && styles.quickPickLabelSelected]}
+                  numberOfLines={1}
+                >
+                  {option.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={translate('serviceForm.select.moreOptions')}
+            onPress={openSheet}
+            style={({ pressed }) => [
+              styles.quickPickChip,
+              styles.quickPickMore,
+              pressed && styles.pressed,
+            ]}
+          >
+            <Text style={styles.quickPickMoreLabel} numberOfLines={1}>
+              {translate('serviceForm.select.moreOptions')}
+            </Text>
+          </Pressable>
+        </View>
+      ) : (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={formatServiceFormFieldLabel(field.label, field.optional)}
+          accessibilityValue={{ text: empty ? pleaseSelectLabel : shown }}
+          disabled={field.readOnly}
+          onPress={openSheet}
+          style={({ pressed }) => [
+            fieldStyles.box,
+            styles.selectBox,
+            field.readOnly && fieldStyles.readonlyBox,
+            error && fieldStyles.boxError,
+            pressed && !field.readOnly && styles.pressed,
+          ]}
+        >
+          <Text style={[styles.grow, empty ? fieldStyles.placeholder : fieldStyles.value]}>
+            {empty ? pleaseSelectLabel : shown}
+          </Text>
+          {field.readOnly ? null : (
+            <Ionicons name="chevron-down" size={20} color={colors.textMuted} />
+          )}
+        </Pressable>
+      )}
       {field.readOnly ? null : (
         <SelectSheet
           title={field.label}
@@ -337,6 +397,38 @@ const styles = StyleSheet.create({
   },
   pressed: { opacity: 0.6 },
   selectBox: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  quickPicks: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+  },
+  quickPickChip: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 999,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    backgroundColor: colors.surface,
+    maxWidth: '100%',
+  },
+  quickPickChipSelected: {
+    borderColor: colors.brand,
+    backgroundColor: colors.brand,
+  },
+  quickPickLabel: {
+    color: colors.text,
+    fontSize: 14,
+  },
+  quickPickLabelSelected: {
+    color: colors.brandText,
+  },
+  quickPickMore: {
+    borderStyle: 'dashed',
+  },
+  quickPickMoreLabel: {
+    color: colors.textMuted,
+    fontSize: 14,
+  },
   unsupported: {
     borderWidth: 1,
     borderStyle: 'dashed',

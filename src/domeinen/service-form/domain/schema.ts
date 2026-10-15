@@ -78,6 +78,12 @@ function normalizeField(
     return null;
   }
 
+  const rawQuickPicks = rawField.autoform?.quickPicks;
+  const quickPicks =
+    typeof rawQuickPicks === 'number' && Number.isFinite(rawQuickPicks) && rawQuickPicks > 0
+      ? Math.floor(rawQuickPicks)
+      : undefined;
+
   return {
     id: `phase-${phase}/section-${sectionIndex}/field-${fieldIndex}/${key}`,
     key,
@@ -87,6 +93,7 @@ function normalizeField(
     readOnly: rawField.autoform?.readonly === true,
     optional: rawField.autoform?.optional === true,
     autocomplete: rawField.autoform?.autocomplete === true,
+    quickPicks,
     autoformValue: rawField.autoform?.value,
     sortOptions: rawField.sortoptions,
     dependencies: rawField.dependencies,

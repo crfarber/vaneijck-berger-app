@@ -2,20 +2,20 @@ import { describe, expect, it } from 'vitest';
 import { isOnVehicleSubject, standGridIndex } from './stand-grid-index';
 
 describe('standGridIndex', () => {
-  it('maps exterior angles around the car, leaving the center for the vehicle', () => {
-    expect(standGridIndex({ category: 'EXTERIOR', angle: 'links-voor' })).toBe(0);
-    expect(standGridIndex({ category: 'EXTERIOR', angle: 'voor' })).toBe(1);
-    expect(standGridIndex({ category: 'EXTERIOR', angle: 'rechts-voor' })).toBe(2);
+  it('maps exterior angles around the car with front at the bottom', () => {
+    expect(standGridIndex({ category: 'EXTERIOR', angle: 'links-achter' })).toBe(0);
+    expect(standGridIndex({ category: 'EXTERIOR', angle: 'achter' })).toBe(1);
+    expect(standGridIndex({ category: 'EXTERIOR', angle: 'rechts-achter' })).toBe(2);
     expect(standGridIndex({ category: 'EXTERIOR', angle: 'links' })).toBe(3);
     expect(standGridIndex({ category: 'EXTERIOR', angle: 'rechts' })).toBe(5);
-    expect(standGridIndex({ category: 'EXTERIOR', angle: 'links-achter' })).toBe(6);
-    expect(standGridIndex({ category: 'EXTERIOR', angle: 'achter' })).toBe(7);
-    expect(standGridIndex({ category: 'EXTERIOR', angle: 'rechts-achter' })).toBe(8);
+    expect(standGridIndex({ category: 'EXTERIOR', angle: 'links-voor' })).toBe(6);
+    expect(standGridIndex({ category: 'EXTERIOR', angle: 'voor' })).toBe(7);
+    expect(standGridIndex({ category: 'EXTERIOR', angle: 'rechts-voor' })).toBe(8);
   });
 
   it('maps tyre slots to the four corners', () => {
-    expect(standGridIndex({ category: 'TYRES', tyre: 'links-voor' })).toBe(0);
-    expect(standGridIndex({ category: 'TYRES', tyre: 'rechts-achter' })).toBe(8);
+    expect(standGridIndex({ category: 'TYRES', tyre: 'links-voor' })).toBe(6);
+    expect(standGridIndex({ category: 'TYRES', tyre: 'rechts-achter' })).toBe(2);
   });
 
   it('maps on-vehicle subjects to the center cell', () => {
@@ -26,9 +26,9 @@ describe('standGridIndex', () => {
   });
 
   it('maps engine to the front and trailer/cargo to the rear', () => {
-    expect(standGridIndex({ category: 'ENGINE' })).toBe(1);
-    expect(standGridIndex({ category: 'TRAILER' })).toBe(7);
-    expect(standGridIndex({ category: 'CARGO' })).toBe(7);
+    expect(standGridIndex({ category: 'ENGINE' })).toBe(7);
+    expect(standGridIndex({ category: 'TRAILER' })).toBe(1);
+    expect(standGridIndex({ category: 'CARGO' })).toBe(1);
   });
 });
 

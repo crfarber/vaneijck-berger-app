@@ -22,13 +22,20 @@ export type Scheduler = {
 
 export type HapticTone = 'success' | 'warning' | 'error';
 
-/** Short vibration on success, warning or error. A noop on devices without haptics. */
+/**
+ * Short vibration: `notify` for outcome feedback (toast/status), `tap` for button press.
+ * A noop on devices without haptics.
+ */
 export type Haptics = {
   notify(tone: HapticTone): void;
+  tap(): void;
 };
 
 export const noopHaptics: Haptics = {
   notify() {
+    // No vibration in tests or when the device adapter is not wired.
+  },
+  tap() {
     // No vibration in tests or when the device adapter is not wired.
   },
 };

@@ -1,7 +1,7 @@
 # Wiki berger-app
 
-> Gecontroleerd op: ba1383c (2026-09-23)
-> Bijgewerkt op: `ba1383c` (2026-09-30; Homebase en fotoproces)
+> Gecontroleerd op: `4cf3132b` (2026-10-13)
+> Bijgewerkt op: `4cf3132b` (2026-10-13; sectiereset, open-service, PLTR-preview, tijdzone, fitContent-sheet — inclusief werkboom)
 > Bronnen: `docs/wiki/`, `.agents/skills/wiki/onderwerpen.md`, `.agents/skills/wiki/pagina-sjabloon.md`, `docs/architecture.md`, `docs/conventions.md`
 > Zie ook: [architectuur](../architecture.md), [conventies](../conventions.md), [roadmap](../roadmap.md)
 
@@ -38,14 +38,14 @@ worden gecontroleerd.
 
 | Pagina                                          | Waarover                                                                | Gecontroleerd               |
 | ----------------------------------------------- | ----------------------------------------------------------------------- | --------------------------- |
-| [Wiki-index](README.md)                         | leesroutes, paginaoverzicht en uitleg van claimstatussen                | `ba1383c`                   |
+| [Wiki-index](README.md)                         | leesroutes, paginaoverzicht en uitleg van claimstatussen                | `4cf3132b`                  |
 | [API en fouten](api-en-fouten.md)               | HTTP-client, fouttypen, retry en sessieverloop                          | `c0687077`                  |
 | [Applicatieflow](applicatieflow.md)             | end-to-end gebruikersreis en terugnavigatie vanuit het eenheidoverzicht | `c1506088` (terugnavigatie) |
 | [Beschikbaarheid](beschikbaarheid.md)           | medewerkerstatus, opties en wijzigen                                    | `ba1383c`                   |
 | [Builds](builds.md)                             | varianten, runtimeconfiguratie en buildprofielen                        | `ba1383c`                   |
-| [Componenten en routes](componenten.md)         | alle actuele routes, schermen en UI-componenten                         | `c0687077`                  |
-| [Diensten](diensten.md)                         | diensten laden, accepteren, weigeren en afronden                        | `ba1383c`                   |
-| [Feedback en dialogen](feedback.md)             | toasts, procesoverlay, bevestigingen en sheets                          | `ba1383c`                   |
+| [Componenten en routes](componenten.md)         | alle actuele routes, schermen en UI-componenten                         | `4cf3132b`                  |
+| [Diensten](diensten.md)                         | diensten laden, accepteren, weigeren en afronden                        | `4cf3132b`                  |
+| [Feedback en dialogen](feedback.md)             | toasts, procesoverlay, bevestigingen en sheets                          | `4cf3132b`                  |
 | [Foto's](fotos.md)                              | schermstroom, fotofasen, lokale opslag en uploadwachtrij                | `ba1383c`                   |
 | [Internationalisatie](i18n.md)                  | Nederlands, Engels en taal richting CRM                                 | `ba1383c`                   |
 | [Inloggen](inloggen.md)                         | externe en interne login, sessie en tokenverversing                     | `ba1383c`                   |
@@ -56,11 +56,11 @@ worden gecontroleerd.
 | [Offline werken](offline.md)                    | bewaarde querydata, mutaties en fotowachtrij                            | `ba1383c`                   |
 | [Onboarding en eenheid](onboarding.md)          | gate, voertuig, uitvoerlocatie, beschikbaarheid en eindtijd             | `ba1383c`                   |
 | [Ontwikkelstatus](ontwikkelstatus.md)           | gebouwd, gedeeltelijk en ontbrekende validatie                          | `ba1383c`                   |
-| [Opdrachten](opdrachten.md)                     | lijst, accepteren, afwijzen, afronden en overdragen                     | `ba1383c`                   |
+| [Opdrachten](opdrachten.md)                     | lijst, accepteren, afwijzen, afronden en overdragen                     | `4cf3132b`                  |
 | [Opslagsleutels](opslagsleutels.md)             | duurzame sleutels en wat uitloggen wist                                 | `ba1383c`                   |
 | [Outbox](outbox.md)                             | duurzame mutatiewachtrij en aflevervolgorde                             | `ba1383c`                   |
 | [Overzicht](overzicht.md)                       | appstart, container, providers en navigatie                             | `ba1383c`                   |
-| [PLTR](pltr.md)                                 | planbaar transport, fasen en acties                                     | `ba1383c`                   |
+| [PLTR](pltr.md)                                 | planbaar transport, fasen en acties                                     | `4cf3132b`                  |
 | [Pushmeldingen](pushmeldingen.md)               | registratie, parsing, effecten en historie                              | `ba1383c`                   |
 | [Referentiedata](referentiedata.md)             | synchronisatie, opslag en formulierdefinities                           | `ba1383c`                   |
 | [Statuscodes](statuscodes.md)                   | opdracht-, dienst- en beschikbaarheidsstatussen                         | `ba1383c`                   |
@@ -68,7 +68,7 @@ worden gecontroleerd.
 | [Support](support.md)                           | geredigeerd log bekijken en delen                                       | `ba1383c`                   |
 | [Testen](testen.md)                             | testopzet, fakes, coverage en architectuurtest                          | `ba1383c`                   |
 | [Toestemmingen](toestemmingen.md)               | locatie, meldingen en camera                                            | `ba1383c`                   |
-| [Verwerkingsformulier](verwerkingsformulier.md) | dynamisch formulier, concept, validatie, adres, handtekening en submit  | `c1506088`                  |
+| [Verwerkingsformulier](verwerkingsformulier.md) | dynamisch formulier, concept, sectiereset, adres, handtekening, submit  | `4cf3132b`                  |
 
 ### Betekenis van signalen
 

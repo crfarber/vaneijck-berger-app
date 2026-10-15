@@ -38,3 +38,13 @@ en toekomstige adressen zoals een buurmanadres.
   antwoorden blijven staan.
 - De postcodeflow en schermnavigatie zijn geautomatiseerd getest, maar de volledige combinatie met
   een echte gesynchroniseerde definitie moet nog op een toestel worden geaccepteerd.
+
+## Aanvulling (2026-10-12)
+
+- Op het markerveld staat naast de oudere `ui_extensions`/`address_components`-paden ook
+  `address_group` (plat, met `fields.postalCode` enz.). Alleen postcode en huisnummer zijn daar
+  verplicht; straat en plaats zijn optioneel (taxi-route). Legacy `address_components` blijft
+  straat én plaats eisen.
+- De definition builder herkent adresblokken op CRM-achtervoegsel en kan een groep in alle fases
+  zetten waar de gekoppelde velden bestaan. Zie
+  [docs/specs/speed-up-address-locations-in-form.md](../specs/speed-up-address-locations-in-form.md).

@@ -1,19 +1,28 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View, type TextInput } from 'react-native';
-import { isDutchLicensePlate, normalizeLicensePlate } from '@/domeinen/allocation-unit';
+import { ActivityIndicator, StyleSheet, Text, View, type TextInput } from 'react-native';
+import {
+  canBeDutchLicensePlate,
+  isDutchLicensePlate,
+  normalizeLicensePlate,
+} from '@/domeinen/allocation-unit';
 import { NumberPlate } from '@/domeinen/allocation-unit/ui';
 import { Button } from '@/shared/ui/button';
 import { confirm } from '@/shared/ui/confirm';
-import { colors, spacing, type as typography } from '@/shared/ui/theme';
+import { colors, radius, spacing, type as typography } from '@/shared/ui/theme';
 import {
   answerText,
   buildClearedLicensePlateAnswers,
   buildLicensePlateSummary,
+  hasAppliedLicensePlateVehicleAnswers,
+  hasLicensePlateTypeAnswer,
   initialLicensePlateState,
   LicensePlatePhase,
   nextLicensePlateState,
   shouldConfirmReported,
+  shouldConfirmRdwVehicle,
+  shouldNeutralizeLicensePlateChrome,
+  shouldRequireManualVehicleFields,
   shouldShowManualVehicleFields,
   shouldShowRdwSummary,
   type LicensePlateEntryGroup,
@@ -28,6 +37,7 @@ import type {
 } from '../domain/types';
 import type { FetchRdwInfo } from '../hooks/service-form-context';
 import { useRdwVehicleRegistration } from '../hooks/use-rdw-vehicle-registration';
+import { DevGroupAnswersButton } from './dev-group-answers-button';
 import { ReadonlyFieldSummary } from './readonly-field-summary';
 import { ServiceFieldRenderer } from './service-field-renderer';
 
@@ -72,29 +82,41 @@ export function ServiceFormLicensePlateGroup({
   const mapping = group.mapping;
   const foundPlateKey = mapping.foundPlate ?? group.anchor.key;
   const reportedPlateKey = mapping.reportedPlate;
+  const orderedFieldKeys = group.orderedFields.map((field) => field.key).join('\0');
   const fieldByKey = useMemo(
     () => new Map(group.orderedFields.map((field) => [field.key, field])),
-    [group.orderedFields],
+    // orderedFields array identity changes every parent render; keys content is the real dep.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- see orderedFieldKeys
+    [orderedFieldKeys],
   );
   const fieldKeys = useMemo(
     () => new Set(group.orderedFields.map((field) => field.key)),
-    [group.orderedFields],
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- see orderedFieldKeys
+    [orderedFieldKeys],
   );
+  const debugFields = useMemo(() => [group.anchor, ...group.orderedFields], [group]);
 
   const reportedPlate = reportedPlateKey ? answerText(answers[reportedPlateKey]) || null : null;
   const foundPlateValue = answerText(answers[foundPlateKey]);
+  const vehicleApplied = hasAppliedLicensePlateVehicleAnswers(mapping, answers, pleaseSelectLabel);
+  const typeFilled = hasLicensePlateTypeAnswer(mapping, answers, pleaseSelectLabel);
+  const restoreOptions = { vehicleApplied, typeFilled };
 
   const [uiState, setUiState] = useState<LicensePlateUiState>(() =>
-    initialLicensePlateState(reportedPlate, foundPlateValue),
+    initialLicensePlateState(reportedPlate, foundPlateValue, restoreOptions),
   );
   const reportedSyncKey = reportedPlate ?? '';
   const [syncedReportedKey, setSyncedReportedKey] = useState(reportedSyncKey);
   if (syncedReportedKey !== reportedSyncKey) {
     setSyncedReportedKey(reportedSyncKey);
-    setUiState(initialLicensePlateState(reportedPlate, foundPlateValue));
+    setUiState(initialLicensePlateState(reportedPlate, foundPlateValue, restoreOptions));
   }
   const pendingConfirmPlate = useRef<string | null>(null);
   const getAnswers = useCallback(() => answers, [answers]);
+  const plateCannotBeDutch =
+    foundPlateValue.trim() !== '' && !canBeDutchLicensePlate(foundPlateValue);
+  const forceManualVehicleRequired =
+    uiState.phase === LicensePlatePhase.Foreign || plateCannotBeDutch;
 
   const dispatch = useCallback((event: Parameters<typeof nextLicensePlateState>[1]) => {
     setUiState((current) => nextLicensePlateState(current, event));
@@ -129,6 +151,7 @@ export function ServiceFormLicensePlateGroup({
       updateAnswers,
       setFieldsRequired,
       mapping,
+      forceManualVehicleRequired,
       onLookupResult: (result) => {
         if (result.failed) {
           dispatch({ type: 'lookupFailed' });
@@ -137,7 +160,14 @@ export function ServiceFormLicensePlateGroup({
         if (!result.info) {
           return;
         }
-        if (group.config.confirmVehicle && pendingConfirmPlate.current !== result.plate) {
+        if (
+          shouldConfirmRdwVehicle({
+            confirmVehicle: group.config.confirmVehicle,
+            alreadyApplied: result.alreadyApplied,
+            pendingPlate: pendingConfirmPlate.current,
+            resultPlate: result.plate,
+          })
+        ) {
           pendingConfirmPlate.current = result.plate;
           const message = [result.info.model, result.info.tradeName, result.info.primaryColor]
             .filter((part) => Boolean(part?.trim()))
@@ -224,14 +254,26 @@ export function ServiceFormLicensePlateGroup({
   const typeField = mapping.type ? fieldByKey.get(mapping.type) : undefined;
   const countryField = mapping.country ? fieldByKey.get(mapping.country) : undefined;
 
-  const showManual = shouldShowManualVehicleFields(uiState);
+  const showManual = shouldShowManualVehicleFields(uiState, plateCannotBeDutch);
   const showSummary = shouldShowRdwSummary(uiState) && Boolean(rdwInfo);
   const showConfirm = shouldConfirmReported(uiState);
+  const neutralizePlate = shouldNeutralizeLicensePlateChrome(
+    uiState,
+    rdwLookupFailed,
+    plateCannotBeDutch,
+  );
+  const requireManualVehicle = shouldRequireManualVehicleFields(
+    uiState,
+    rdwLookupFailed,
+    plateCannotBeDutch,
+  );
   const summaryText = buildLicensePlateSummary(mapping, answers, {
     brand: rdwInfo?.model,
     type: rdwInfo?.tradeName,
     color: rdwInfo?.primaryColor,
   });
+
+  const debugButton = <DevGroupAnswersButton answers={answers} fields={debugFields} />;
 
   if (readOnly) {
     const displayAnswers: ServiceFormAnswers = { ...answers };
@@ -241,30 +283,40 @@ export function ServiceFormLicensePlateGroup({
         displayAnswers[field.key] = { value: overlay, displayValue: overlay };
       }
     }
-    return <ReadonlyFieldSummary fields={group.orderedFields} answers={displayAnswers} />;
+    return (
+      <View style={styles.container}>
+        <ReadonlyFieldSummary fields={group.orderedFields} answers={displayAnswers} />
+        {debugButton}
+      </View>
+    );
   }
 
   const renderField = (field: ServiceFormField | undefined) => {
     if (!field) {
       return null;
     }
+    // Schema may leave type optional; when RDW fails / foreign, show it as required.
+    const effectiveField =
+      requireManualVehicle && !field.readOnly ? { ...field, optional: false } : field;
     return (
       <View
-        key={field.id}
+        key={effectiveField.id}
         collapsable={false}
-        ref={(node) => registerFieldRef?.(field.id, field.readOnly ? null : node)}
+        ref={(node) => registerFieldRef?.(effectiveField.id, effectiveField.readOnly ? null : node)}
         onLayout={() => {
-          if (!field.readOnly) {
-            onFieldLayout?.(field.id);
+          if (!effectiveField.readOnly) {
+            onFieldLayout?.(effectiveField.id);
           }
         }}
       >
         <ServiceFieldRenderer
-          field={field}
-          answer={answers[field.key]}
-          error={errors[field.key]}
+          field={effectiveField}
+          answer={answers[effectiveField.key]}
+          error={errors[effectiveField.key]}
           dependencyAnswer={
-            field.dependencies?.required ? answers[field.dependencies.required] : undefined
+            effectiveField.dependencies?.required
+              ? answers[effectiveField.dependencies.required]
+              : undefined
           }
           pleaseSelectLabel={pleaseSelectLabel}
           onChange={updateAnswer}
@@ -310,6 +362,7 @@ export function ServiceFormLicensePlateGroup({
               <NumberPlate
                 plateNumber={foundPlateValue}
                 editable
+                chrome={neutralizePlate ? 'foreign' : 'auto'}
                 onChangeText={onFoundPlateChange}
                 onBlur={() => onBlur(foundField)}
                 accessibilityLabel={t('serviceForm.licensePlate.foundLabel')}
@@ -329,16 +382,16 @@ export function ServiceFormLicensePlateGroup({
               <Text style={styles.summary} accessibilityLiveRegion="polite">
                 {summaryText}
               </Text>
-              {group.config.allowManual ? (
-                <Pressable
-                  onPress={() => dispatch({ type: 'openManual' })}
-                  style={styles.link}
-                  accessibilityRole="button"
-                >
-                  <Text style={styles.linkText}>{t('serviceForm.licensePlate.notCorrect')}</Text>
-                </Pressable>
-              ) : null}
-              <View style={styles.modeLink}>
+              <View style={styles.summaryActions}>
+                {group.config.allowManual ? (
+                  <Button
+                    label={t('serviceForm.licensePlate.notCorrect')}
+                    variant="text"
+                    onPress={() => dispatch({ type: 'openManual' })}
+                  />
+                ) : (
+                  <View />
+                )}
                 <Button
                   label={t('serviceForm.licensePlate.reset')}
                   variant="text"
@@ -354,13 +407,14 @@ export function ServiceFormLicensePlateGroup({
 
           {showManual ? (
             <>
-              {uiState.phase === LicensePlatePhase.Foreign || rdwLookupFailed
+              {uiState.phase === LicensePlatePhase.Foreign || rdwLookupFailed || plateCannotBeDutch
                 ? renderField(countryField)
                 : null}
               {renderField(brandField)}
               {uiState.showTypeGap ||
               uiState.phase === LicensePlatePhase.Manual ||
-              uiState.phase === LicensePlatePhase.Foreign
+              uiState.phase === LicensePlatePhase.Foreign ||
+              plateCannotBeDutch
                 ? renderField(typeField)
                 : null}
             </>
@@ -389,6 +443,7 @@ export function ServiceFormLicensePlateGroup({
           ) : null}
         </>
       )}
+      {debugButton}
     </View>
   );
 }
@@ -401,12 +456,25 @@ const styles = StyleSheet.create({
   actionButton: { flex: 1, minWidth: 0 },
   status: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   statusText: { ...typography.label, color: colors.textMuted },
-  summary: { ...typography.body, color: colors.textMuted },
-  link: { alignSelf: 'flex-start', paddingVertical: spacing.xs },
-  linkText: {
-    color: colors.brandAction,
-    textDecorationLine: 'underline',
-    fontSize: 14,
+  summary: {
+    ...typography.small,
+    textAlign: 'center',
+    textTransform: 'capitalize',
+    fontWeight: 'bold',
+    color: colors.brandLight,
+    backgroundColor: colors.success,
+    padding: spacing.sm,
+    borderRadius: radius.sm,
+    flexShrink: 1,
+    flexWrap: 'wrap',
+    alignSelf: 'stretch',
+    width: '100%',
+  },
+  summaryActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
   },
   modeLink: { alignSelf: 'flex-end' },
 });

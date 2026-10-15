@@ -1,14 +1,16 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert } from 'react-native';
+import { serviceFormSelectOptionsQueryKey } from '../domain/select-options-query-key';
 import { selectedOptionAnswer, type SelectOption } from '../domain/select-options';
 import type { ServiceFormAnswer, ServiceFormField } from '../domain/types';
 import { useServiceFormService } from './service-form-context';
 
 /**
- * Opening a select field, ported from the pilot's `useServiceFormSelectOption`: load the synced
- * table, stop with a message when the brand is missing or the table is empty, otherwise show the
- * list. The chosen option carries its own CRM value, so nothing is looked up again by label.
+ * Opening a select field: load the synced table (or reuse the quick-picks cache), stop with a
+ * message when the brand is missing or the table is empty, otherwise show the list. The chosen
+ * option carries its own CRM value, so nothing is looked up again by label.
  */
 export function useServiceFormSelectOption({
   field,
@@ -21,6 +23,7 @@ export function useServiceFormSelectOption({
 }) {
   const { t } = useTranslation();
   const service = useServiceFormService();
+  const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
   const [options, setOptions] = useState<SelectOption[] | null>(null);
 
@@ -30,10 +33,14 @@ export function useServiceFormSelectOption({
     }
     setLoading(true);
     try {
-      const result = await service.loadSelectOptions({
-        table: field.table,
-        sortOptions: field.sortOptions,
-        dependencyValue,
+      const result = await queryClient.ensureQueryData({
+        queryKey: serviceFormSelectOptionsQueryKey(field, dependencyValue),
+        queryFn: () =>
+          service.loadSelectOptions({
+            table: field.table,
+            sortOptions: field.sortOptions,
+            dependencyValue,
+          }),
       });
       if (result.kind === 'needs-dependency') {
         Alert.alert(field.label, t('serviceForm.select.needsDependency'));

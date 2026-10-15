@@ -162,7 +162,7 @@ export function EndDateField({
 
       <Button
         label={t('unit.quickSetPlus8')}
-        variant="secondary"
+        variant="action"
         onPress={() => applyCandidate(getDefaultEndDate(now()))}
       />
 

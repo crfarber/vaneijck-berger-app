@@ -418,7 +418,8 @@
                   "readonly": false,
                   "optional": false,
                   "autocomplete": true,
-                  "value": "_dn_locationid_value"
+                  "value": "_dn_locationid_value",
+                  "quickPicks": 3
                 },
                 "requiredvisibility": {
                   "property": "dn_imactionstatuscode",
@@ -447,7 +448,8 @@
                   "readonly": false,
                   "optional": true,
                   "autocomplete": true,
-                  "value": "_dn_locationid_value"
+                  "value": "_dn_locationid_value",
+                  "quickPicks": 3
                 },
                 "requiredvisibility": {
                   "property": "dn_imactionstatuscode",
@@ -477,7 +479,6 @@
                   "value": 1001
                 }
               },
-
               {
                 "name": "dn_additionalvehicles",
                 "label": [
@@ -501,7 +502,6 @@
                   "value": 1005
                 }
               },
-
               {
                 "name": "_dn_vehiclecountryoforiginid_value",
                 "label": [
@@ -663,7 +663,6 @@
               }
             ]
           },
-
           {
             "header": [
               {
@@ -1172,7 +1171,8 @@
                   "readonly": false,
                   "optional": false,
                   "autocomplete": true,
-                  "value": "_dn_locationid_value"
+                  "value": "_dn_locationid_value",
+                  "quickPicks": 3
                 },
                 "requiredvisibility": {
                   "property": "dn_imactionstatuscode",
@@ -1197,7 +1197,8 @@
                   "readonly": false,
                   "optional": true,
                   "autocomplete": true,
-                  "value": "_dn_locationid_value"
+                  "value": "_dn_locationid_value",
+                  "quickPicks": 3
                 },
                 "requiredvisibility": {
                   "property": "dn_imactionstatuscode",
@@ -1251,7 +1252,6 @@
                   "value": 1005
                 }
               },
-
               {
                 "name": "_dn_vehiclecountryoforiginid_value",
                 "label": [
@@ -1413,7 +1413,6 @@
               }
             ]
           },
-
           {
             "header": [
               {

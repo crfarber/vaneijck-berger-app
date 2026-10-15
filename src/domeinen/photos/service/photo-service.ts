@@ -42,14 +42,30 @@ export type PhotoService = {
   listByService(serviceId: string): Promise<Photo[]>;
   displayUri(filePath: string): Promise<string>;
   listServerPhotos(input: ListServerPhotosInput): Promise<ServerPhotoSummary[]>;
+  /**
+   * Display URI for a server photo without a local copy. Downloads it once and keeps it encrypted
+   * until the allocation is cleared; a url outside our API is returned unchanged.
+   */
+  serverPhotoUri(input: { allocationId: string; url: string }): Promise<string>;
   /** Persists the file as a local draft. */
   capture(input: CapturePhotoInput): Promise<Photo>;
+  /**
+   * Reads GPS once and stamps every matching draft that still has no coordinate.
+   * Returns false when GPS is unavailable and at least one draft still needs a fix.
+   */
+  attachLocation(input: {
+    serviceId: string;
+    phase: PhotoPhase;
+    photoId?: string;
+  }): Promise<boolean>;
   /** Offers every local draft in one service phase to the upload queue. */
   submitBatch(serviceId: string, phase: PhotoPhase): Promise<void>;
   /** Offers exactly one replacement draft to the upload queue. */
   submitOverride(photoId: string): Promise<void>;
   /** Puts a failed photo back on the queue. */
   retry(photoId: string): Promise<void>;
+  /** Deletes a local draft or failed photo (not queued/sent). */
+  remove(photoId: string): Promise<void>;
   clearForService(serviceId: string): Promise<void>;
   clearForAllocation(allocationId: string): Promise<void>;
   clearAll(): Promise<void>;
@@ -109,6 +125,13 @@ export function createPhotoService(deps: PhotoServiceDeps): PhotoService {
   let retryAttempt = 0;
   let idSequence = 0;
   let pendingMutation: Promise<void> = Promise.resolve();
+  const pendingDownloads = new Map<string, Promise<string>>();
+  const clearedScopes = new Map<string, number>();
+  let clearedAll = 0;
+
+  function remoteEpoch(allocationId: string): string {
+    return `${clearedAll}:${clearedScopes.get(allocationId) ?? 0}`;
+  }
 
   async function replace(next: readonly Photo[]): Promise<void> {
     await repository.save(next);
@@ -283,7 +306,25 @@ export function createPhotoService(deps: PhotoServiceDeps): PhotoService {
   return {
     async listByService(serviceId) {
       const photos = await repository.load();
-      return photos.filter((photo) => photo.serviceId === serviceId);
+      const forService = photos.filter((photo) => photo.serviceId === serviceId);
+      const missingIds: string[] = [];
+      const present: Photo[] = [];
+      for (const photo of forService) {
+        if (await files.exists(photo.filePath)) {
+          present.push(photo);
+        } else {
+          missingIds.push(photo.id);
+        }
+      }
+      if (missingIds.length > 0) {
+        const missing = new Set(missingIds);
+        logger?.warn('photos', 'Pruned photo metadata with missing files', {
+          serviceId,
+          count: missingIds.length,
+        });
+        await withUpdate((current) => current.filter((photo) => !missing.has(photo.id)));
+      }
+      return present;
     },
 
     displayUri(filePath) {
@@ -302,6 +343,31 @@ export function createPhotoService(deps: PhotoServiceDeps): PhotoService {
       }
     },
 
+    serverPhotoUri({ allocationId, url }) {
+      const key = `${allocationId}\n${url}`;
+      const pending = pendingDownloads.get(key);
+      if (pending) {
+        return pending;
+      }
+      const loading = (async () => {
+        const stored = await files.remoteDisplayUri(allocationId, url);
+        if (stored !== null) {
+          return stored;
+        }
+        const epoch = remoteEpoch(allocationId);
+        const bytes = await api.download(url);
+        // A download that outlives "allocation finished" or sign-out must not leave a file behind.
+        if (bytes === null || epoch !== remoteEpoch(allocationId)) {
+          return url;
+        }
+        return files.storeRemote(allocationId, url, bytes);
+      })().finally(() => {
+        pendingDownloads.delete(key);
+      });
+      pendingDownloads.set(key, loading);
+      return loading;
+    },
+
     async capture(input) {
       const id = nextId();
       const filePath = await files.persist(input.sourceUri, id);
@@ -314,7 +380,8 @@ export function createPhotoService(deps: PhotoServiceDeps): PhotoService {
         role: input.role ?? PHOTO_ROLE.mandatory,
         position: input.position,
         filePath,
-        coordinate: resolveCurrentPosition(await locationReader.getCurrent()),
+        // GPS is deferred to submit (`attachLocation`) so the camera stays responsive.
+        coordinate: null,
         takenAt: clock.now(),
         status: PHOTO_STATUS.draft,
         overrideExisting: input.overrideExisting === true,
@@ -343,6 +410,38 @@ export function createPhotoService(deps: PhotoServiceDeps): PhotoService {
         });
       }
       return photo;
+    },
+
+    async attachLocation(input) {
+      const photos = await repository.load();
+      const targets = photos.filter((photo) => {
+        if (photo.serviceId !== input.serviceId || photo.status !== PHOTO_STATUS.draft) {
+          return false;
+        }
+        if (input.photoId !== undefined) {
+          return photo.id === input.photoId;
+        }
+        return photo.phase === input.phase && photo.overrideExisting !== true;
+      });
+      const needing = targets.filter((photo) => photo.coordinate === null);
+      if (needing.length === 0) {
+        return true;
+      }
+      const coordinate = resolveCurrentPosition(await locationReader.getCurrent());
+      if (coordinate === null) {
+        logger?.info('photos', 'No usable location while attaching coordinates before submit', {
+          serviceId: input.serviceId,
+          phase: input.phase,
+          photoId: input.photoId,
+          needing: needing.length,
+        });
+        return false;
+      }
+      const needingIds = new Set(needing.map((photo) => photo.id));
+      await withUpdate((current) =>
+        current.map((photo) => (needingIds.has(photo.id) ? { ...photo, coordinate } : photo)),
+      );
+      return true;
     },
 
     async submitBatch(serviceId, phase) {
@@ -389,6 +488,30 @@ export function createPhotoService(deps: PhotoServiceDeps): PhotoService {
       kick();
     },
 
+    async remove(photoId) {
+      let removedFilePath: string | null = null;
+      await withUpdate((photos) => {
+        const target = photos.find(
+          (photo) =>
+            photo.id === photoId &&
+            (photo.status === PHOTO_STATUS.draft || photo.status === PHOTO_STATUS.failed),
+        );
+        if (!target) {
+          return photos;
+        }
+        removedFilePath = target.filePath;
+        return photos.filter((photo) => photo.id !== target.id);
+      });
+      if (removedFilePath !== null) {
+        await files.remove(removedFilePath).catch((error: unknown) => {
+          logger?.warn('photos', 'Could not remove discarded photo file', {
+            photoId,
+            error,
+          });
+        });
+      }
+    },
+
     async clearForService(serviceId) {
       const photos = await repository.load();
       const keep: Photo[] = [];
@@ -420,6 +543,8 @@ export function createPhotoService(deps: PhotoServiceDeps): PhotoService {
       }
       await replace(keep);
       await repository.clearServerForAllocation(allocationId);
+      clearedScopes.set(allocationId, (clearedScopes.get(allocationId) ?? 0) + 1);
+      await files.clearRemote(allocationId);
     },
 
     async clearAll() {
@@ -431,6 +556,8 @@ export function createPhotoService(deps: PhotoServiceDeps): PhotoService {
       }
       await replace([]);
       await repository.clearServer();
+      clearedAll += 1;
+      await files.clearRemote();
       await files.clearKey();
       cancelRetry?.();
       cancelRetry = null;

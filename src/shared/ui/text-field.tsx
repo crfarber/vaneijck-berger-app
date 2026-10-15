@@ -40,9 +40,12 @@ export function TextField({
   inputRef,
   ...input
 }: TextFieldProps) {
+  /** `null`/`undefined` = ok; any string (including `''`) = invalid visuals; non-empty = message. */
+  const invalid = error !== null && error !== undefined;
+  const errorMessage = invalid && error.length > 0 ? error : null;
   return (
     <View style={[styles.container, containerStyle]}>
-      {label ? <Text style={styles.label}>{label}</Text> : null}
+      {label ? <Text style={[styles.label, invalid && styles.labelError]}>{label}</Text> : null}
       <TextInput
         ref={inputRef}
         accessibilityLabel={accessibilityLabel ?? label}
@@ -52,11 +55,11 @@ export function TextField({
         style={[
           styles.input,
           input.multiline ? styles.multiline : null,
-          error ? styles.inputError : null,
+          invalid ? styles.inputError : null,
         ]}
         {...input}
       />
-      {error ? <Text style={styles.error}>{error}</Text> : null}
+      {errorMessage ? <Text style={styles.error}>{errorMessage}</Text> : null}
     </View>
   );
 }
@@ -64,6 +67,7 @@ export function TextField({
 const styles = StyleSheet.create({
   container: { gap: spacing.xs },
   label: { color: colors.text, fontSize: 14, fontWeight: '600' },
+  labelError: { color: colors.danger },
   input: {
     minHeight: 48,
     borderWidth: 1,

@@ -1,5 +1,6 @@
 export {
   applyLicensePlateInput,
+  canBeDutchLicensePlate,
   displayVehicleRegistration,
   formatLicensePlate,
   isDutchLicensePlate,
@@ -33,6 +34,14 @@ export {
 export type { RecentTruckPreference } from './service/recent-truck-preference';
 export { createHomebasePreference, REMEMBERED_HOMEBASE_KEY } from './service/homebase-preference';
 export type { HomebasePreference } from './service/homebase-preference';
+export { createLastUnitPreference, LAST_UNIT_SNAPSHOT_KEY } from './service/last-unit-preference';
+export type { LastUnitPreference } from './service/last-unit-preference';
+export {
+  matchLastUnitSnapshot,
+  parseLastUnitSnapshot,
+  toUnitReuseIntent,
+} from './domain/last-unit-snapshot';
+export type { LastUnitSnapshot, UnitReuseIntent } from './domain/last-unit-snapshot';
 export {
   formatHomebaseAddress,
   normalizeHomebaseCoordinate,

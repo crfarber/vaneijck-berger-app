@@ -6,6 +6,7 @@ import {
   isPltrType,
   type VehicleSummary,
 } from '@/domeinen/services';
+import { getDeviceTimeZone } from '@/shared/utils/time';
 import { classifyAllocation } from './status';
 import { getAllocationTypeKey, type AllocationTypeKey } from './type';
 import type { Allocation } from './types';
@@ -91,29 +92,46 @@ export function resolveIncidentCardModel(allocation: Allocation): IncidentCardMo
 }
 
 /** Presentation-only date formatter; invalid values are hidden by the caller. */
-export function formatIncidentCreatedAt(value: string, locale: string): string {
-  return new Intl.DateTimeFormat(locale, { dateStyle: 'short', timeStyle: 'short' }).format(
-    new Date(value),
-  );
+export function formatIncidentCreatedAt(
+  value: string,
+  locale: string,
+  timeZone: string = getDeviceTimeZone(),
+): string {
+  return new Intl.DateTimeFormat(locale, {
+    dateStyle: 'short',
+    timeStyle: 'short',
+    timeZone,
+  }).format(new Date(value));
 }
 
 /**
  * Date and clock as on the old standard card (`dd/MM/yyyy`, hour without a leading zero).
+ * CMS/API timestamps are UTC; display uses the device (or given) timezone.
  * Invalid values are hidden by the caller.
  */
-export function formatIncidentClock(value: string): { date: string; time: string } | undefined {
+export function formatIncidentClock(
+  value: string,
+  timeZone: string = getDeviceTimeZone(),
+): { date: string; time: string } | undefined {
   const parsed = Date.parse(value);
   if (!Number.isFinite(parsed)) {
     return undefined;
   }
-  const d = new Date(parsed);
-  const day = String(d.getDate()).padStart(2, '0');
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const year = d.getFullYear();
-  const hour = d.getHours();
-  const minute = String(d.getMinutes()).padStart(2, '0');
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone,
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(new Date(parsed));
+  const part = (type: Intl.DateTimeFormatPartTypes): string =>
+    parts.find((entry) => entry.type === type)?.value ?? '';
+  const hour = String(Number(part('hour')));
+  const minute = part('minute').padStart(2, '0');
   return {
-    date: `${day}/${month}/${year}`,
+    date: `${part('day')}/${part('month')}/${part('year')}`,
     time: `${hour}:${minute}`,
   };
 }

@@ -13,8 +13,8 @@ import { colors, radius, spacing } from '@/shared/ui/theme';
 import { displayVehicleRegistration } from '../domain/license-plate';
 
 /**
- * Dutch yellow plate with blue EU strip, or a plain foreign box. Tap opens a picker (internal)
- * or focuses an inline TextInput (external).
+ * License-plate chrome: yellow NL plate with flag image, or a neutral plate (same shape, blue
+ * strip without flag, non-yellow body) for foreign / RDW-unknown plates.
  */
 export function NumberPlate({
   plateNumber,
@@ -22,6 +22,7 @@ export function NumberPlate({
   placeholder,
   onPress,
   editable = false,
+  chrome = 'auto',
   onChangeText,
   onBlur,
   accessibilityLabel,
@@ -33,6 +34,12 @@ export function NumberPlate({
   onPress?: () => void;
   /** When true, a TextInput is shown instead of static text (external typing). */
   editable?: boolean;
+  /**
+   * `auto` follows NL sidecode rules (and keeps yellow chrome while typing).
+   * `foreign` keeps plate shape with a blue strip (no flag image) and a non-yellow body.
+   * `dutch` forces the yellow NL plate regardless of pattern.
+   */
+  chrome?: 'auto' | 'dutch' | 'foreign';
   onChangeText?: (text: string) => void;
   onBlur?: () => void;
   accessibilityLabel?: string;
@@ -40,7 +47,12 @@ export function NumberPlate({
 }) {
   const { text, variant } = displayVehicleRegistration(plateNumber);
   const isEmpty = text === '';
-  const showDutchChrome = variant === 'dutch' || isEmpty || (editable && plateNumber.trim() !== '');
+  const showDutchChrome =
+    chrome === 'foreign'
+      ? false
+      : chrome === 'dutch'
+        ? true
+        : variant === 'dutch' || isEmpty || (editable && plateNumber.trim() !== '');
   const shown = text !== '' ? text : (placeholder ?? '');
 
   const body = editable ? (
@@ -64,22 +76,24 @@ export function NumberPlate({
     </View>
   );
 
-  const content = showDutchChrome ? (
-    <View style={[styles.container, style]}>
+  const content = (
+    <View style={[styles.container, !showDutchChrome && styles.foreignStretch, style]}>
       <View style={styles.flagContainer}>
-        <Image source={qrflag} resizeMode="cover" style={styles.flagImage} />
+        {showDutchChrome ? (
+          <Image source={qrflag} resizeMode="cover" style={styles.flagImage} />
+        ) : (
+          <View style={styles.flagSpacer} />
+        )}
       </View>
-      <View style={styles.plateBody}>
+      <View style={[styles.plateBody, !showDutchChrome && styles.foreignPlateBody]}>
         {body}
-        {vehicleNumber ? (
+        {showDutchChrome && vehicleNumber ? (
           <Text style={styles.vehicleNumber} numberOfLines={1}>
             {vehicleNumber}
           </Text>
         ) : null}
       </View>
     </View>
-  ) : (
-    <View style={[styles.foreignContainer, style]}>{body}</View>
   );
 
   if (editable || onPress === undefined) {
@@ -110,6 +124,10 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 5,
   },
+  foreignStretch: {
+    alignSelf: 'stretch',
+    width: '100%',
+  },
   platecontainer: {
     flexDirection: 'column',
     justifyContent: 'center',
@@ -131,8 +149,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#0B38A3',
     borderTopLeftRadius: radius.lg,
     borderBottomLeftRadius: radius.lg,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   flagImage: {
+    width: 36,
+    height: 56,
+  },
+  /** Keeps the blue strip the same height as the NL flag image when no image is shown. */
+  flagSpacer: {
     width: 36,
     height: 56,
   },
@@ -149,6 +174,9 @@ const styles = StyleSheet.create({
     borderTopRightRadius: radius.lg,
     borderBottomRightRadius: radius.lg,
   },
+  foreignPlateBody: {
+    backgroundColor: colors.background,
+  },
   plateText: {
     fontSize: 28,
     fontWeight: '700',
@@ -164,17 +192,6 @@ const styles = StyleSheet.create({
   input: {
     padding: 0,
     margin: 0,
-  },
-  foreignContainer: {
-    borderRadius: radius.lg,
-    overflow: 'hidden',
-    alignSelf: 'stretch',
-    backgroundColor: colors.surface,
-    minHeight: 56,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: spacing.xl,
-    width: '100%',
   },
   pressable: { width: '100%' },
   pressed: { opacity: 0.85 },

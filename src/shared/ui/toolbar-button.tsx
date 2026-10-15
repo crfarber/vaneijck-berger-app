@@ -2,6 +2,7 @@ import { BlurView } from 'expo-blur';
 import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors, radius, spacing } from './theme';
+import { useGuardedPress } from './use-guarded-press';
 
 const SIZE = 40;
 
@@ -15,6 +16,8 @@ type ToolbarButtonProps = {
   badge?: string | null;
   /** Set to use the button as a tab: brand background when true, announced as a tab. */
   selected?: boolean;
+  /** Light tap haptic on accepted press. Default true. */
+  haptic?: boolean;
 };
 
 /**
@@ -28,13 +31,16 @@ export function ToolbarButton({
   variant = 'default',
   badge = null,
   selected,
+  haptic = true,
 }: ToolbarButtonProps) {
+  const handlePress = useGuardedPress({ onPress, haptic });
+
   return (
     <Pressable
       accessibilityRole={selected === undefined ? 'button' : 'tab'}
       accessibilityState={selected === undefined ? undefined : { selected }}
       accessibilityLabel={accessibilityLabel}
-      onPress={onPress}
+      onPress={handlePress}
       style={({ pressed }) => [
         styles.base,
         variant === 'success' && styles.success,
@@ -72,7 +78,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
-    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+    backgroundColor: colors.brandDarker,
     borderWidth: 1,
     borderColor: 'rgba(0, 0, 0, 0.025)',
   },
@@ -80,7 +86,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.xxl,
     overflow: 'hidden',
   },
-  defaultTint: { backgroundColor: `${colors.brandDark}BF` },
+  defaultTint: { backgroundColor: colors.brandDarker },
   alert: { backgroundColor: `${colors.danger}BF` },
   success: { backgroundColor: `${colors.success}BF` },
   selected: { backgroundColor: `${colors.brand}BF` },

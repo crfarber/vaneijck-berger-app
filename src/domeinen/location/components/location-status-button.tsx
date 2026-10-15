@@ -8,6 +8,7 @@ import { BottomSheet } from '@/shared/ui/bottom-sheet';
 import { Button } from '@/shared/ui/button';
 import { ToolbarButton } from '@/shared/ui/toolbar-button';
 import { colors, spacing } from '@/shared/ui/theme';
+import { formatInstantTime } from '@/shared/utils/time';
 import {
   GPS_STATUS,
   gpsButtonVariant,
@@ -29,10 +30,11 @@ const EMPTY_PERMISSION: PermissionSnapshot = {
  * without a fix yet); red otherwise. Opens a sheet with coordinates and refresh / maps / settings.
  */
 export function LocationStatusButton() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const reader = useLocationReader();
   const clock = useLocationClock();
   const permissions = useDevicePermissions();
+  const locale = i18n.resolvedLanguage ?? i18n.language;
   const [visible, setVisible] = useState(false);
   const [permission, setPermission] = useState<PermissionSnapshot>(EMPTY_PERMISSION);
   const [position, setPosition] = useState<CurrentLocation>(null);
@@ -162,7 +164,7 @@ export function LocationStatusButton() {
           {lastUpdatedAt !== null ? (
             <Text style={styles.meta}>
               {t('location.lastUpdate', {
-                time: new Date(lastUpdatedAt).toLocaleTimeString(),
+                time: formatInstantTime(lastUpdatedAt, locale),
               })}
             </Text>
           ) : null}

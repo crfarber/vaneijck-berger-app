@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, Text, View, type TextInput } from 'react-native';
 import { Button } from '@/shared/ui/button';
-import { colors, spacing, type as typography } from '@/shared/ui/theme';
+import { colors, radius, spacing, type as typography } from '@/shared/ui/theme';
 import { confirm } from '@/shared/ui/confirm';
 import {
   buildClearedAddressEntryAnswers,
@@ -42,6 +42,7 @@ import {
   useServiceFormLogger,
   useServiceFormService,
 } from '../hooks/service-form-context';
+import { DevGroupAnswersButton } from './dev-group-answers-button';
 import { ReadonlyFieldSummary } from './readonly-field-summary';
 import { ServiceFieldRenderer } from './service-field-renderer';
 
@@ -91,6 +92,7 @@ export function ServiceFormAddressGroup({
   const loggedLookupErrorKey = useRef<string | null>(null);
   const lookupFields = useMemo(() => getAddressEntryLookupFields(group), [group]);
   const resolvedFields = useMemo(() => getAddressEntryResolvedFields(group), [group]);
+  const debugFields = useMemo(() => [group.anchor, ...group.orderedFields], [group]);
   const manuallyEditableResolvedFields = useMemo(
     () =>
       group.config.allowForeignManual
@@ -243,9 +245,14 @@ export function ServiceFormAddressGroup({
     });
   }, [foreignLocationActive, logger, lookup.error, lookup.isError, lookupKey]);
 
+  const debugButton = <DevGroupAnswersButton answers={answers} fields={debugFields} />;
+
   if (readOnly) {
     return (
-      <ReadonlyFieldSummary fields={[group.anchor, ...group.orderedFields]} answers={answers} />
+      <View style={styles.container}>
+        <ReadonlyFieldSummary fields={[group.anchor, ...group.orderedFields]} answers={answers} />
+        {debugButton}
+      </View>
     );
   }
 
@@ -310,6 +317,7 @@ export function ServiceFormAddressGroup({
             }}
           />
         </View>
+        {debugButton}
       </View>
     );
   }
@@ -349,7 +357,12 @@ export function ServiceFormAddressGroup({
         />
       ) : null}
       {addressSummary ? (
-        <Text style={styles.addressSummary} accessibilityLiveRegion="polite">
+        <Text
+          style={styles.addressSummary}
+          accessibilityLiveRegion="polite"
+          numberOfLines={0}
+          ellipsizeMode="tail"
+        >
           {addressSummary}
         </Text>
       ) : null}
@@ -392,6 +405,7 @@ export function ServiceFormAddressGroup({
       {showResolvedFields
         ? manuallyEditableResolvedFields.map((field) => renderField(field))
         : null}
+      {debugButton}
     </View>
   );
 }
@@ -402,7 +416,20 @@ const styles = StyleSheet.create({
   lookupField: { flex: 1, minWidth: 0 },
   status: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   statusText: { ...typography.label, color: colors.textMuted },
-  addressSummary: { ...typography.body, color: colors.textMuted },
+  addressSummary: {
+    ...typography.small,
+    textAlign: 'center',
+    textTransform: 'capitalize',
+    fontWeight: 'bold',
+    color: colors.brandLight,
+    backgroundColor: colors.success,
+    padding: spacing.sm,
+    borderRadius: radius.sm,
+    flexShrink: 1,
+    flexWrap: 'wrap',
+    alignSelf: 'stretch',
+    width: '100%',
+  },
   actionRow: { flexDirection: 'row', alignItems: 'stretch', gap: spacing.sm },
   actionButton: { flex: 0.5, minWidth: 0 },
   modeLink: { flex: 1, alignSelf: 'flex-end' },

@@ -15,10 +15,15 @@ export type CurrentAllocationUnitOverview = {
 export type CurrentAllocationUnitCardProps = {
   vehicle: CurrentAllocationUnitOverview;
   trailer?: CurrentAllocationUnitOverview;
+  /** Full overview (end date + availability) or reuse prompt (vehicle only). */
+  mode?: 'full' | 'reuse';
   isActive: boolean;
   activeUntil: string | null;
   restrictions: readonly (keyof UnitAvailability)[];
   onUseLastVehicle: () => void;
+  /** Overrides status / action copy (defaults depend on mode). */
+  statusLabel?: string;
+  actionLabel?: string;
 };
 
 const RESTRICTION_CHIP_KEY = {
@@ -31,24 +36,39 @@ const RESTRICTION_CHIP_KEY = {
 export function CurrentAllocationUnitCard({
   vehicle,
   trailer,
+  mode = 'full',
   isActive,
   activeUntil,
   restrictions,
   onUseLastVehicle,
+  statusLabel: statusLabelProp,
+  actionLabel,
 }: CurrentAllocationUnitCardProps) {
   const { t } = useTranslation();
-  const statusLabel = isActive ? t('unit.overview.active') : t('unit.recentVehicles');
+  const reuseMode = mode === 'reuse';
+  const statusLabel =
+    statusLabelProp ??
+    (reuseMode
+      ? t('unit.overview.lastUsed')
+      : isActive
+        ? t('unit.overview.active')
+        : t('unit.recentVehicles'));
   const availabilitySummary =
     restrictions.length === 0
       ? t('unit.overview.noRestrictions')
       : t('unit.overview.restrictionCount', { count: restrictions.length });
+  const buttonLabel =
+    actionLabel ?? (reuseMode ? t('unit.overview.useThisUnit') : t('unit.overview.useLastVehicle'));
 
   return (
     <GlassCard style={styles.card}>
       <View style={styles.content}>
         <View style={styles.statusHeader}>
           <View
-            style={[styles.statusDot, isActive ? styles.statusDotActive : styles.statusDotLast]}
+            style={[
+              styles.statusDot,
+              reuseMode || !isActive ? styles.statusDotLast : styles.statusDotActive,
+            ]}
           />
           <Text style={styles.statusLabel}>{statusLabel}</Text>
         </View>
@@ -70,37 +90,37 @@ export function CurrentAllocationUnitCard({
           </View>
         ) : null}
 
-        <View style={styles.divider} />
+        {!reuseMode ? (
+          <>
+            <View style={styles.divider} />
 
-        <View style={styles.metaRow}>
-          <Text style={styles.metaLabel}>{t('unit.endDateLabel')}</Text>
-          <Text style={styles.metaValue}>{activeUntil ?? t('unit.overview.notSet')}</Text>
-        </View>
-
-        <View style={styles.divider} />
-
-        <View style={styles.availabilityBlock}>
-          <View style={styles.metaRow}>
-            <Text style={styles.metaLabel}>{t('unit.availabilityTitle')}</Text>
-            <Text style={styles.metaMuted}>{availabilitySummary}</Text>
-          </View>
-          {restrictions.length > 0 ? (
-            <View style={styles.chips}>
-              {restrictions.map((key) => (
-                <View key={key} style={styles.chip}>
-                  <Text style={styles.chipText}>{t(RESTRICTION_CHIP_KEY[key])}</Text>
-                </View>
-              ))}
+            <View style={styles.metaRow}>
+              <Text style={styles.metaLabel}>{t('unit.endDateLabel')}</Text>
+              <Text style={styles.metaValue}>{activeUntil ?? t('unit.overview.notSet')}</Text>
             </View>
-          ) : null}
-        </View>
 
-        {!isActive ? (
-          <Button
-            onPress={onUseLastVehicle}
-            label={t('unit.overview.useLastVehicle')}
-            variant="action"
-          />
+            <View style={styles.divider} />
+
+            <View style={styles.availabilityBlock}>
+              <View style={styles.metaRow}>
+                <Text style={styles.metaLabel}>{t('unit.availabilityTitle')}</Text>
+                <Text style={styles.metaMuted}>{availabilitySummary}</Text>
+              </View>
+              {restrictions.length > 0 ? (
+                <View style={styles.chips}>
+                  {restrictions.map((key) => (
+                    <View key={key} style={styles.chip}>
+                      <Text style={styles.chipText}>{t(RESTRICTION_CHIP_KEY[key])}</Text>
+                    </View>
+                  ))}
+                </View>
+              ) : null}
+            </View>
+          </>
+        ) : null}
+
+        {reuseMode || !isActive ? (
+          <Button onPress={onUseLastVehicle} label={buttonLabel} variant="action" />
         ) : null}
       </View>
     </GlassCard>

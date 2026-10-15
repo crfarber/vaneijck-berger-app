@@ -6,7 +6,7 @@ import { createToastQueue } from './toast-queue';
 describe('createToastQueue', () => {
   it('shows one toast and dismisses it after the duration', async () => {
     const scheduler = createFakeScheduler();
-    const haptics = { notify: vi.fn() };
+    const haptics = { notify: vi.fn(), tap: vi.fn() };
     const queue = createToastQueue({ scheduler, haptics, durationMs: 1000 });
 
     queue.show({ tone: 'success', message: 'Opdracht geaccepteerd' });
@@ -30,7 +30,7 @@ describe('createToastQueue', () => {
 
   it('ignores an identical toast while the same one is still visible', () => {
     const scheduler = createFakeScheduler();
-    const haptics = { notify: vi.fn() };
+    const haptics = { notify: vi.fn(), tap: vi.fn() };
     const queue = createToastQueue({ scheduler, haptics, durationMs: 1000 });
 
     queue.show({ tone: 'error', message: 'Fout' });
@@ -42,7 +42,7 @@ describe('createToastQueue', () => {
 
   it('does not vibrate for an info toast', () => {
     const scheduler = createFakeScheduler();
-    const haptics = { notify: vi.fn() };
+    const haptics = { notify: vi.fn(), tap: vi.fn() };
     const queue = createToastQueue({ scheduler, haptics });
 
     queue.show({ tone: 'info', message: 'In de wachtrij' });

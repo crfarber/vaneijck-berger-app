@@ -92,4 +92,89 @@ describe('validateServiceFormField', () => {
       validateServiceFormField(field, { dn_field: { value: 'abcd', displayValue: 'abcd' } }),
     ).toBeNull();
   });
+
+  it('requires signature name, email and terms after ink is present', () => {
+    const field = createField({
+      id: 'sig',
+      key: 'signature_receiver',
+      type: 'signature',
+      raw: { subFields: { name: {}, email: {} } },
+    });
+    const withInk = {
+      signature_receiver: {
+        value: 'data:image/jpeg;base64,abc',
+        displayValue: 'Handtekening',
+        signatureName: '',
+        email: '',
+      },
+    };
+
+    expect(validateServiceFormField(field, withInk)).toMatchObject({
+      code: 'signature-name-required',
+    });
+    expect(
+      validateServiceFormField(field, {
+        signature_receiver: { ...withInk.signature_receiver, signatureName: 'Jan' },
+      }),
+    ).toMatchObject({ code: 'signature-email-required' });
+    expect(
+      validateServiceFormField(
+        field,
+        {
+          signature_receiver: {
+            ...withInk.signature_receiver,
+            signatureName: 'Jan',
+            email: 'jan@example.com',
+          },
+        },
+        {},
+        {},
+        {},
+        { termsAcceptanceRequired: true, acceptedTermsAndConditions: false },
+      ),
+    ).toMatchObject({ code: 'terms-required' });
+    expect(
+      validateServiceFormField(
+        field,
+        {
+          signature_receiver: {
+            ...withInk.signature_receiver,
+            signatureName: 'Jan',
+            email: 'jan@example.com',
+          },
+        },
+        {},
+        {},
+        {},
+        { termsAcceptanceRequired: true, acceptedTermsAndConditions: true },
+      ),
+    ).toBeNull();
+  });
+
+  it('attaches terms-required to a skipped signature when validating the form', () => {
+    const field = createField({
+      id: 'sig',
+      key: 'signature_receiver',
+      type: 'signature',
+      optional: true,
+      raw: { subFields: { name: {} } },
+    });
+
+    expect(
+      validateVisibleServiceForm(
+        [field],
+        new Set(['sig']),
+        {},
+        {},
+        { signature_receiver: true },
+        {},
+        { termsAcceptanceRequired: true, acceptedTermsAndConditions: false },
+      ),
+    ).toEqual({
+      signature_receiver: {
+        code: 'terms-required',
+        message: 'Accepteer eerst de voorwaarden.',
+      },
+    });
+  });
 });

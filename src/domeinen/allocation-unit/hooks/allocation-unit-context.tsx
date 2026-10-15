@@ -1,6 +1,7 @@
 import { createContext, useContext, type ReactNode } from 'react';
 import type { EndDatePreference } from '../service/end-date-preference';
 import type { HomebasePreference } from '../service/homebase-preference';
+import type { LastUnitPreference } from '../service/last-unit-preference';
 import type { RecentTruckPreference } from '../service/recent-truck-preference';
 import type { AllocationUnitService } from '../service/allocation-unit-service';
 import type { Clock } from '@/shared/platform/ports';
@@ -11,6 +12,7 @@ export type AllocationUnitContextValue = {
   endDatePreference: EndDatePreference;
   recentTruckPreference: RecentTruckPreference;
   homebasePreference: HomebasePreference;
+  lastUnitPreference: LastUnitPreference;
 };
 
 const AllocationUnitContext = createContext<AllocationUnitContextValue | null>(null);
@@ -47,3 +49,6 @@ export const useRecentTruckPreference = (): RecentTruckPreference =>
 
 export const useHomebasePreference = (): HomebasePreference =>
   useAllocationUnitContext().homebasePreference;
+
+export const useLastUnitPreference = (): LastUnitPreference =>
+  useAllocationUnitContext().lastUnitPreference;

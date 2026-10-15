@@ -15,6 +15,7 @@ import { SettingsProvider } from '@/domeinen/settings/ui';
 import { SupportProvider } from '@/domeinen/support/ui';
 import { WorkerApiProvider } from '@/domeinen/worker/ui';
 import { OutboxProvider } from '@/domeinen/outbox/ui';
+import { HapticsProvider } from '@/shared/ui/haptics-context';
 import { StatusOverlayProvider } from '@/shared/ui/status-overlay-host';
 import { FeedbackProvider } from '@/shared/ui/toast-host';
 import { SchedulerProvider } from '@/shared/ui/scheduler-context';
@@ -82,75 +83,81 @@ export function AppProviders({
         <FeedbackProvider value={container.feedback}>
           <StatusOverlayProvider value={container.statusOverlay}>
             <SchedulerProvider value={container.scheduler}>
-              <OutboxProvider value={container.outbox}>
-                <AuthProvider
-                  value={{
-                    authService: container.authService,
-                    sessionStore: container.sessionStore,
-                  }}
-                >
-                  <DevToolsProvider value={devTools}>
-                    <AllocationsApiProvider
-                      value={{
-                        api: container.allocationsApi,
-                        rdwApi: container.rdwApi,
-                        actionsService: container.allocationActionsService,
-                        acceptFlow: container.allocationAcceptFlow,
-                        serviceActionsService: container.serviceActionsService,
-                        reassignService: container.reassignService,
-                      }}
-                    >
-                      <WorkerApiProvider
+              <HapticsProvider value={container.haptics}>
+                <OutboxProvider value={container.outbox}>
+                  <AuthProvider
+                    value={{
+                      authService: container.authService,
+                      sessionStore: container.sessionStore,
+                    }}
+                  >
+                    <DevToolsProvider value={devTools}>
+                      <AllocationsApiProvider
                         value={{
-                          api: container.workerApi,
-                          availabilityService: container.workerAvailabilityService,
+                          api: container.allocationsApi,
+                          rdwApi: container.rdwApi,
+                          actionsService: container.allocationActionsService,
+                          acceptFlow: container.allocationAcceptFlow,
+                          serviceActionsService: container.serviceActionsService,
+                          reassignService: container.reassignService,
                         }}
                       >
-                        <PhotosProvider value={container.photoService}>
-                          <PlacesProvider value={container.placesClient}>
-                            <ServiceFormProvider
-                              value={{
-                                service: container.serviceFormService,
-                                drafts: container.serviceFormDrafts,
-                                logger: container.logger,
-                                fetchRdwInfo: (registrationNumber) =>
-                                  container.rdwApi.lookupByRegistrationNumber(registrationNumber),
-                                lookupPostalAddress: createPostalAddressLookup(
-                                  (postalCode, houseNumber) =>
-                                    container.allocationsApi.checkZipcode(postalCode, houseNumber),
-                                ),
-                                signaturesApi: container.signaturesApi,
-                              }}
-                            >
-                              <SettingsProvider value={settings}>
-                                <LocationProvider value={location}>
-                                  <NotificationHistoryProvider
-                                    value={container.notificationHistory}
-                                  >
-                                    <SupportProvider value={container.supportLog}>
-                                      <AllocationUnitProvider
-                                        value={{
-                                          service: container.allocationUnitService,
-                                          clock: container.clock,
-                                          endDatePreference: container.endDatePreference,
-                                          recentTruckPreference: container.recentTruckPreference,
-                                          homebasePreference: container.homebasePreference,
-                                        }}
-                                      >
-                                        {children}
-                                      </AllocationUnitProvider>
-                                    </SupportProvider>
-                                  </NotificationHistoryProvider>
-                                </LocationProvider>
-                              </SettingsProvider>
-                            </ServiceFormProvider>
-                          </PlacesProvider>
-                        </PhotosProvider>
-                      </WorkerApiProvider>
-                    </AllocationsApiProvider>
-                  </DevToolsProvider>
-                </AuthProvider>
-              </OutboxProvider>
+                        <WorkerApiProvider
+                          value={{
+                            api: container.workerApi,
+                            availabilityService: container.workerAvailabilityService,
+                          }}
+                        >
+                          <PhotosProvider value={container.photoService} logger={container.logger}>
+                            <PlacesProvider value={container.placesClient}>
+                              <ServiceFormProvider
+                                value={{
+                                  service: container.serviceFormService,
+                                  drafts: container.serviceFormDrafts,
+                                  logger: container.logger,
+                                  fetchRdwInfo: (registrationNumber) =>
+                                    container.rdwApi.lookupByRegistrationNumber(registrationNumber),
+                                  lookupPostalAddress: createPostalAddressLookup(
+                                    (postalCode, houseNumber) =>
+                                      container.allocationsApi.checkZipcode(
+                                        postalCode,
+                                        houseNumber,
+                                      ),
+                                  ),
+                                  signaturesApi: container.signaturesApi,
+                                }}
+                              >
+                                <SettingsProvider value={settings}>
+                                  <LocationProvider value={location}>
+                                    <NotificationHistoryProvider
+                                      value={container.notificationHistory}
+                                    >
+                                      <SupportProvider value={container.supportLog}>
+                                        <AllocationUnitProvider
+                                          value={{
+                                            service: container.allocationUnitService,
+                                            clock: container.clock,
+                                            endDatePreference: container.endDatePreference,
+                                            recentTruckPreference: container.recentTruckPreference,
+                                            homebasePreference: container.homebasePreference,
+                                            lastUnitPreference: container.lastUnitPreference,
+                                          }}
+                                        >
+                                          {children}
+                                        </AllocationUnitProvider>
+                                      </SupportProvider>
+                                    </NotificationHistoryProvider>
+                                  </LocationProvider>
+                                </SettingsProvider>
+                              </ServiceFormProvider>
+                            </PlacesProvider>
+                          </PhotosProvider>
+                        </WorkerApiProvider>
+                      </AllocationsApiProvider>
+                    </DevToolsProvider>
+                  </AuthProvider>
+                </OutboxProvider>
+              </HapticsProvider>
             </SchedulerProvider>
           </StatusOverlayProvider>
         </FeedbackProvider>

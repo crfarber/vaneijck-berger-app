@@ -23,9 +23,11 @@ import {
   createEndDatePreference,
   createRecentTruckPreference,
   createHomebasePreference,
+  createLastUnitPreference,
   type AllocationUnitService,
   type EndDatePreference,
   type HomebasePreference,
+  type LastUnitPreference,
   type RecentTruckPreference,
 } from '@/domeinen/allocation-unit';
 import type { LocationReader } from '@/domeinen/location';
@@ -179,6 +181,8 @@ export type Container = {
   endDatePreference: EndDatePreference;
   recentTruckPreference: RecentTruckPreference;
   homebasePreference: HomebasePreference;
+  /** Survives sign-out; matched by worker id before reuse. */
+  lastUnitPreference: LastUnitPreference;
   allocationUnitService: AllocationUnitService;
   referenceDataService: ReferenceDataService;
   rdwApi: RdwApi;
@@ -199,6 +203,8 @@ export type Container = {
   statusOverlay: StatusOverlay;
   /** Shared timer port — used by toasts and the status overlay. */
   scheduler: Scheduler;
+  /** Short vibration for toast/status outcomes and button taps. */
+  haptics: Haptics;
   languageSettings: LanguageSettings;
   /** Which post-login permission disclosures the berger already dismissed. */
   permissionDisclosurePreference: PermissionDisclosurePreference;
@@ -362,6 +368,7 @@ export function createContainer(input: ContainerInput): Container {
   const endDatePreference = createEndDatePreference(input.keyValueStore);
   const recentTruckPreference = createRecentTruckPreference(input.keyValueStore);
   const homebasePreference = createHomebasePreference(input.keyValueStore);
+  const lastUnitPreference = createLastUnitPreference(input.keyValueStore);
   const permissionDisclosurePreference = createPermissionDisclosurePreference({
     store: input.keyValueStore,
     logger,
@@ -372,7 +379,7 @@ export function createContainer(input: ContainerInput): Container {
 
   const securePhotoRepository = createPhotoRepository(input.secretStore);
   const photoService = createPhotoService({
-    api: createPhotosApi(http, input.multipartUploadFiles),
+    api: createPhotosApi(http, input.multipartUploadFiles, config.apiBaseUrl),
     files: input.photoFiles,
     repository: securePhotoRepository,
     locationReader: input.locationReader,
@@ -658,6 +665,7 @@ export function createContainer(input: ContainerInput): Container {
     endDatePreference,
     recentTruckPreference,
     homebasePreference,
+    lastUnitPreference,
     allocationUnitService,
     referenceDataService,
     rdwApi,
@@ -682,6 +690,7 @@ export function createContainer(input: ContainerInput): Container {
     feedback,
     statusOverlay,
     scheduler,
+    haptics,
     languageSettings,
     permissionDisclosurePreference,
     pushRuntime,

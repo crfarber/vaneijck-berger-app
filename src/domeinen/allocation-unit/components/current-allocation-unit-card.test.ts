@@ -92,4 +92,25 @@ describe('current allocation unit card', () => {
       true,
     );
   });
+
+  it('hides end date and availability in reuse mode', () => {
+    const rendered = elements(
+      CurrentAllocationUnitCard({
+        ...props,
+        mode: 'reuse',
+        statusLabel: 'onboarding.registerUnit.lastUsed',
+        actionLabel: 'onboarding.registerUnit.useThis',
+      }),
+    );
+    expect(
+      rendered.some((element) => element.props.children === 'onboarding.registerUnit.lastUsed'),
+    ).toBe(true);
+    expect(rendered.some((element) => element.props.children === 'Vandaag 18:00')).toBe(false);
+    expect(rendered.some((element) => element.props.children === 'unit.availabilityTitle')).toBe(
+      false,
+    );
+    expect(
+      rendered.some((element) => element.props.label === 'onboarding.registerUnit.useThis'),
+    ).toBe(true);
+  });
 });

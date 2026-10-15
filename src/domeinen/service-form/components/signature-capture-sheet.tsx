@@ -70,7 +70,7 @@ function SignatureCaptureBody({
   };
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+    <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
         <Text style={styles.title}>{t('serviceForm.signature.captureTitle')}</Text>
         <Button label={t('serviceForm.select.close')} variant="secondary" onPress={onClose} />

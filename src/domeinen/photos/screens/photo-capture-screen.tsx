@@ -16,7 +16,7 @@ import {
 } from '../index';
 import { MandatoryPhotoHelpPopup } from '../components/mandatory-photo-help-popup';
 import { PhotoCamera } from '../components/photo-camera';
-import { useServicePhotos } from '../hooks/use-service-photos';
+import { usePhotoService } from '../hooks/photos-context';
 import type { PhotoCaptureMode, PhotoFlowContext } from './photo-flow';
 
 export function PhotoCaptureScreen({
@@ -42,7 +42,7 @@ export function PhotoCaptureScreen({
   replacePhotoId?: string;
 }) {
   const { t } = useTranslation();
-  const { capture } = useServicePhotos(serviceId);
+  const photoService = usePhotoService();
   const mode: PhotoCaptureMode = modeParam === 'mandatory' ? 'mandatory' : 'extra';
   const category =
     categoryParam && isPhotoCategory(categoryParam) ? categoryParam : PHOTO_CATEGORY.DASHBOARD;
@@ -86,7 +86,8 @@ export function PhotoCaptureScreen({
       <PhotoCamera
         onCapture={async (sourceUri) => {
           if (helpVisible) return;
-          await capture({
+          await photoService.capture({
+            serviceId,
             incidentId,
             allocationId,
             phase: photoPhaseFromServiceStatus(serviceStatuscode, phaseNumbers),

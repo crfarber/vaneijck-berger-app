@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, type ReactNode } from 'react';
 import { useSession } from '@/domeinen/auth/ui';
+import type { UnitReuseIntent } from '../domain/last-unit-snapshot';
 import { useRegisterInternalUnit } from './use-register-internal-unit';
 import { useRegisterUnit } from './use-register-unit';
 
@@ -7,6 +8,7 @@ type RegistrationFlowOptions = {
   isOnboarding: boolean;
   onRegistered: () => void;
   onOpenWork?: () => void;
+  reuse?: UnitReuseIntent | null;
 };
 
 type UnitRegistrationFlow = {
@@ -23,9 +25,10 @@ export function UnitRegistrationFlowProvider({ children }: { children: ReactNode
   const [options, setOptions] = useState<RegistrationFlowOptions | null>(null);
   const isOnboarding = options?.isOnboarding ?? true;
   const onOpenWork = options?.onOpenWork;
+  const reuse = options?.reuse ?? null;
   const isInternal = useSession((state) => state.userType === 'internal');
-  const external = useRegisterUnit({ isOnboarding, onOpenWork });
-  const internal = useRegisterInternalUnit({ isOnboarding, onOpenWork, isInternal });
+  const external = useRegisterUnit({ isOnboarding, onOpenWork, reuse });
+  const internal = useRegisterInternalUnit({ isOnboarding, onOpenWork, isInternal, reuse });
 
   return (
     <UnitRegistrationFlowContext.Provider

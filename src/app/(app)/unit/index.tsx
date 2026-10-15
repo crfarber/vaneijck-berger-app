@@ -1,12 +1,16 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable } from 'react-native';
 import {
   allocationUnitKeys,
   CurrentUnitOverviewScreen,
   ExtendShiftScreen,
+  matchLastUnitSnapshot,
+  toUnitReuseIntent,
+  useAllocationUnitService,
+  useLastUnitPreference,
   useUnitRegistrationFlow,
 } from '@/domeinen/allocation-unit/ui';
 import { allocationKeys } from '@/domeinen/allocations';
@@ -17,6 +21,7 @@ import {
 } from '@/domeinen/allocations/ui';
 import { useSession } from '@/domeinen/auth/ui';
 import { onboardingGateKey } from '@/domeinen/onboarding/ui';
+import { useWorker } from '@/domeinen/worker/ui';
 import { ChevronLeftSVG } from '@/shared/ui/icons/chevron-left';
 import { goBackOrReplace } from '@/shared/ui/navigation';
 import { colors } from '@/shared/ui/theme';
@@ -25,15 +30,24 @@ export default function UnitIndexRoute() {
   const { t } = useTranslation();
   const userType = useSession((state) => state.userType);
   const queryClient = useQueryClient();
-  const { mode, returnTo } = useLocalSearchParams<{ mode?: string; returnTo?: string }>();
+  const { mode, returnTo, reuse } = useLocalSearchParams<{
+    mode?: string;
+    returnTo?: string;
+    reuse?: string;
+  }>();
   const { start } = useUnitRegistrationFlow();
+  const lastUnitPreference = useLastUnitPreference();
+  const unitService = useAllocationUnitService();
+  const { data: worker } = useWorker();
   const completeAccept = useCompleteAllocationAccept();
   const { sections } = useAllocations();
   const hasActiveWork = hasActiveAllocations(sections);
   const isOnboarding = mode === 'onboarding';
   const isAccepting = mode === 'accept';
   const extendOnly = mode === 'extend';
+  const reuseLast = reuse === 'last';
   const fromSettings = returnTo === 'allocation-unit-management';
+  const registrationStarted = useRef(false);
 
   const goBack = useCallback(() => {
     goBackOrReplace(router, fromSettings ? '/settings' : '/');
@@ -47,39 +61,99 @@ export default function UnitIndexRoute() {
     });
   }, [completeAccept, fromSettings, queryClient]);
 
+  const registrationCallbacks = useCallback(
+    () => ({
+      isOnboarding,
+      onRegistered: onSaved,
+      onOpenWork: isOnboarding
+        ? () => {
+            void queryClient.invalidateQueries({ queryKey: allocationKeys.list() });
+            router.replace('/?openWork=1');
+          }
+        : undefined,
+    }),
+    [isOnboarding, onSaved, queryClient],
+  );
+
   const openRegistration = useCallback(
-    (replace: boolean) => {
+    (replace: boolean, reuseIntent?: ReturnType<typeof toUnitReuseIntent>) => {
       if (userType === null) {
         return;
       }
 
       start({
-        isOnboarding,
-        onRegistered: onSaved,
-        onOpenWork: isOnboarding
-          ? () => {
-              void queryClient.invalidateQueries({ queryKey: allocationKeys.list() });
-              router.replace('/?openWork=1');
-            }
-          : undefined,
+        ...registrationCallbacks(),
+        reuse: reuseIntent ?? null,
       });
 
-      const route = userType === 'internal' ? '/unit/internal/vehicle' : '/unit/external/vehicle';
+      const route =
+        reuseIntent !== undefined
+          ? userType === 'internal'
+            ? '/unit/internal/availability'
+            : '/unit/external/availability'
+          : userType === 'internal'
+            ? '/unit/internal/vehicle'
+            : '/unit/external/vehicle';
       if (replace) {
         router.replace(route);
       } else {
         router.push(route);
       }
     },
-    [isOnboarding, onSaved, queryClient, start, userType],
+    [registrationCallbacks, start, userType],
   );
 
   useEffect(() => {
     if ((!isOnboarding && !isAccepting) || extendOnly || userType === null) {
       return;
     }
-    openRegistration(true);
-  }, [extendOnly, isAccepting, isOnboarding, openRegistration, userType]);
+    if (registrationStarted.current) {
+      return;
+    }
+
+    if (!reuseLast) {
+      registrationStarted.current = true;
+      openRegistration(true);
+      return;
+    }
+
+    if (worker === undefined) {
+      return;
+    }
+
+    registrationStarted.current = true;
+    void (async () => {
+      const stored = await lastUnitPreference.load();
+      let fleetTruckIds: ReadonlySet<string> | undefined;
+      if (userType === 'internal') {
+        const fleet = await unitService.getFleet();
+        fleetTruckIds = new Set(fleet.map((vehicle) => vehicle.id));
+      }
+      const matched =
+        worker === null
+          ? null
+          : matchLastUnitSnapshot(stored, {
+              workerId: worker.dn_workerid,
+              userType,
+              fleetTruckIds,
+            });
+      if (matched === null) {
+        openRegistration(true);
+        return;
+      }
+      openRegistration(true, toUnitReuseIntent(matched));
+    })();
+  }, [
+    extendOnly,
+    isAccepting,
+    isOnboarding,
+    lastUnitPreference,
+    openRegistration,
+    reuseLast,
+    unitService,
+    userType,
+    worker,
+  ]);
 
   const changeUnit = useCallback(() => openRegistration(false), [openRegistration]);
   const registerMissingUnit = useCallback(() => openRegistration(true), [openRegistration]);
