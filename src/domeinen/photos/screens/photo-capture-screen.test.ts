@@ -11,10 +11,19 @@ describe('photo capture screen', () => {
     expect(source).toContain('usePhotoService()');
   });
 
-  it('saves the photo for the current service before navigating back', () => {
+  it('saves the photo, then pops back to the existing overview instead of opening a new one', () => {
     expect(source).toMatch(/await photoService\.capture\(\{\s*serviceId,/);
     expect(source.indexOf('await photoService.capture(')).toBeLessThan(
-      source.indexOf('router.navigate('),
+      source.indexOf('returnToOverview();'),
     );
+    expect(source).toContain('useReturnToPhotoOverview(routeParams)');
+    expect(source).not.toContain('router.navigate(');
+    expect(source).not.toContain('router.canDismiss()');
+  });
+
+  it('labels a retake or override capture as replacing, not as an extra photo', () => {
+    expect(source).toContain('isReplacing');
+    expect(source).toContain("t('photos.replaceCapture'");
+    expect(source).toContain('Boolean(replacePhotoId) || overrideExisting');
   });
 });

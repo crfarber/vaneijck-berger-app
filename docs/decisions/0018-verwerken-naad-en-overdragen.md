@@ -1,7 +1,7 @@
 # 0018. De naad naar verwerken, overdragen aan een collega, postcode controleren
 
 **Status:** gebouwd; actieve diensten openen `ServiceFormScreen` (slices 12/18), afgeronde
-diensten openen dezelfde schermimplementatie in finishmodus. De oude
+diensten openen het aparte `ServiceFinishScreen`. De oude
 `ProcessingService.js`/`ProcessingFinish.js` blijven alleen gedragsnaslag in `legacy/`.
 
 ## Context
@@ -48,15 +48,17 @@ deed vermoeden:
     eigen gewoonte); mag hij niet meer verstuurd worden (iemand anders was sneller, of de status
     veranderde ondertussen), dan verlaat de app dat scherm meteen — exact het gedrag van
     `ProcessingServiceWrapper`'s eigen effect bij het openen.
-  - **`finish`**: een dienst die al op HULPVERLENING_AFGEROND staat opent `ServiceFormScreen` in
-    finishmodus. Die toont Start en Afleveren apart en read-only; de Finish-knop ruimt de fase-1-
-    snapshot op en voert daarna dezelfde exitflow als `ProcessingFinishedWrapper` uit.
+  - **`finish`**: een dienst die al op HULPVERLENING_AFGEROND staat opent `ServiceFinishScreen`.
+    Die toont Start en Afleveren apart en read-only; de Finish-knop ruimt de fase-1-snapshot op en
+    voert daarna dezelfde exitflow als `ProcessingFinishedWrapper` uit. Terug (header, iOS-veeg,
+    Android-hardwareknop) is uitgeschakeld — de enige uitweg is afronden. De oude app toonde wél
+    een terugknop (`getTopBarHeaderOptions` zonder `disableGoBack`); dat is hier bewust anders.
   - Alles daartussen (de meeste actieve diensten, nog in fase 1) opent sinds slice 12
     `ServiceFormScreen` via `useOpenService` — geen "nog gebouwd"-melding meer.
 
 ## Gevolgen
 
-- **De finishweergave volgt de legacywerking, niet de legacycode.** `ServiceFormScreen` toont op
+- **De finishweergave volgt de legacywerking, niet de legacycode.** `ServiceFinishScreen` toont op
   één scherm de fase 1- en fase 2-gegevens via Start/Afleveren; Start gebruikt de volledige
   fase-1-snapshot wanneer die bestaat en anders de actuele dienstdata. Afleveren gebruikt altijd
   de actuele dienstdata. Finish verwijdert de

@@ -17,6 +17,7 @@ import {
 import { MandatoryPhotoHelpPopup } from '../components/mandatory-photo-help-popup';
 import { PhotoCamera } from '../components/photo-camera';
 import { usePhotoService } from '../hooks/photos-context';
+import { useReturnToPhotoOverview } from '../hooks/use-return-to-photo-overview';
 import type { PhotoCaptureMode, PhotoFlowContext } from './photo-flow';
 
 export function PhotoCaptureScreen({
@@ -59,8 +60,19 @@ export function PhotoCaptureScreen({
       ? { phaseNumbers: phaseNumbers.join(',') }
       : {}),
   };
-  const label =
-    mode === 'mandatory' && position !== null ? captureLabel(position) : t('photos.extraPhoto');
+  const returnToOverview = useReturnToPhotoOverview(routeParams);
+  const isReplacing = Boolean(replacePhotoId) || overrideExisting;
+  const positionLabel =
+    position !== null
+      ? captureLabel(position)
+      : mode === 'mandatory'
+        ? PHOTO_CATEGORY_LABEL[category]
+        : t('photos.extraPhoto');
+  const label = isReplacing
+    ? t('photos.replaceCapture', { position: positionLabel })
+    : mode === 'mandatory' && position !== null
+      ? positionLabel
+      : t('photos.extraPhoto');
 
   useEffect(() => {
     if (position === null) {
@@ -98,10 +110,7 @@ export function PhotoCaptureScreen({
             isExtraOverride,
             replacePhotoId,
           });
-          router.navigate({
-            pathname: '/allocations/[id]/services/[serviceId]/photos',
-            params: routeParams,
-          });
+          returnToOverview();
         }}
         overlay={
           mode === 'mandatory' && !helpVisible ? (

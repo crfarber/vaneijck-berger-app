@@ -343,6 +343,62 @@ describe('quick view field selection', () => {
     ).toEqual(['dependent']);
   });
 
+  it('always keeps a signature field visible so the terms toggle inside it stays reachable', () => {
+    const signatureField: ServiceFormField = {
+      id: 'receiver-signature',
+      key: 'signature_receiver',
+      label: 'Handtekening',
+      type: 'signature',
+      readOnly: false,
+      optional: false,
+      autocomplete: false,
+      validations: [],
+      raw: {},
+    };
+    const visible = new Set(['receiver-signature']);
+    const signed = {
+      signature_receiver: {
+        value: 'data:image/jpeg;base64,abc',
+        displayValue: 'Vastgelegd',
+        signatureName: 'Jan Jansen',
+      },
+    };
+
+    expect(
+      selectQuickViewFields(
+        [signatureField],
+        visible,
+        {},
+        {
+          hideSignature: { signature_receiver: true },
+        },
+      ).map((field) => field.id),
+    ).toEqual(['receiver-signature']);
+    expect(
+      selectQuickViewFields([signatureField], visible, signed, { initialAnswers: signed }).map(
+        (field) => field.id,
+      ),
+    ).toEqual(['receiver-signature']);
+  });
+
+  it('still hides a read-only signature field', () => {
+    const signatureField: ServiceFormField = {
+      id: 'receiver-signature',
+      key: 'signature_receiver',
+      label: 'Handtekening',
+      type: 'signature',
+      readOnly: true,
+      optional: false,
+      autocomplete: false,
+      validations: [],
+      raw: {},
+    };
+
+    expect(selectQuickViewFields([signatureField], new Set(['receiver-signature']), {})).toEqual(
+      [],
+    );
+  });
+
   it('keeps an invalid filled field visible', () => {
     const longField: ServiceFormField = {
       id: 'short',

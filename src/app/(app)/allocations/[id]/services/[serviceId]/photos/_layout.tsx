@@ -5,6 +5,9 @@ import { WorkerStatusPill } from '@/domeinen/worker/ui';
 import { mapBackgroundScreenLayout } from '@/shared/ui/map-background';
 import { defaultStackHeaderOptions } from '@/shared/ui/navigation';
 
+// The overview is always the root of the photo stack, even when a link opens the camera directly.
+export const unstable_settings = { initialRouteName: 'index' };
+
 export default function PhotosLayout() {
   return (
     <Stack

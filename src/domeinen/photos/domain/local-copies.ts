@@ -16,3 +16,32 @@ export function matchLocalCopies<T extends { position: PhotoPosition; status: Ph
     return index < 0 ? null : (available.splice(index, 1)[0] ?? null);
   });
 }
+
+/**
+ * Photo types that have a local mandatory override (`overrideExisting`) in draft, queued, or sent.
+ * The overview hides all server photos of those types so a replacement stays on the mandatory tile
+ * instead of appearing under Extra next to (or instead of) the original.
+ */
+export function pendingOverrideTypeKeys(
+  local: readonly {
+    position: PhotoPosition;
+    status: PhotoStatus;
+    overrideExisting?: boolean;
+  }[],
+): ReadonlySet<string> {
+  const keys = new Set<string>();
+  for (const photo of local) {
+    if (photo.overrideExisting !== true) {
+      continue;
+    }
+    if (
+      photo.status !== PHOTO_STATUS.draft &&
+      photo.status !== PHOTO_STATUS.queued &&
+      photo.status !== PHOTO_STATUS.sent
+    ) {
+      continue;
+    }
+    keys.add(photoTypeKey(photo.position));
+  }
+  return keys;
+}

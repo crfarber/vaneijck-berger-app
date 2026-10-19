@@ -8,6 +8,16 @@ const {
 const config = getDefaultConfig(__dirname);
 const experimentDirectory = path.join(__dirname, 'docs', 'diensten', 'experiment');
 
+// Vitest colocated next to routes must never enter the Expo Router graph (node:fs, etc.).
+config.resolver.blockList = [
+  ...(Array.isArray(config.resolver.blockList)
+    ? config.resolver.blockList
+    : config.resolver.blockList
+      ? [config.resolver.blockList]
+      : []),
+  /[\\/]src[\\/]app[\\/].*\.test\.[tj]sx?$/,
+];
+
 config.server ??= {};
 const previousEnhance = config.server.enhanceMiddleware;
 config.server.enhanceMiddleware = (middleware, server) => {

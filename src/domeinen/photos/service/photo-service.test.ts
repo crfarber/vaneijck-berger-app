@@ -21,6 +21,8 @@ function locationReader(valid = true): LocationReader {
   return {
     getCurrent: async () =>
       valid ? { isValid: true, latitude: 52.1, longitude: 5.1 } : { isValid: false },
+    start: async () => undefined,
+    stop: () => undefined,
   };
 }
 
@@ -37,7 +39,10 @@ describe('photo location reader', () => {
 
   it('preserves a usable device location', async () => {
     const current = { isValid: true, latitude: 52.1, longitude: 5.1 } as const;
-    const reader = createPhotoLocationReader({ getCurrent: async () => current }, true);
+    const reader = createPhotoLocationReader(
+      { getCurrent: async () => current, start: async () => undefined, stop: () => undefined },
+      true,
+    );
 
     await expect(reader.getCurrent()).resolves.toEqual(current);
   });
@@ -50,7 +55,11 @@ describe('photo location reader', () => {
 
   it('replaces the invalid zero coordinate with the simulator test location', async () => {
     const reader = createPhotoLocationReader(
-      { getCurrent: async () => ({ isValid: true, latitude: 0, longitude: 0 }) },
+      {
+        getCurrent: async () => ({ isValid: true, latitude: 0, longitude: 0 }),
+        start: async () => undefined,
+        stop: () => undefined,
+      },
       true,
     );
 
@@ -554,24 +563,29 @@ describe('photo service queue', () => {
     expect(upload.mock.calls[0]?.[0].isExtra).toBe(true);
   });
 
-  it('preserves the target isExtra value when overriding a server photo', async () => {
+  it('uploads an override as isExtra false even when an earlier sibling was already sent', async () => {
     const { service, upload } = setup();
-    const replacement = await service.capture({
+    const input = {
       serviceId: 'svc-1',
       incidentId: 'inc-1',
       allocationId: 'alloc-1',
-      phase: 'load',
-      role: 'mandatory',
-      position: { category: 'ROOF' },
+      phase: 'load' as const,
+      role: 'mandatory' as const,
+      position: { category: 'ROOF' as const },
       sourceUri: 'file:///camera/shot.jpg',
+    };
+    await service.capture(input);
+    await service.submitBatch('svc-1', 'load');
+    const replacement = await service.capture({
+      ...input,
       overrideExisting: true,
       isExtraOverride: true,
     });
 
     await service.submitOverride(replacement.id);
 
-    expect(upload.mock.calls[0]?.[0]).toMatchObject({
-      isExtra: true,
+    expect(upload.mock.calls[1]?.[0]).toMatchObject({
+      isExtra: false,
       overrideExisting: true,
     });
   });
@@ -647,7 +661,58 @@ describe('photo service queue', () => {
     expect(upload.mock.calls[1]?.[0]).toMatchObject({
       fileName: `${replacement.id}.jpg`,
       overrideExisting: true,
+      isExtra: false,
     });
+  });
+
+  it('keeps overrideExisting when retaking an override draft via replacePhotoId', async () => {
+    const { service } = setup();
+    const input = {
+      serviceId: 'svc-1',
+      incidentId: 'inc-1',
+      allocationId: 'alloc-1',
+      phase: 'load' as const,
+      role: 'mandatory' as const,
+      position: { category: 'DASHBOARD' as const },
+      sourceUri: 'file:///camera/shot.jpg',
+    };
+    const first = await service.capture({
+      ...input,
+      overrideExisting: true,
+      isExtraOverride: false,
+    });
+
+    const retake = await service.capture({ ...input, replacePhotoId: first.id });
+
+    expect(retake.overrideExisting).toBe(true);
+    expect(retake.isExtraOverride).toBe(false);
+    expect(await service.listByService('svc-1')).toEqual([retake]);
+  });
+
+  it('treats a mandatory retake as override when a sent sibling of that type already exists', async () => {
+    const { service } = setup();
+    const front = { category: 'EXTERIOR' as const, angle: 'voor' as const };
+    const rear = { category: 'EXTERIOR' as const, angle: 'achter' as const };
+    const base = {
+      serviceId: 'svc-1',
+      incidentId: 'inc-1',
+      allocationId: 'alloc-1',
+      phase: 'load' as const,
+      role: 'mandatory' as const,
+      sourceUri: 'file:///camera/shot.jpg',
+    };
+    await service.capture({ ...base, position: front });
+    await service.capture({ ...base, position: rear });
+    await service.submitBatch('svc-1', 'load');
+
+    // Second session retake without route overrideExisting (regression: two replacements → Extra).
+    const frontOverride = await service.capture({ ...base, position: front });
+    const rearOverride = await service.capture({ ...base, position: rear });
+
+    expect(frontOverride.overrideExisting).toBe(true);
+    expect(frontOverride.isExtraOverride).toBe(false);
+    expect(rearOverride.overrideExisting).toBe(true);
+    expect(rearOverride.isExtraOverride).toBe(false);
   });
 
   it('replaces an unsent local draft instead of adding a duplicate', async () => {
@@ -676,7 +741,9 @@ describe('photo service queue', () => {
       latitude: 52.1,
       longitude: 5.1,
     }));
-    const { service } = setup({ locationReader: { getCurrent } });
+    const { service } = setup({
+      locationReader: { getCurrent, start: async () => undefined, stop: () => undefined },
+    });
 
     await service.capture({
       serviceId: 'svc-1',
@@ -831,7 +898,7 @@ describe('photo service queue', () => {
     expect((await service.listByService('svc-1'))[0]?.status).toBe(PHOTO_STATUS.sent);
   });
 
-  it('marks the second photo of the same type as extra', async () => {
+  it('marks an additional photo of the same type as extra after a sent mandatory', async () => {
     const { service, upload } = setup();
 
     await service.capture({
@@ -839,15 +906,18 @@ describe('photo service queue', () => {
       incidentId: 'inc-1',
       allocationId: 'alloc-1',
       phase: 'load',
+      role: 'mandatory',
       position: { category: 'DASHBOARD' },
       sourceUri: 'file:///camera/shot.jpg',
     });
     await service.submitBatch('svc-1', 'load');
+    // Extra flow: same type again, but role additional — not a mandatory override.
     await service.capture({
       serviceId: 'svc-1',
       incidentId: 'inc-1',
       allocationId: 'alloc-1',
       phase: 'load',
+      role: 'additional',
       position: { category: 'DASHBOARD' },
       sourceUri: 'file:///camera/shot.jpg',
     });

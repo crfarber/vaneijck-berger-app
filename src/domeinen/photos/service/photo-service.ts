@@ -7,7 +7,7 @@ import { isExtraForUpload } from '../domain/extra';
 import { commentForPhase } from '../domain/phase';
 import { matchLocalCopies } from '../domain/local-copies';
 import { missingPhotoPositions } from '../domain/photo-position-options';
-import { toImagePosition } from '../domain/photo-type';
+import { photoTypeKey, toImagePosition } from '../domain/photo-type';
 import {
   PHOTO_ROLE,
   PHOTO_STATUS,
@@ -220,13 +220,16 @@ export function createPhotoService(deps: PhotoServiceDeps): PhotoService {
         fileBytes: bytes,
         comment: commentForPhase(withLocation.phase),
         createdDateTime: utcStringFromEpoch(withLocation.takenAt),
+        // Mandatory override replaces the existing slot; never upload it as a second "extra".
         isExtra:
-          withLocation.isExtraOverride ??
-          isExtraForUpload(
-            withLocation,
-            all,
-            cachedServerPhotos?.map((serverPhoto) => serverPhoto.position),
-          ),
+          withLocation.overrideExisting === true
+            ? false
+            : (withLocation.isExtraOverride ??
+              isExtraForUpload(
+                withLocation,
+                all,
+                cachedServerPhotos?.map((serverPhoto) => serverPhoto.position),
+              )),
         overrideExisting: withLocation.overrideExisting === true,
       });
       await withUpdate((photos) =>
@@ -423,31 +426,51 @@ export function createPhotoService(deps: PhotoServiceDeps): PhotoService {
     async capture(input) {
       const id = nextId();
       const filePath = await files.persist(input.sourceUri, id);
+      const existing = await repository.load();
+      const replaceable = existing.find(
+        (item) =>
+          item.id === input.replacePhotoId &&
+          item.serviceId === input.serviceId &&
+          (item.status === PHOTO_STATUS.draft || item.status === PHOTO_STATUS.failed),
+      );
+      // Retake of an override draft only passes replacePhotoId; keep the override flags so the
+      // overview still hides the server photo and submitOverride remains available. A mandatory
+      // capture of a type that already has a sent sibling is always an override — even when the
+      // camera route drops overrideExisting (second retake in one session).
+      const role = input.role ?? PHOTO_ROLE.mandatory;
+      const hasSentSibling = existing.some(
+        (item) =>
+          item.serviceId === input.serviceId &&
+          item.phase === input.phase &&
+          photoTypeKey(item.position) === photoTypeKey(input.position) &&
+          item.status === PHOTO_STATUS.sent &&
+          item.id !== replaceable?.id,
+      );
+      const overrideExisting =
+        input.overrideExisting === true ||
+        replaceable?.overrideExisting === true ||
+        (role === PHOTO_ROLE.mandatory && hasSentSibling);
+      const isExtraOverride =
+        overrideExisting === true ? false : (input.isExtraOverride ?? replaceable?.isExtraOverride);
       const photo: Photo = {
         id,
         serviceId: input.serviceId,
         incidentId: input.incidentId,
         allocationId: input.allocationId,
         phase: input.phase,
-        role: input.role ?? PHOTO_ROLE.mandatory,
+        role,
         position: input.position,
         filePath,
         // GPS is deferred to submit (`attachLocation`) so the camera stays responsive.
         coordinate: null,
         takenAt: clock.now(),
         status: PHOTO_STATUS.draft,
-        overrideExisting: input.overrideExisting === true,
-        isExtraOverride: input.isExtraOverride,
+        overrideExisting,
+        isExtraOverride,
       };
       let replacedFilePath: string | null = null;
       await withUpdate((photos) => {
-        const replaceable = photos.find(
-          (item) =>
-            item.id === input.replacePhotoId &&
-            item.serviceId === input.serviceId &&
-            (item.status === PHOTO_STATUS.draft || item.status === PHOTO_STATUS.failed),
-        );
-        if (!replaceable) {
+        if (replaceable === undefined) {
           return [...photos, photo];
         }
         replacedFilePath = replaceable.filePath;

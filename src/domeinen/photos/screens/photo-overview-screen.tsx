@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, Stack } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -17,6 +17,7 @@ import { Button } from '@/shared/ui/button';
 import { CollapsibleSectionHeader } from '@/shared/ui/collapsible-section-header';
 import { CameraSVG } from '@/shared/ui/icons/camera';
 import CheckIcon from '@/shared/ui/icons/check';
+import { ChevronLeftSVG } from '@/shared/ui/icons/chevron-left';
 import { CarSVG, MotorcycleSVG, TruckSVG } from '@/shared/ui/icons/vehicles';
 import { Toolbar, ToolbarSlot } from '@/shared/ui/toolbar';
 import { ToolbarButton } from '@/shared/ui/toolbar-button';
@@ -26,8 +27,11 @@ import {
   PHOTO_PHASE,
   PHOTO_STATUS,
   deliveryPhotoRequirements,
+  localsForOverview,
   matchLocalCopies,
   missingPhotoPositions,
+  pendingOverrideTypeKeys,
+  pickMandatoryAndExtra,
   photoPositionForRequirement,
   photoPositionToRouteParam,
   photoPhaseFromServiceStatus,
@@ -43,6 +47,7 @@ import { PhotoZoomViewer } from '../components/photo-zoom-viewer';
 import { useServerPhotoUris } from '../hooks/use-server-photo-uris';
 import { usePhotoService } from '../hooks/photos-context';
 import type { PhotoFlowContext } from './photo-flow';
+import { goBackOrReplace } from '@/shared/ui/navigation';
 import { Screen } from '@/shared/ui/screen';
 import { useStatusOverlay } from '@/shared/ui/status-overlay-host';
 import type { StatusOutcome } from '@/shared/feedback/status-overlay';
@@ -64,6 +69,7 @@ type OverviewPhoto = {
   role?: PhotoRole;
   source?: 'local' | 'server';
   isExtra?: boolean;
+  overrideExisting?: boolean;
   imageState?: 'loading' | 'failed';
 };
 
@@ -170,21 +176,30 @@ export function PhotoOverviewScreen({
     loadMandatoryKey,
   ]);
 
-  const localCurrentPhotos: OverviewPhoto[] = phasePhotos.map((photo) => ({
+  const overrideTypes = pendingOverrideTypeKeys(phasePhotos);
+  // While overrides exist, show only the latest replacement per type — not earlier local sent
+  // siblings or server copies — so one or more retakes stay on mandatory tiles instead of Extra.
+  const localCurrentPhotos: OverviewPhoto[] = localsForOverview(phasePhotos).map((photo) => ({
     id: photo.id,
     position: photo.position,
     status: photo.status,
     uri: photo.displayUri,
     role: photo.role,
-    source: 'local',
+    source: 'local' as const,
     isExtra: photo.isExtraOverride,
+    overrideExisting: photo.overrideExisting === true,
   }));
-  const localCopies = matchLocalCopies(serverPhotos, localCurrentPhotos);
+  const visibleServerPhotos = serverPhotos.filter(
+    (photo) => !overrideTypes.has(photoTypeKey(photo.position)),
+  );
+  const localCopies = matchLocalCopies(visibleServerPhotos, localCurrentPhotos);
   const copiedLocalIds = new Set(localCopies.map((photo) => photo?.id));
   const loadCopies = matchLocalCopies(serverLoadPhotos, loadPhotos);
   const remoteLoadPhotos = serverLoadPhotos.filter((_, index) => loadCopies[index] === null);
   const remoteUris = useServerPhotoUris(allocationId, [
-    ...serverPhotos.filter((_, index) => localCopies[index] === null).map((photo) => photo.url),
+    ...visibleServerPhotos
+      .filter((_, index) => localCopies[index] === null)
+      .map((photo) => photo.url),
     ...remoteLoadPhotos.map((photo) => photo.url),
   ]);
   const remoteImage = (url: string): Pick<OverviewPhoto, 'uri' | 'imageState'> => {
@@ -193,7 +208,7 @@ export function PhotoOverviewScreen({
     if (uri === null) return { uri: '', imageState: 'failed' };
     return { uri };
   };
-  const serverCurrentPhotos: OverviewPhoto[] = serverPhotos.map((photo, index) => {
+  const serverCurrentPhotos: OverviewPhoto[] = visibleServerPhotos.map((photo, index) => {
     const copy = localCopies[index];
     return {
       id: `server-${index}`,
@@ -233,14 +248,12 @@ export function PhotoOverviewScreen({
       ? deliveryPhotoRequirements(currentRequirements, loadPositions)
       : currentRequirements;
   const usablePhotos = currentPhotos.filter((photo) => photo.status !== PHOTO_STATUS.failed);
-  const remainingPhotos = [...usablePhotos];
-  const mandatoryPhotos = requirements.map((position) => {
-    const index = remainingPhotos.findIndex(
-      (photo) => photoTypeKey(photo.position) === photoTypeKey(position),
-    );
-    return { position, photo: index < 0 ? null : (remainingPhotos.splice(index, 1)[0] ?? null) };
-  });
-  const extraPhotos = remainingPhotos;
+  const assigned = pickMandatoryAndExtra(requirements, usablePhotos);
+  const mandatoryPhotos = requirements.map((position, index) => ({
+    position,
+    photo: assigned.mandatory[index] ?? null,
+  }));
+  const extraPhotos = assigned.extra;
   const missingRequired = missingPhotoPositions(
     requirements,
     usablePhotos.map((photo) => photo.position),
@@ -263,11 +276,14 @@ export function PhotoOverviewScreen({
   };
 
   const openMandatoryPhoto = (position: PhotoPosition, photo: OverviewPhoto | null): void => {
+    const asServerOverride = photo?.status === PHOTO_STATUS.sent;
+    const asOverrideDraft = photo?.overrideExisting === true;
     const replacementParams = {
-      ...(photo?.status === PHOTO_STATUS.sent
+      ...(asServerOverride || asOverrideDraft
         ? {
             overrideExisting: '1',
-            isExtraOverride: photo.isExtra === true ? '1' : '0',
+            // Mandatory override is never an extra upload.
+            isExtraOverride: '0',
           }
         : {}),
       ...(photo?.source === 'local' && photo.status !== PHOTO_STATUS.sent
@@ -282,7 +298,8 @@ export function PhotoOverviewScreen({
           mode: 'mandatory',
           category: position.category,
           position: photoPositionToRouteParam(position),
-          help: '1',
+          // Stand-position help only on the first take, not when replacing.
+          ...(photo === null ? { help: '1' } : {}),
           ...replacementParams,
         },
       });
@@ -291,7 +308,12 @@ export function PhotoOverviewScreen({
     if (position.category === 'EXTERIOR' || position.category === 'TYRES') {
       router.push({
         pathname: '/allocations/[id]/services/[serviceId]/photos/camera',
-        params: { ...routeParams, mode: 'extra', position: photoPositionToRouteParam(position) },
+        params: {
+          ...routeParams,
+          mode: 'mandatory',
+          position: photoPositionToRouteParam(position),
+          ...replacementParams,
+        },
       });
       return;
     }
@@ -328,30 +350,56 @@ export function PhotoOverviewScreen({
     });
   };
 
-  const replacementDraft = phasePhotos.find(
+  const replacementDrafts = phasePhotos.filter(
     (photo) => photo.status === PHOTO_STATUS.draft && photo.overrideExisting === true,
   );
-  const primaryButtonLabel = replacementDraft
-    ? t('photos.sendReplacement')
-    : missingRequired > 0
-      ? t('photos.remainingMandatory', { count: missingRequired })
-      : t('photos.send');
+  const primaryButtonLabel =
+    replacementDrafts.length > 0
+      ? t('photos.sendReplacement')
+      : missingRequired > 0
+        ? t('photos.remainingMandatory', { count: missingRequired })
+        : t('photos.send');
+  // The overview is the root of the photo stack, so going back leaves the whole stack and lands
+  // on the form underneath. Only without a form below (deep link) does it replace to the form.
+  const leaveToServiceForm = (): void => {
+    goBackOrReplace(router, {
+      pathname: '/allocations/[id]/services/[serviceId]/form',
+      params: {
+        id: allocationId,
+        serviceId,
+      },
+    });
+  };
   const submitPhotos = async (): Promise<void> => {
     let succeeded = false;
     await statusOverlay.run(t('photos.attachingLocation'), async () => {
-      const ready = await photoService.attachLocation({
-        serviceId,
-        phase,
-        ...(replacementDraft ? { photoId: replacementDraft.id } : {}),
-      });
-      if (!ready) {
-        return {
-          tone: 'error',
-          message: t('photos.locationMissing'),
-          retry: () => {
-            void submitPhotos();
-          },
-        } satisfies StatusOutcome;
+      for (const draft of replacementDrafts) {
+        const ready = await photoService.attachLocation({
+          serviceId,
+          phase,
+          photoId: draft.id,
+        });
+        if (!ready) {
+          return {
+            tone: 'error',
+            message: t('photos.locationMissing'),
+            retry: () => {
+              void submitPhotos();
+            },
+          } satisfies StatusOutcome;
+        }
+      }
+      if (replacementDrafts.length === 0) {
+        const ready = await photoService.attachLocation({ serviceId, phase });
+        if (!ready) {
+          return {
+            tone: 'error',
+            message: t('photos.locationMissing'),
+            retry: () => {
+              void submitPhotos();
+            },
+          } satisfies StatusOutcome;
+        }
       }
       statusOverlay.store.setState({
         current: {
@@ -360,8 +408,10 @@ export function PhotoOverviewScreen({
           slow: false,
         },
       });
-      if (replacementDraft) {
-        await submitOverride(replacementDraft.id);
+      if (replacementDrafts.length > 0) {
+        for (const draft of replacementDrafts) {
+          await submitOverride(draft.id);
+        }
       } else {
         await submitBatch(phase);
       }
@@ -369,180 +419,199 @@ export function PhotoOverviewScreen({
       return { tone: 'success', message: t('photos.sendSuccess') } satisfies StatusOutcome;
     });
     if (succeeded) {
-      router.back();
+      leaveToServiceForm();
     }
   };
 
   return (
-    <Screen
-      footer={
-        <>
-          {lookupFailed || loadFailed ? (
-            <Text style={styles.counterText}>{t('common.somethingWrong')}</Text>
-          ) : null}
-          <Button
-            label={primaryButtonLabel}
-            onPress={() => void submitPhotos()}
-            disabled={!canLeave || busy}
-          />
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => router.back()}
-            style={styles.cancelButton}
-          >
-            <Text style={styles.cancelText}>{t('common.cancel')}</Text>
-          </Pressable>
-        </>
-      }
-    >
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <Toolbar>
-          {VEHICLE_TYPES.map(({ key, label, Icon }) => {
-            const selected = vehicleType === key;
-            const iconColor = selected ? colors.brandText : colors.brandLight;
-            return (
-              <ToolbarSlot key={key}>
-                <ToolbarButton
-                  accessibilityLabel={label}
-                  selected={selected}
-                  onPress={() => setVehicleType(key)}
-                >
-                  {Icon ? (
-                    <Icon size={22} color={iconColor} />
-                  ) : (
-                    <Text style={[styles.otherPillText, { color: iconColor }]}>?</Text>
-                  )}
-                </ToolbarButton>
-              </ToolbarSlot>
-            );
-          })}
-        </Toolbar>
-        {phase === PHOTO_PHASE.delivery &&
-        (loadPhotos.length > 0 || serverLoadPhotos.length > 0) ? (
-          <>
-            <CollapsibleSectionHeader
-              title={`${t('photos.loadReference')}`}
-              count={loadPhotos.length + remoteLoadPhotos.length}
-              collapsed={collapsedSections.has('load')}
-              onPress={() => toggleSection('load')}
-            />
-            {!collapsedSections.has('load') ? (
-              <ScrollView
-                horizontal
-                nestedScrollEnabled
-                showsHorizontalScrollIndicator={false}
-                style={styles.loadStrip}
-                contentContainerStyle={styles.loadStripContent}
-              >
-                {loadPhotos.map((photo) => (
-                  <ExtraPhotoTile
-                    key={photo.id}
-                    variant="strip"
-                    photo={{
-                      id: photo.id,
-                      position: photo.position,
-                      status: photo.status,
-                      uri: photo.displayUri,
-                    }}
-                  />
-                ))}
-                {remoteLoadPhotos.map((photo, index) => (
-                  <ExtraPhotoTile
-                    key={`load-server-${index}`}
-                    variant="strip"
-                    photo={{
-                      id: `load-server-${index}`,
-                      position: photo.position,
-                      status: PHOTO_STATUS.sent,
-                      ...remoteImage(photo.url),
-                    }}
-                  />
-                ))}
-              </ScrollView>
-            ) : null}
-          </>
-        ) : null}
-        <CollapsibleSectionHeader
-          title={`${t('photos.mandatory')}`}
-          count={t('photos.mandatoryCount', {
-            count: mandatoryPhotos.filter((entry) => entry.photo !== null).length,
-            total: mandatoryPhotos.length,
-          })}
-          collapsed={collapsedSections.has('mandatory')}
-          onPress={() => toggleSection('mandatory')}
-        />
-        {!collapsedSections.has('mandatory') ? (
-          <View style={styles.gridTwo}>
-            {mandatoryPhotos.map(({ position, photo }, index) => (
-              <MandatoryPhotoTile
-                key={`${photoTypeKey(position)}-${index}`}
-                position={position}
-                photo={photo}
-                vehicleType={vehicleType}
-                onPress={() => openMandatoryPhoto(position, photo)}
-              />
-            ))}
-          </View>
-        ) : null}
-        <CollapsibleSectionHeader
-          title={`${t('photos.extra')}`}
-          count={`${extraPhotos.length}`}
-          collapsed={collapsedSections.has('extra')}
-          onPress={() => toggleSection('extra')}
-        />
-        {!collapsedSections.has('extra') ? (
-          <View style={styles.gridTwo}>
-            {extraPhotos.map((photo) => {
-              const locked =
-                photo.source === 'server' ||
-                photo.status === PHOTO_STATUS.sent ||
-                photo.status === PHOTO_STATUS.queued;
-              return (
-                <ExtraPhotoTile
-                  key={photo.id}
-                  photo={photo}
-                  locked={locked}
-                  onRetake={locked ? undefined : () => openExtraPhotoRetake(photo)}
-                  onDelete={
-                    locked
-                      ? undefined
-                      : () => {
-                          void remove(photo.id);
-                        }
-                  }
-                />
-              );
-            })}
+    <>
+      <Stack.Screen
+        options={{
+          headerLeft: () => (
             <Pressable
               accessibilityRole="button"
-              onPress={openExtraPhotoPosition}
-              style={styles.addTile}
+              accessibilityLabel={t('common.back')}
+              hitSlop={8}
+              onPress={leaveToServiceForm}
+              style={{ paddingHorizontal: 4 }}
             >
-              <CameraSVG size={26} color={colors.textMuted} />
-              <Text style={styles.addTileText}>{t('photos.extraPhoto')}</Text>
+              <ChevronLeftSVG color={colors.brandText} />
             </Pressable>
-          </View>
-        ) : null}
-        <View style={styles.footer}>
-          {photos.some((photo) => photo.status === PHOTO_STATUS.failed && photo.phase === phase) ? (
+          ),
+        }}
+      />
+      <Screen
+        footer={
+          <>
+            {lookupFailed || loadFailed ? (
+              <Text style={styles.counterText}>{t('common.somethingWrong')}</Text>
+            ) : null}
             <Button
-              label={t('photos.retry')}
-              variant="secondary"
-              disabled={busy}
-              onPress={() => {
-                void (async () => {
-                  for (const photo of photos) {
-                    if (photo.phase === phase && photo.status === PHOTO_STATUS.failed) {
-                      await retry(photo.id);
-                    }
-                  }
-                })();
-              }}
+              label={primaryButtonLabel}
+              onPress={() => void submitPhotos()}
+              disabled={!canLeave || busy}
             />
+            <Pressable
+              accessibilityRole="button"
+              onPress={leaveToServiceForm}
+              style={styles.cancelButton}
+            >
+              <Text style={styles.cancelText}>{t('common.cancel')}</Text>
+            </Pressable>
+          </>
+        }
+      >
+        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+          <Toolbar>
+            {VEHICLE_TYPES.map(({ key, label, Icon }) => {
+              const selected = vehicleType === key;
+              const iconColor = selected ? colors.brandText : colors.brandLight;
+              return (
+                <ToolbarSlot key={key}>
+                  <ToolbarButton
+                    accessibilityLabel={label}
+                    selected={selected}
+                    onPress={() => setVehicleType(key)}
+                  >
+                    {Icon ? (
+                      <Icon size={22} color={iconColor} />
+                    ) : (
+                      <Text style={[styles.otherPillText, { color: iconColor }]}>?</Text>
+                    )}
+                  </ToolbarButton>
+                </ToolbarSlot>
+              );
+            })}
+          </Toolbar>
+          {phase === PHOTO_PHASE.delivery &&
+          (loadPhotos.length > 0 || serverLoadPhotos.length > 0) ? (
+            <>
+              <CollapsibleSectionHeader
+                title={`${t('photos.loadReference')}`}
+                count={loadPhotos.length + remoteLoadPhotos.length}
+                collapsed={collapsedSections.has('load')}
+                onPress={() => toggleSection('load')}
+              />
+              {!collapsedSections.has('load') ? (
+                <ScrollView
+                  horizontal
+                  nestedScrollEnabled
+                  showsHorizontalScrollIndicator={false}
+                  style={styles.loadStrip}
+                  contentContainerStyle={styles.loadStripContent}
+                >
+                  {loadPhotos.map((photo) => (
+                    <ExtraPhotoTile
+                      key={photo.id}
+                      variant="strip"
+                      photo={{
+                        id: photo.id,
+                        position: photo.position,
+                        status: photo.status,
+                        uri: photo.displayUri,
+                      }}
+                    />
+                  ))}
+                  {remoteLoadPhotos.map((photo, index) => (
+                    <ExtraPhotoTile
+                      key={`load-server-${index}`}
+                      variant="strip"
+                      photo={{
+                        id: `load-server-${index}`,
+                        position: photo.position,
+                        status: PHOTO_STATUS.sent,
+                        ...remoteImage(photo.url),
+                      }}
+                    />
+                  ))}
+                </ScrollView>
+              ) : null}
+            </>
           ) : null}
-        </View>
-      </ScrollView>
-    </Screen>
+          <CollapsibleSectionHeader
+            title={`${t('photos.mandatory')}`}
+            count={t('photos.mandatoryCount', {
+              count: mandatoryPhotos.filter((entry) => entry.photo !== null).length,
+              total: mandatoryPhotos.length,
+            })}
+            collapsed={collapsedSections.has('mandatory')}
+            onPress={() => toggleSection('mandatory')}
+          />
+          {!collapsedSections.has('mandatory') ? (
+            <View style={styles.gridTwo}>
+              {mandatoryPhotos.map(({ position, photo }, index) => (
+                <MandatoryPhotoTile
+                  key={`${photoTypeKey(position)}-${index}`}
+                  position={position}
+                  photo={photo}
+                  vehicleType={vehicleType}
+                  onPress={() => openMandatoryPhoto(position, photo)}
+                />
+              ))}
+            </View>
+          ) : null}
+          <CollapsibleSectionHeader
+            title={`${t('photos.extra')}`}
+            count={`${extraPhotos.length}`}
+            collapsed={collapsedSections.has('extra')}
+            onPress={() => toggleSection('extra')}
+          />
+          {!collapsedSections.has('extra') ? (
+            <View style={styles.gridTwo}>
+              {extraPhotos.map((photo) => {
+                const locked =
+                  photo.source === 'server' ||
+                  photo.status === PHOTO_STATUS.sent ||
+                  photo.status === PHOTO_STATUS.queued;
+                return (
+                  <ExtraPhotoTile
+                    key={photo.id}
+                    photo={photo}
+                    locked={locked}
+                    onRetake={locked ? undefined : () => openExtraPhotoRetake(photo)}
+                    onDelete={
+                      locked
+                        ? undefined
+                        : () => {
+                            void remove(photo.id);
+                          }
+                    }
+                  />
+                );
+              })}
+              <Pressable
+                accessibilityRole="button"
+                onPress={openExtraPhotoPosition}
+                style={styles.addTile}
+              >
+                <CameraSVG size={26} color={colors.textMuted} />
+                <Text style={styles.addTileText}>{t('photos.extraPhoto')}</Text>
+              </Pressable>
+            </View>
+          ) : null}
+          <View style={styles.footer}>
+            {photos.some(
+              (photo) => photo.status === PHOTO_STATUS.failed && photo.phase === phase,
+            ) ? (
+              <Button
+                label={t('photos.retry')}
+                variant="secondary"
+                disabled={busy}
+                onPress={() => {
+                  void (async () => {
+                    for (const photo of photos) {
+                      if (photo.phase === phase && photo.status === PHOTO_STATUS.failed) {
+                        await retry(photo.id);
+                      }
+                    }
+                  })();
+                }}
+              />
+            ) : null}
+          </View>
+        </ScrollView>
+      </Screen>
+    </>
   );
 }
 

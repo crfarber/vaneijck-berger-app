@@ -1,5 +1,7 @@
-import type { ReactNode } from 'react';
+import { useCallback, type ReactNode } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { useFocusEffect } from 'expo-router';
+import { useLocationReader } from '@/domeinen/location/ui';
 import { isPltrType } from '@/domeinen/services';
 import { colors, spacing } from '@/shared/ui/theme';
 import { useAllocations } from '../hooks/use-allocations';
@@ -9,6 +11,8 @@ import { ServicesScreen } from './services-screen';
 /**
  * An accepted allocation opens its services. Planned transport (1012 and 1030) has its own screen.
  * The old list showed a PLTR card for both codes but only navigated 1012 to `PLTRScreen`.
+ * While focused (and not previewing), warms a foreground location watch so accept can use a
+ * fresh sample for the 500 m check without a cold GPS start.
  */
 export function AllocationDetailScreen({
   allocationId,
@@ -20,10 +24,23 @@ export function AllocationDetailScreen({
   preview?: boolean;
   toolbar?: ReactNode;
 }) {
+  const locationReader = useLocationReader();
   const { sections, isPending } = useAllocations();
   const [active, pending] = sections;
   const allocation = [...active.data, ...pending.data].find(
     (item) => item.dn_allocationid === allocationId,
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      if (preview) {
+        return undefined;
+      }
+      void locationReader.start();
+      return () => {
+        locationReader.stop();
+      };
+    }, [locationReader, preview]),
   );
 
   if (isPending || !allocation) {

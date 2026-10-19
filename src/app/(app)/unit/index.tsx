@@ -1,8 +1,8 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable } from 'react-native';
+import { Alert, Pressable } from 'react-native';
 import {
   allocationUnitKeys,
   CurrentUnitOverviewScreen,
@@ -21,9 +21,11 @@ import {
 } from '@/domeinen/allocations/ui';
 import { useSession } from '@/domeinen/auth/ui';
 import { onboardingGateKey } from '@/domeinen/onboarding/ui';
+import { useAllocationUnitManagement } from '@/domeinen/settings/ui';
 import { useWorker } from '@/domeinen/worker/ui';
 import { ChevronLeftSVG } from '@/shared/ui/icons/chevron-left';
 import { goBackOrReplace } from '@/shared/ui/navigation';
+import { useStatusOverlay } from '@/shared/ui/status-overlay-host';
 import { colors } from '@/shared/ui/theme';
 
 export default function UnitIndexRoute() {
@@ -40,6 +42,10 @@ export default function UnitIndexRoute() {
   const unitService = useAllocationUnitService();
   const { data: worker } = useWorker();
   const completeAccept = useCompleteAllocationAccept();
+  const management = useAllocationUnitManagement();
+  const statusOverlay = useStatusOverlay();
+  const [cancelling, setCancelling] = useState(false);
+  const ignoreMissingUnit = useRef(false);
   const {
     sections,
     isSuccess: allocationsReady,
@@ -63,7 +69,11 @@ export default function UnitIndexRoute() {
     void completeAccept(() => {
       void queryClient.invalidateQueries({ queryKey: onboardingGateKey });
       void queryClient.invalidateQueries({ queryKey: allocationUnitKeys.current() });
-      router.replace(fromSettings ? '/allocation-unit-management' : '/');
+      router.replace(
+        fromSettings
+          ? { pathname: '/unit', params: { returnTo: 'allocation-unit-management' } }
+          : '/',
+      );
     });
   }, [completeAccept, fromSettings, queryClient]);
 
@@ -180,8 +190,60 @@ export default function UnitIndexRoute() {
   ]);
 
   const changeUnit = useCallback(() => openRegistration(false), [openRegistration]);
-  const registerMissingUnit = useCallback(() => openRegistration(true), [openRegistration]);
-  const changeEndDate = useCallback(() => router.push('/unit?mode=extend'), []);
+  const registerMissingUnit = useCallback(() => {
+    if (ignoreMissingUnit.current) {
+      return;
+    }
+    openRegistration(true);
+  }, [openRegistration]);
+  const changeEndDate = useCallback(
+    () =>
+      router.push(
+        fromSettings
+          ? {
+              pathname: '/unit',
+              params: { mode: 'extend', returnTo: 'allocation-unit-management' },
+            }
+          : { pathname: '/unit', params: { mode: 'extend' } },
+      ),
+    [fromSettings],
+  );
+
+  const cancelUnit = async (): Promise<void> => {
+    setCancelling(true);
+    try {
+      let blockedByActiveWork = false;
+      await statusOverlay.run(t('feedback.processing.cancelUnit'), async () => {
+        const result = await management.cancelUnit();
+        if (!result.ok) {
+          if (result.error === 'active-work') {
+            blockedByActiveWork = true;
+            return { tone: 'none' };
+          }
+          return { tone: 'error', message: t('settings.allocationUnitManagement.cancelFailed') };
+        }
+        ignoreMissingUnit.current = true;
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: allocationUnitKeys.current() }),
+          queryClient.invalidateQueries({ queryKey: onboardingGateKey }),
+        ]);
+        return { tone: 'none' };
+      });
+      if (blockedByActiveWork) {
+        Alert.alert(
+          t('settings.allocationUnitManagement.activeWorkTitle'),
+          t('settings.allocationUnitManagement.activeWorkMessage'),
+          [{ text: t('common.ok') }],
+        );
+        return;
+      }
+      if (ignoreMissingUnit.current) {
+        router.replace('/settings');
+      }
+    } finally {
+      setCancelling(false);
+    }
+  };
 
   if (extendOnly) {
     return <ExtendShiftScreen onExtended={onSaved} isOnboarding={false} />;
@@ -213,6 +275,8 @@ export default function UnitIndexRoute() {
         onChangeUnit={changeUnit}
         onChangeEndDate={changeEndDate}
         onMissingUnit={registerMissingUnit}
+        onCancel={fromSettings ? () => void cancelUnit() : undefined}
+        cancelling={cancelling}
       />
     </>
   );

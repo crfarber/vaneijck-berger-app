@@ -15,5 +15,4 @@ export { LanguageScreen } from './screens/language-screen';
 export { PermissionDisclosureScreen } from './screens/permission-disclosure-screen';
 export { PermissionsScreen } from './screens/permissions-screen';
 export { ReferenceDataSyncScreen } from './screens/reference-data-sync-screen';
-export { AllocationUnitManagementScreen } from './screens/allocation-unit-management-screen';
 export { SettingsHeaderButton, SettingsScreen } from './screens/settings-screen';

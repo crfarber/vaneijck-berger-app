@@ -170,6 +170,8 @@ function setup(
     internalAuth: null,
     locationReader: options.locationReader ?? {
       getCurrent: async () => ({ isValid: true, latitude: 52, longitude: 5 }),
+      start: async () => undefined,
+      stop: () => undefined,
     },
     photoLocationReader: options.photoLocationReader,
     devicePermissions: deniedPermissions(),
@@ -730,12 +732,16 @@ describe('photo upload queue', () => {
         sharedReads += 1;
         return { isValid: true, latitude: 52, longitude: 5 };
       },
+      start: async () => undefined,
+      stop: () => undefined,
     };
     const photoLocationReader: LocationReader = {
       getCurrent: async () => {
         photoReads += 1;
         return { isValid: true, latitude: 52.0803, longitude: 4.3244 };
       },
+      start: async () => undefined,
+      stop: () => undefined,
     };
     const { container, backend } = setup({
       stored: storedSession(),

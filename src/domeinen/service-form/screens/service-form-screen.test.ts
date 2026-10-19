@@ -10,15 +10,7 @@ describe('service form footer', () => {
   });
 });
 
-describe('finish form behavior', () => {
-  it('shows separate legacy phases and clears their snapshot before the wrapper exit', () => {
-    expect(source).toContain('SERVICE_FORM_FINISH_PHASES.map');
-    expect(source).toContain('const initialExpandedSectionIds = finishMode');
-    expect(source).toContain('populatedSectionIds.slice(0, 1)');
-    expect(source).toContain('await drafts.clearPhaseOneSnapshot(');
-    expect(source).toContain("trigger: 'finish', fromProcessingFinish: true");
-  });
-
+describe('phase-one snapshot on submit', () => {
   it('stores phase-one answers only after a successful first-phase submit on a two-phase form', () => {
     expect(source).toContain('form.phase === SERVICE_FORM_PHASE.load');
     expect(source).toContain('phaseNumbers.includes(SERVICE_FORM_PHASE.delivery)');

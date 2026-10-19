@@ -12,8 +12,23 @@ describe('photo overview screen', () => {
   });
 
   it('shows the local copy of a sent photo instead of fetching it from the server', () => {
-    expect(source).toContain('matchLocalCopies(serverPhotos, localCurrentPhotos)');
+    expect(source).toContain('matchLocalCopies(visibleServerPhotos, localCurrentPhotos)');
     expect(source).toContain('...(copy ? { uri: copy.uri } : remoteImage(photo.url))');
+  });
+
+  it('hides server photos of a type that has a pending mandatory override', () => {
+    expect(source).toContain('pendingOverrideTypeKeys(phasePhotos)');
+    expect(source).toContain('visibleServerPhotos');
+    expect(source).toContain("isExtraOverride: '0'");
+    expect(source).toContain('asOverrideDraft');
+    expect(source).toContain('overrideExisting: photo.overrideExisting === true');
+    expect(source).toContain('localsForOverview(phasePhotos)');
+    expect(source).toContain('pickMandatoryAndExtra(requirements, usablePhotos)');
+    expect(source).toContain('replacementDrafts');
+  });
+
+  it('shows stand-position help only on the first mandatory take, not on retake', () => {
+    expect(source).toContain("...(photo === null ? { help: '1' } : {})");
   });
 
   it('never hands a server url straight to an image without the session-aware download', () => {
@@ -42,5 +57,15 @@ describe('photo overview screen', () => {
 
   it('only zooms a photo that has finished loading', () => {
     expect(source).toContain("return photo.imageState === undefined && photo.uri !== '';");
+  });
+
+  it('goes back to the service form underneath instead of pushing it forward', () => {
+    const formPath = '/allocations/[id]/services/[serviceId]/form';
+    expect(source).toContain('goBackOrReplace(router, {');
+    expect(source).toContain(`pathname: '${formPath}'`);
+    expect(source).toContain('if (succeeded) {\n      leaveToServiceForm();');
+    expect(source).toContain('onPress={leaveToServiceForm}');
+    expect(source).not.toContain('router.navigate(');
+    expect(source).not.toContain('router.dismissTo(');
   });
 });

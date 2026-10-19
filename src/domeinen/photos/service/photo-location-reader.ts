@@ -11,6 +11,8 @@ export function createPhotoLocationReader(
   useSimulatorFallback: boolean,
 ): LocationReader {
   return {
+    start: () => reader.start(),
+    stop: () => reader.stop(),
     async getCurrent(options) {
       const current = await reader.getCurrent(options);
       if (!useSimulatorFallback || resolveCurrentPosition(current) !== null) {

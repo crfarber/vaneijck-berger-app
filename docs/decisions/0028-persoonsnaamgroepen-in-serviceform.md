@@ -18,9 +18,11 @@ bevestiging.
 - Overige rollen in de metadata (`phone1`, `phone2`, `email`, `company`, `gate`, `addressGroupId`,
   `copyFrom`) mogen in de definitie staan; de app v1 consumeert die **niet** in de persoonskaart.
   Die velden blijven gewone losse velden tot een latere slice.
-- Snelle naaminvoer: één vrij tekstveld → lokale NL-parser → bevestigingsdialoog → batch
-  `updateAnswers` op de gemapte naamrollen. Aanhef wordt alleen gezet als de geparsede alias een
-  optie in `dn_salutation` (of de tabel van het veld) matcht.
+- Snelle naaminvoer: één vrij tekstveld → knop **Verdelen** → lokale NL-parser →
+  bevestigingsdialoog → batch `updateAnswers` op de gemapte naamrollen. Aanhef wordt alleen gezet
+  als de geparsede alias een optie in `dn_salutation` (of de tabel van het veld) matcht. Na
+  accepteren blijft de ingetikte tekst in het vrije veld staan; dezelfde knop wordt **Opnieuw** en
+  wist alleen de afgeleide naamrollen (de vrije tekst blijft).
 - Compacte handmatige velden blijven altijd beschikbaar. Afwijzen van de bevestiging schrijft niets
   weg. Wijzigen van het vrije veld wist afgeleide naamrollen opnieuw.
 - Zonder `person_group` of bij incomplete mapping (geen `lastName`-veld aanwezig) rendert de app de

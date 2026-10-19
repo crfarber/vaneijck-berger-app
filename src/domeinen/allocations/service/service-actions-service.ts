@@ -1,4 +1,9 @@
-import type { LocationReader, ProximityDecision } from '@/domeinen/location';
+import {
+  ACCEPT_LOCATION_MAX_AGE_MS,
+  ACCEPT_LOCATION_REQUIRED_ACCURACY_METERS,
+  type LocationReader,
+  type ProximityDecision,
+} from '@/domeinen/location';
 import { OUTBOX_KIND, shouldQueueMutation, type MutationOutbox } from '@/domeinen/outbox';
 import { checkAcceptLocation, SERVICE_STATUS, type TargetSource } from '@/domeinen/services';
 import type { Logger } from '@/shared/logging/logger';
@@ -31,7 +36,10 @@ export function createServiceActionsService(
 
   return {
     async checkAcceptProximity(source) {
-      const current = await locationReader.getCurrent();
+      const current = await locationReader.getCurrent({
+        maxAgeMs: ACCEPT_LOCATION_MAX_AGE_MS,
+        requiredAccuracyMeters: ACCEPT_LOCATION_REQUIRED_ACCURACY_METERS,
+      });
       return checkAcceptLocation(source, current);
     },
 

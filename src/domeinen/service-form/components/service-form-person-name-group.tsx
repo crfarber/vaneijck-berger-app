@@ -1,16 +1,14 @@
+import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View, type TextInput } from 'react-native';
-import { Button } from '@/shared/ui/button';
+import { Pressable, StyleSheet, Text, View, type TextInput } from 'react-native';
 import { confirm } from '@/shared/ui/confirm';
 import { TextField } from '@/shared/ui/text-field';
 import { colors, radius, spacing, type as typography } from '@/shared/ui/theme';
 import {
   buildClearedPersonNameAnswers,
   buildPersonNameAnswers,
-  buildPersonNameSummary,
-  hasAppliedPersonNameAnswers,
   previewPersonNameParse,
   type PersonNameEntryGroup,
 } from '../domain/person-name-entry';
@@ -43,7 +41,8 @@ export type ServiceFormPersonNameGroupProps = {
 };
 
 /**
- * Free-text name entry with confirm → fill CRM name roles, plus always-editable manual fields.
+ * Compact free-text name entry. A square action beside the field splits the name (confirm, then
+ * fill CRM roles) and afterwards clears those roles while keeping the typed text.
  */
 export function ServiceFormPersonNameGroup({
   group,
@@ -65,8 +64,7 @@ export function ServiceFormPersonNameGroup({
   const salutationField = group.orderedFields.find((field) => field.key === mapping.salutation);
   const [freeText, setFreeText] = useState('');
   const [appliedFreeText, setAppliedFreeText] = useState<string | null>(null);
-  const applied = hasAppliedPersonNameAnswers(mapping, answers, pleaseSelectLabel);
-  const summary = buildPersonNameSummary(mapping, answers, pleaseSelectLabel);
+  const splitApplied = appliedFreeText !== null;
 
   const salutationQuery = useQuery({
     queryKey: salutationField
@@ -148,31 +146,39 @@ export function ServiceFormPersonNameGroup({
   return (
     <View style={styles.container}>
       <Text style={styles.title}>{title}</Text>
-      <TextField
-        label={t('serviceForm.personName.freeTextLabel')}
-        value={freeText}
-        onChangeText={onFreeTextChange}
-        placeholder={t('serviceForm.personName.freeTextPlaceholder')}
-        autoCapitalize="words"
-        accessibilityLabel={t('serviceForm.personName.freeTextLabel')}
-      />
-      <Button
-        label={t('serviceForm.personName.apply')}
-        onPress={() => {
-          void applyFreeText();
-        }}
-        disabled={!freeText.trim()}
-      />
-      {applied && summary ? (
-        <View style={styles.summaryBox}>
-          <Text style={styles.summaryText}>{summary}</Text>
-          <Button
-            label={t('serviceForm.personName.reset')}
-            variant="secondary"
-            onPress={clearDerived}
-          />
-        </View>
-      ) : null}
+      <View style={styles.inputRow}>
+        <TextField
+          containerStyle={styles.grow}
+          label={t('serviceForm.personName.freeTextLabel')}
+          value={freeText}
+          onChangeText={onFreeTextChange}
+          placeholder={t('serviceForm.personName.freeTextPlaceholder')}
+          autoCapitalize="words"
+          accessibilityLabel={t('serviceForm.personName.freeTextLabel')}
+        />
+        {freeText.trim() ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={
+              splitApplied ? t('serviceForm.personName.reset') : t('serviceForm.personName.apply')
+            }
+            onPress={() => {
+              if (splitApplied) {
+                clearDerived();
+                return;
+              }
+              void applyFreeText();
+            }}
+            style={({ pressed }) => [styles.actionButton, pressed && styles.pressed]}
+          >
+            <Ionicons
+              name={splitApplied ? 'refresh' : 'cut-outline'}
+              size={20}
+              color={colors.brandText}
+            />
+          </Pressable>
+        ) : null}
+      </View>
       <Text style={styles.manualHint}>{t('serviceForm.personName.manualHint')}</Text>
       {group.orderedFields.map((field) => (
         <View
@@ -211,18 +217,17 @@ const styles = StyleSheet.create({
     ...typography.header,
     color: colors.text,
   },
-  summaryBox: {
-    gap: spacing.sm,
-    padding: spacing.md,
+  inputRow: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing.sm },
+  grow: { flex: 1 },
+  actionButton: {
+    width: 48,
+    height: 48,
     borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.brand,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  summaryText: {
-    ...typography.body,
-    color: colors.text,
-  },
+  pressed: { opacity: 0.6 },
   manualHint: {
     ...typography.small,
     color: colors.textMuted,

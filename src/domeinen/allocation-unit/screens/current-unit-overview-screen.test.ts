@@ -22,4 +22,18 @@ describe('current unit overview screen', () => {
     expect(source).toContain('getDeviceTimeZone()');
     expect(source).toContain('formatActiveUntil(');
   });
+
+  it('confirms cancellation only when opened from settings', () => {
+    expect(source).toContain('onCancel?: () => void');
+    expect(source).toContain('onCancel !== undefined');
+    expect(source).toContain('await confirm({');
+    expect(source).toContain('settings.allocationUnitManagement.cancel');
+  });
+
+  it('alerts on cancel while active work exists instead of showing inline warning text', () => {
+    expect(source).toContain('settings.allocationUnitManagement.activeWorkTitle');
+    expect(source).toContain('settings.allocationUnitManagement.activeWorkMessage');
+    expect(source).not.toContain('disabled={hasActiveWork}');
+    expect(source).not.toContain('styles.warning');
+  });
 });

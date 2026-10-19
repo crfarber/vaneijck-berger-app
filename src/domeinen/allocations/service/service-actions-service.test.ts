@@ -1,6 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 import { NetworkError } from '@/shared/api/errors';
-import type { CurrentLocation, LocationReader } from '@/domeinen/location';
+import {
+  ACCEPT_LOCATION_MAX_AGE_MS,
+  ACCEPT_LOCATION_REQUIRED_ACCURACY_METERS,
+  type CurrentLocation,
+  type LocationReader,
+} from '@/domeinen/location';
 import { SERVICE_STATUS } from '@/domeinen/services';
 import type { AllocationsApi } from '../api/allocations-api';
 import { createServiceActionsService } from './service-actions-service';
@@ -20,7 +25,11 @@ function setup(current: CurrentLocation, apiOverrides: Partial<AllocationsApi> =
     checkZipcode: vi.fn(async () => ''),
     ...apiOverrides,
   };
-  const locationReader: LocationReader = { getCurrent: vi.fn(async () => current) };
+  const locationReader: LocationReader = {
+    getCurrent: vi.fn(async () => current),
+    start: vi.fn(async () => undefined),
+    stop: vi.fn(),
+  };
   const outbox = { enqueue: vi.fn(async () => undefined) };
   const service = createServiceActionsService({ api, locationReader, outbox });
   return { service, api, locationReader, outbox };
@@ -31,6 +40,20 @@ const HERE = { isValid: true, latitude: 52.0, longitude: 5.0 };
 const FAR_AWAY = { isValid: true, latitude: 10.0, longitude: 10.0 };
 
 describe('checkAcceptProximity', () => {
+  it('asks the location reader for a fresh sample accurate enough for 500 m', async () => {
+    const { service, locationReader } = setup(HERE);
+
+    await service.checkAcceptProximity({
+      incident: NEARBY_INCIDENT,
+      service: {},
+    });
+
+    expect(locationReader.getCurrent).toHaveBeenCalledWith({
+      maxAgeMs: ACCEPT_LOCATION_MAX_AGE_MS,
+      requiredAccuracyMeters: ACCEPT_LOCATION_REQUIRED_ACCURACY_METERS,
+    });
+  });
+
   it('proceeds when the berger is close to the target', async () => {
     const { service } = setup(HERE);
 

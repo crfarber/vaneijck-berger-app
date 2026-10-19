@@ -8,8 +8,14 @@ import type { GetCurrentLocationOptions } from '../domain/location-accuracy';
  * `decideProximity` and does not care why the position is missing.
  *
  * Callers that only need a rough fix (e.g. sorting depots by distance) pass `accuracy: 'coarse'`.
- * Default is fine GPS for the 500 m accept boundary and photo coordinates.
+ * Default one-shot reads use fine GPS. Accept passes `maxAgeMs` / `requiredAccuracyMeters` so the
+ * reader can reuse a warm foreground watch instead of a cold high-accuracy fix.
+ *
+ * `start` / `stop` keep one foreground watch alive while the services / PLTR detail screen is
+ * focused (reference-counted). Tests and callers that never accept can leave them as no-ops.
  */
 export type LocationReader = {
   getCurrent(options?: GetCurrentLocationOptions): Promise<CurrentLocation>;
+  start(): Promise<void>;
+  stop(): void;
 };

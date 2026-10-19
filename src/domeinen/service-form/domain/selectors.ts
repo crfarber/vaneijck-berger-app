@@ -178,6 +178,8 @@ export type QuickViewContext = ServiceFormValidationContext & {
 /**
  * Fields still relevant in quick view: editable, not yet validly filled, plus required fields
  * filled by the user and the currently focused field so it does not disappear mid-edit.
+ * Editable signature fields always stay: the terms toggle lives inside them, so a skipped or
+ * signed signature must not take it out of view.
  */
 export function selectQuickViewFields(
   fields: ServiceFormField[],
@@ -201,6 +203,9 @@ export function selectQuickViewFields(
       return false;
     }
     if (focusedFieldId !== null && field.id === focusedFieldId) {
+      return true;
+    }
+    if (resolveFieldKind(field) === FIELD_KIND.signature) {
       return true;
     }
     const isFilled = isServiceFormFieldFilled(

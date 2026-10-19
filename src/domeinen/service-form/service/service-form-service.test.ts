@@ -76,7 +76,11 @@ function setup(
     sync: vi.fn<() => Promise<SyncResult>>(async () => ({ synced: [], failed: [] })),
   };
   const api: ServiceFormApi = { updateService: vi.fn(async () => undefined) };
-  const locationReader = { getCurrent: vi.fn(async () => location) };
+  const locationReader = {
+    getCurrent: vi.fn(async () => location),
+    start: vi.fn(async () => undefined),
+    stop: vi.fn(),
+  };
   const logger = createLogger({ clock: createFakeClock() });
   const service = createServiceFormService({
     api,

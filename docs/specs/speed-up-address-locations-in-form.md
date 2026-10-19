@@ -167,8 +167,8 @@ Op het eerste veld van een persoonsblok:
 
 **v1 (naamrollen, [ADR 0028](../decisions/0028-persoonsnaamgroepen-in-serviceform.md)):**
 
-1. **Snelle naaminvoer:** één vrij tekstveld. Bij bevestigen (niet per toetsaanslag) parst de app lokaal (aanhef-aliassen, voorletters, NL-tussenvoegsels, conservatief bij buitenlandse namen).
-2. **Bevestiging:** dialoog “Klopt deze verdeling?” met de voorgestelde rollen. **Ja** schrijft batch naar de gemapte CRM-velden. **Nee** schrijft niets weg.
+1. **Snelle naaminvoer:** één vrij tekstveld plus knop **Verdelen**. Bij bevestigen (niet per toetsaanslag) parst de app lokaal (aanhef-aliassen, voorletters, NL-tussenvoegsels, conservatief bij buitenlandse namen).
+2. **Bevestiging:** dialoog “Klopt deze verdeling?” met de voorgestelde rollen. **Ja** schrijft batch naar de gemapte CRM-velden en laat de ingetikte tekst in het vrije veld staan; de knop wordt **Opnieuw** (wist alleen de afgeleide rollen). **Nee** schrijft niets weg.
 3. **Handmatig:** aanhef als knoppen (opties uit de tabel van het veld) plus voorletters, voornaam, tussenvoegsel en achternaam blijven altijd bewerkbaar. Wijzigen van het vrije veld wist afgeleide naamrollen opnieuw.
 4. Contact, adres, bedrijf, gate-kaart, samenvatting en `copyFrom` blijven in v1 gewone losse velden / later.
 

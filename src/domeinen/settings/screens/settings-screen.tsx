@@ -30,13 +30,8 @@ type MenuItem = {
     | 'settings.referenceData.open'
     | 'support.open'
     | 'debug.open';
-  route:
-    | '/allocation-unit-management'
-    | '/language'
-    | '/permissions'
-    | '/reference-data-sync'
-    | '/support'
-    | '/debug';
+  route: '/unit' | '/language' | '/permissions' | '/reference-data-sync' | '/support' | '/debug';
+  params?: { returnTo: 'allocation-unit-management' };
   icon: ReactNode;
   devOnly?: boolean;
 };
@@ -45,7 +40,8 @@ const MENU_ITEMS: readonly MenuItem[] = [
   {
     key: 'allocation-unit-management',
     labelKey: 'settings.allocationUnitManagement.open',
-    route: '/allocation-unit-management',
+    route: '/unit',
+    params: { returnTo: 'allocation-unit-management' },
     icon: <Ionicons name="car-outline" size={20} color={colors.text} />,
   },
   {
@@ -178,7 +174,13 @@ export function SettingsScreen() {
             key={item.key}
             label={t(item.labelKey)}
             icon={item.icon}
-            onPress={() => router.push(item.route)}
+            onPress={() => {
+              if (item.params !== undefined) {
+                router.push({ pathname: '/unit', params: item.params });
+                return;
+              }
+              router.push(item.route);
+            }}
             showDivider={index < visibleItems.length - 1}
           />
         ))}

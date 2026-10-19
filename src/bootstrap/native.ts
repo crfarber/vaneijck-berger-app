@@ -10,6 +10,7 @@ import { createPhotoLocationReader } from '@/domeinen/photos';
 import { createExpoPhotoFiles } from '@/domeinen/photos/ui';
 import { createExpoDevicePermissions } from '@/domeinen/settings/ui';
 import { createRnLogShare } from '@/domeinen/support/ui';
+import { systemClock, type Scheduler } from '@/shared/platform/ports';
 import { createDeviceKeyValueStore } from '@/shared/platform/rn/key-value-store';
 import { createExpoHaptics } from '@/shared/platform/rn/expo-haptics';
 import { createExpoMultipartUploadFiles } from '@/shared/platform/rn/expo-multipart-upload-files';
@@ -19,6 +20,15 @@ import type { RuntimeConfig } from '@/shared/config/runtime-config';
 import type { Language } from '@/shared/i18n/resources';
 import { createContainer, type Container } from './container';
 import { readRuntimeConfig } from './env';
+
+const deviceScheduler: Scheduler = {
+  schedule(callback, delayMs) {
+    const id = setTimeout(callback, delayMs);
+    return () => {
+      clearTimeout(id);
+    };
+  },
+};
 
 /** Dutch when the phone is set to Dutch, English otherwise. */
 function detectLanguage(): Language {
@@ -38,7 +48,10 @@ function buildInternalAuth(config: RuntimeConfig): InternalAuth | null {
 export function createNativeContainer(): Container {
   const config = readRuntimeConfig();
   const secretStore = createDeviceSecretStore();
-  const locationReader = createExpoLocationReader();
+  const locationReader = createExpoLocationReader({
+    clock: systemClock,
+    scheduler: deviceScheduler,
+  });
   return createContainer({
     config,
     secretStore,

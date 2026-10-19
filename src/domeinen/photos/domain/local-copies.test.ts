@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { matchLocalCopies } from './local-copies';
+import { matchLocalCopies, pendingOverrideTypeKeys } from './local-copies';
+import { photoTypeKey } from './photo-type';
 import { PHOTO_STATUS, type PhotoPosition, type PhotoStatus } from './types';
 
 const front: PhotoPosition = { category: 'EXTERIOR', angle: 'voor' };
@@ -59,5 +60,42 @@ describe('matchLocalCopies', () => {
 
   it('returns nothing when the server has no photos', () => {
     expect(matchLocalCopies([], [local('a', front)])).toEqual([]);
+  });
+});
+
+describe('pendingOverrideTypeKeys', () => {
+  it('includes the type of a draft override', () => {
+    expect(
+      pendingOverrideTypeKeys([
+        { ...local('a', dashboard, PHOTO_STATUS.draft), overrideExisting: true },
+      ]),
+    ).toEqual(new Set([photoTypeKey(dashboard)]));
+  });
+
+  it('includes a queued override and ignores a sent photo without override', () => {
+    expect(
+      pendingOverrideTypeKeys([
+        { ...local('a', front, PHOTO_STATUS.queued), overrideExisting: true },
+        local('b', rear, PHOTO_STATUS.sent),
+      ]),
+    ).toEqual(new Set([photoTypeKey(front)]));
+  });
+
+  it('still covers the type after the override itself is sent', () => {
+    expect(
+      pendingOverrideTypeKeys([
+        { ...local('a', dashboard, PHOTO_STATUS.sent), overrideExisting: true },
+      ]),
+    ).toEqual(new Set([photoTypeKey(dashboard)]));
+  });
+
+  it('ignores failed overrides and drafts without the override flag', () => {
+    expect(
+      pendingOverrideTypeKeys([
+        { ...local('a', dashboard, PHOTO_STATUS.failed), overrideExisting: true },
+        { ...local('b', front, PHOTO_STATUS.draft), overrideExisting: false },
+        local('c', rear, PHOTO_STATUS.draft),
+      ]),
+    ).toEqual(new Set());
   });
 });

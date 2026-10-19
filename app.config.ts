@@ -47,11 +47,18 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     icon: './assets/ios/1024.png',
     scheme,
     userInterfaceStyle: 'automatic',
+    // Fingerprint so a JS update only lands on a binary with matching native code.
+    runtimeVersion: {
+      policy: 'fingerprint',
+    },
+    updates: {
+      url: 'https://u.expo.dev/08d43b2a-c97f-4988-aba5-f6d03c39accf',
+    },
     ios: {
       bundleIdentifier: id,
       supportsTablet: false,
-      // Gitignored; copy from legacy/ios for local builds (docs/decisions/0009).
-      googleServicesFile: './GoogleService-Info.plist',
+      // Gitignored. EAS Build reads GOOGLE_SERVICES_PLIST; local builds use the copy in the repo root.
+      googleServicesFile: process.env.GOOGLE_SERVICES_PLIST ?? './GoogleService-Info.plist',
       infoPlist: {
         UIBackgroundModes: ['remote-notification'],
       },
@@ -61,8 +68,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     },
     android: {
       package: id,
-      // Gitignored; copy from legacy/android for local builds (docs/decisions/0009).
-      googleServicesFile: './google-services.json',
+      // Gitignored. EAS Build reads the file variable GOOGLE_SERVICES_JSON; local builds use the copy in the repo root.
+      googleServicesFile: process.env.GOOGLE_SERVICES_JSON ?? './google-services.json',
       adaptiveIcon: {
         backgroundColor: '#FEC900',
         foregroundImage: './assets/ios/1024.png',
@@ -152,7 +159,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       // Linked by `eas init`. Not a secret. Kept for EAS project linkage; push uses FCM tokens.
       // EXPO_PUBLIC_EAS_PROJECT_ID can override locally; EAS Build uses this value when unset.
       eas: {
-        projectId: process.env.EXPO_PUBLIC_EAS_PROJECT_ID ?? 'ddbab1b3-aa0d-445e-b003-8943841f8b5',
+        projectId: process.env.EXPO_PUBLIC_EAS_PROJECT_ID ?? '08d43b2a-c97f-4988-aba5-f6d03c39accf',
       },
     },
   };

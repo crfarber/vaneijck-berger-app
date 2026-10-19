@@ -14,6 +14,14 @@ export {
   type ProximityDecision,
 } from './domain/proximity';
 export {
+  ACCEPT_LOCATION_MAX_AGE_MS,
+  ACCEPT_LOCATION_REQUIRED_ACCURACY_METERS,
+  ACCEPT_LOCATION_WAIT_TIMEOUT_MS,
+  resolveFreshSample,
+  type FreshSampleOptions,
+  type LocationSample,
+} from './domain/fresh-sample';
+export {
   GPS_STATUS,
   gpsButtonVariant,
   resolveGpsStatus,

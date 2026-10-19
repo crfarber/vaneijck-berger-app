@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, StyleSheet, Text, View } from 'react-native';
 import { Button } from '@/shared/ui/button';
+import { confirm } from '@/shared/ui/confirm';
 import { Screen } from '@/shared/ui/screen';
 import { colors, spacing, type } from '@/shared/ui/theme';
 import { formatActiveUntil, getDeviceTimeZone } from '@/shared/utils/time';
@@ -14,11 +15,16 @@ export function CurrentUnitOverviewScreen({
   onChangeUnit,
   onChangeEndDate,
   onMissingUnit,
+  onCancel,
+  cancelling = false,
 }: {
   hasActiveWork: boolean;
   onChangeUnit: () => void;
   onChangeEndDate: () => void;
   onMissingUnit: () => void;
+  /** Set when this overview was opened from settings, so the unit can be cancelled here. */
+  onCancel?: () => void;
+  cancelling?: boolean;
 }) {
   const { t, i18n } = useTranslation();
   const clock = useAllocationUnitClock();
@@ -48,6 +54,30 @@ export function CurrentUnitOverviewScreen({
       return;
     }
     onChangeEndDate();
+  };
+
+  const confirmCancellation = async (): Promise<void> => {
+    if (onCancel === undefined || cancelling) {
+      return;
+    }
+    if (hasActiveWork) {
+      Alert.alert(
+        t('settings.allocationUnitManagement.activeWorkTitle'),
+        t('settings.allocationUnitManagement.activeWorkMessage'),
+        [{ text: t('common.ok') }],
+      );
+      return;
+    }
+    const accepted = await confirm({
+      title: t('settings.allocationUnitManagement.cancelConfirmTitle'),
+      message: t('settings.allocationUnitManagement.cancelConfirmMessage'),
+      confirmLabel: t('settings.allocationUnitManagement.cancel'),
+      cancelLabel: t('common.cancel'),
+      destructive: true,
+    });
+    if (accepted) {
+      onCancel();
+    }
   };
 
   useEffect(() => {
@@ -95,6 +125,14 @@ export function CurrentUnitOverviewScreen({
         <View style={styles.actions}>
           <Button label={t('unit.overview.changeUnit')} onPress={changeUnit} />
           <Button label={t('unit.changeEndDate')} onPress={changeEndDate} variant="secondary" />
+          {onCancel !== undefined ? (
+            <Button
+              label={t('settings.allocationUnitManagement.cancel')}
+              variant="danger"
+              loading={cancelling}
+              onPress={() => void confirmCancellation()}
+            />
+          ) : null}
         </View>
       }
     >

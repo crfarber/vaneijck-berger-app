@@ -26,14 +26,6 @@ export default function AppLayout() {
         }}
       />
       <Stack.Screen
-        name="allocation-unit-management"
-        options={{
-          title: t('settings.allocationUnitManagement.title'),
-          headerTitle: undefined,
-          headerRight: () => null,
-        }}
-      />
-      <Stack.Screen
         name="language"
         options={{ title: t('settings.language.title'), headerTitle: undefined }}
       />
@@ -80,7 +72,15 @@ export default function AppLayout() {
         }}
       />
       <Stack.Screen name="allocations/[id]/index" />
-      <Stack.Screen name="allocations/[id]/services/[serviceId]" />
+      <Stack.Screen
+        name="allocations/[id]/services/[serviceId]"
+        options={{
+          headerBackVisible: false,
+          headerLeft: () => null,
+          gestureEnabled: false,
+          headerRight: () => null,
+        }}
+      />
       <Stack.Screen
         name="allocations/[id]/services/[serviceId]/photos"
         options={{ headerShown: false }}

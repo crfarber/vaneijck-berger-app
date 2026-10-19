@@ -11,12 +11,14 @@
       "extends": "base",
       "developmentClient": true,
       "distribution": "internal",
+      "environment": "development",
       "env": { "APP_VARIANT": "internal" }
     },
     "internal": {
       "extends": "base",
       "distribution": "internal",
       "channel": "internal",
+      "environment": "development",
       "env": { "APP_VARIANT": "internal" },
       "android": { "buildType": "apk" }
     },
@@ -24,12 +26,14 @@
       "extends": "base",
       "distribution": "internal",
       "channel": "acceptance",
+      "environment": "preview",
       "env": { "APP_VARIANT": "acceptance" },
       "android": { "buildType": "apk" }
     },
     "production": {
       "extends": "base",
       "channel": "production",
+      "environment": "production",
       "autoIncrement": true,
       "env": { "APP_VARIANT": "production" },
       "android": { "buildType": "app-bundle" }

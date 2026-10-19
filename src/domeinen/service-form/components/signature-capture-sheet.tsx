@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Modal, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SignatureInk, type SignatureInkHandle } from 'react-native-signature-ink';
 import { hasSignatureInk, toJpegDataUrl } from '@/domeinen/signatures';
 import { Button } from '@/shared/ui/button';
@@ -17,16 +17,16 @@ export function SignatureCaptureSheet({
   onClose: () => void;
 }) {
   return (
-    <SafeAreaView>
-      <Modal
-        visible={visible}
-        animationType="slide"
-        presentationStyle="fullScreen"
-        onRequestClose={onClose}
-      >
-        {visible ? <SignatureCaptureBody onCapture={onCapture} onClose={onClose} /> : null}
-      </Modal>
-    </SafeAreaView>
+    <Modal
+      visible={visible}
+      animationType="slide"
+      presentationStyle="fullScreen"
+      statusBarTranslucent
+      navigationBarTranslucent
+      onRequestClose={onClose}
+    >
+      {visible ? <SignatureCaptureBody onCapture={onCapture} onClose={onClose} /> : null}
+    </Modal>
   );
 }
 
@@ -38,6 +38,7 @@ function SignatureCaptureBody({
   onClose: () => void;
 }) {
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const ref = useRef<SignatureInkHandle>(null);
   const [saving, setSaving] = useState(false);
   const [isEmpty, setIsEmpty] = useState(true);
@@ -72,7 +73,17 @@ function SignatureCaptureBody({
   };
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <View
+      style={[
+        styles.safe,
+        {
+          paddingTop: insets.top,
+          paddingBottom: insets.bottom,
+          paddingLeft: insets.left,
+          paddingRight: insets.right,
+        },
+      ]}
+    >
       <View style={styles.header}>
         <Text style={styles.title}>{t('serviceForm.signature.captureTitle')}</Text>
       </View>
@@ -119,7 +130,7 @@ function SignatureCaptureBody({
         />
         <Button label={t('serviceForm.select.close')} variant="secondary" onPress={onClose} />
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 

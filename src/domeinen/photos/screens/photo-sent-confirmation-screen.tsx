@@ -1,4 +1,3 @@
-import { router } from 'expo-router';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
@@ -8,6 +7,7 @@ import { Screen } from '@/shared/ui/screen';
 import { colors, radius, spacing } from '@/shared/ui/theme';
 import { PHOTO_STATUS, type PhotoStatus } from '../index';
 import { PhotoThumbnail } from '../components/photo-thumbnail';
+import { useReturnToPhotoOverview } from '../hooks/use-return-to-photo-overview';
 import { useServicePhotos } from '../hooks/use-service-photos';
 import type { PhotoFlowContext } from './photo-flow';
 
@@ -53,6 +53,7 @@ export function PhotoSentConfirmationScreen({
       ? { phaseNumbers: phaseNumbers.join(',') }
       : {}),
   };
+  const returnToOverview = useReturnToPhotoOverview(routeParams);
 
   useEffect(() => {
     void refresh();
@@ -62,17 +63,7 @@ export function PhotoSentConfirmationScreen({
     <Screen
       backgroundColor={colors.background}
       contentStyle={styles.content}
-      footer={
-        <Button
-          label={t('photos.sentConfirmation.done')}
-          onPress={() =>
-            router.navigate({
-              pathname: '/allocations/[id]/services/[serviceId]/photos',
-              params: routeParams,
-            })
-          }
-        />
-      }
+      footer={<Button label={t('photos.sentConfirmation.done')} onPress={returnToOverview} />}
     >
       <View style={styles.message}>
         <View style={[styles.icon, status === PHOTO_STATUS.failed && styles.iconFailed]}>
