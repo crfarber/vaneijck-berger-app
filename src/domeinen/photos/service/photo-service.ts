@@ -278,17 +278,27 @@ export function createPhotoService(deps: PhotoServiceDeps): PhotoService {
     }
     draining = true;
     try {
+      // One temporary failure must not stall later queued photos in the same round.
+      const skipped = new Set<string>();
+      let hadRetry = false;
       while (running) {
         const photos = await repository.load();
-        const next = photos.find((photo) => photo.status === PHOTO_STATUS.queued);
+        const next = photos.find(
+          (photo) => photo.status === PHOTO_STATUS.queued && !skipped.has(photo.id),
+        );
         if (!next) {
-          retryAttempt = 0;
+          if (hadRetry) {
+            scheduleRetry();
+          } else {
+            retryAttempt = 0;
+          }
           return;
         }
         const outcome = await uploadOne(next, photos);
         if (outcome === 'retry') {
-          scheduleRetry();
-          return;
+          skipped.add(next.id);
+          hadRetry = true;
+          continue;
         }
         retryAttempt = 0;
       }

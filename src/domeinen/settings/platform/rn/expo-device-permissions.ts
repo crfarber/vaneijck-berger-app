@@ -2,10 +2,13 @@ import { Camera } from 'expo-camera';
 import type { PermissionResponse } from 'expo';
 import * as Location from 'expo-location';
 import notifee, { AuthorizationStatus as NotifeeAuthorizationStatus } from '@notifee/react-native';
-import { Linking } from 'react-native';
+import { Linking, Platform } from 'react-native';
 import {
+  NOTIFICATION_AUTHORIZATION,
+  notificationPermissionSnapshot,
   PERMISSION_KIND,
   PERMISSION_STATUS,
+  type NotificationAuthorization,
   type PermissionKind,
   type PermissionSnapshot,
   type PermissionStatus,
@@ -22,18 +25,25 @@ function fromExpo(response: PermissionResponse): PermissionSnapshot {
   return { status, canAskAgain: response.canAskAgain };
 }
 
-/** Authorized and provisional grants still count: the app can deliver a banner. */
-function fromNotifee(authorizationStatus: number): PermissionSnapshot {
-  if (
-    authorizationStatus === NotifeeAuthorizationStatus.AUTHORIZED ||
-    authorizationStatus === NotifeeAuthorizationStatus.PROVISIONAL
-  ) {
-    return { status: PERMISSION_STATUS.granted, canAskAgain: false };
+function notifeeAuthorization(authorizationStatus: number): NotificationAuthorization {
+  switch (authorizationStatus) {
+    case NotifeeAuthorizationStatus.AUTHORIZED:
+      return NOTIFICATION_AUTHORIZATION.authorized;
+    case NotifeeAuthorizationStatus.PROVISIONAL:
+      return NOTIFICATION_AUTHORIZATION.provisional;
+    case NotifeeAuthorizationStatus.NOT_DETERMINED:
+      return NOTIFICATION_AUTHORIZATION.notDetermined;
+    default:
+      return NOTIFICATION_AUTHORIZATION.denied;
   }
-  if (authorizationStatus === NotifeeAuthorizationStatus.NOT_DETERMINED) {
-    return { status: PERMISSION_STATUS.undetermined, canAskAgain: true };
-  }
-  return { status: PERMISSION_STATUS.denied, canAskAgain: false };
+}
+
+function fromNotifee(authorizationStatus: number, afterRequest: boolean): PermissionSnapshot {
+  return notificationPermissionSnapshot({
+    authorization: notifeeAuthorization(authorizationStatus),
+    platform: Platform.OS === 'android' ? 'android' : 'ios',
+    afterRequest,
+  });
 }
 
 async function readKind(kind: PermissionKind): Promise<PermissionSnapshot> {
@@ -42,7 +52,7 @@ async function readKind(kind: PermissionKind): Promise<PermissionSnapshot> {
       return fromExpo(await Location.getForegroundPermissionsAsync());
     case PERMISSION_KIND.notifications: {
       const settings = await notifee.getNotificationSettings();
-      return fromNotifee(settings.authorizationStatus);
+      return fromNotifee(settings.authorizationStatus, false);
     }
     case PERMISSION_KIND.camera:
       return fromExpo(await Camera.getCameraPermissionsAsync());
@@ -59,7 +69,7 @@ async function requestKind(kind: PermissionKind): Promise<PermissionSnapshot> {
         badge: true,
         sound: true,
       });
-      return fromNotifee(settings.authorizationStatus);
+      return fromNotifee(settings.authorizationStatus, true);
     }
     case PERMISSION_KIND.camera:
       return fromExpo(await Camera.requestCameraPermissionsAsync());

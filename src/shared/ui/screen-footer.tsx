@@ -1,8 +1,9 @@
 import { BlurView } from 'expo-blur';
 import { useContext, type ReactNode } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MapBackgroundBlurContext } from './map-background';
+import { screenFooterBackground } from './screen-footer-background';
 import { colors, spacing } from './theme';
 
 /**
@@ -21,7 +22,15 @@ export function ScreenFooter({
   const blurTarget = backgroundColor === 'transparent' ? backgroundTarget : undefined;
 
   return (
-    <View style={[styles.footer, { backgroundColor, paddingBottom: spacing.md + insets.bottom }]}>
+    <View
+      style={[
+        styles.footer,
+        {
+          backgroundColor: screenFooterBackground(backgroundColor, Platform.OS),
+          paddingBottom: spacing.md + insets.bottom,
+        },
+      ]}
+    >
       <BlurView
         pointerEvents="none"
         intensity={35}

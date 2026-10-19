@@ -37,7 +37,7 @@ describe('screen footer glass appearance', () => {
       "backgroundColor === 'transparent' ? backgroundTarget : undefined",
     );
     expect(footerSource).toContain(
-      '{ backgroundColor, paddingBottom: spacing.md + insets.bottom }',
+      'backgroundColor: screenFooterBackground(backgroundColor, Platform.OS)',
     );
   });
 });

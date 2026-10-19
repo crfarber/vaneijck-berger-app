@@ -1,6 +1,6 @@
 # De oude app raadplegen
 
-De oude app staat in `../vaneijck-salvageapp-analyse` (React Native 0.85, TypeScript en zeven JS-bestanden). **Neem het gedrag over, niet de code.** Schrijf eerst de test, en gebruik de fouten uit [bekende-fouten-oude-app.md](functioneel/bekende-fouten-oude-app.md) als regressietests.
+De oude app staat in `../vaneijck-salvageapp` (React Native 0.85, TypeScript en zeven JS-bestanden). **Neem het gedrag over, niet de code.** Schrijf eerst de test, en gebruik de fouten uit [bekende-fouten-oude-app.md](functioneel/bekende-fouten-oude-app.md) als regressietests.
 
 De volledige analyse (domeinmodel, login, sync, API-laag, stores, notificaties, instellingen en permissies, gebruikersflows, verdiepingen op PLTR, foto's en debugschermen, technische problemen en open vragen) staat in het Claude Doc **"Salvage App — analyse van de bestaande applicatie"**: <https://claude.ai/code/artifact/5456e97a-1e5d-4097-a31b-afd07ad2cf7c>.
 

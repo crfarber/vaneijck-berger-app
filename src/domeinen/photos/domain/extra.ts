@@ -1,5 +1,5 @@
 import { photoTypeKey } from './photo-type';
-import type { Photo } from './types';
+import { PHOTO_ROLE, type Photo } from './types';
 
 /**
  * Whether this photo is the 2nd, 3rd, … of its type in its own phase. The backend accepts only one
@@ -10,7 +10,8 @@ import type { Photo } from './types';
  * without copying a stored flag. Already-sent photos in the same phase still count, so a fourth
  * dashboard after an earlier upload stays extra.
  *
- * Order is `takenAt`, then `id` when the clock stamps collide.
+ * Order is role (mandatory before additional), then `takenAt`, then `id` when stamps collide — so
+ * a mandatory photo stays the primary even when an extra of the same type was taken first.
  */
 export function isExtraForUpload(
   photo: Photo,
@@ -29,7 +30,7 @@ export function isExtraForUpload(
         photoTypeKey(candidate.position) === type,
     )
     .slice()
-    .sort(byTakenAtThenId);
+    .sort(byRoleThenTakenAtThenId);
 
   const index = siblings.findIndex((candidate) => candidate.id === photo.id);
   if (index < 0) {
@@ -38,7 +39,12 @@ export function isExtraForUpload(
   return index > 0;
 }
 
-function byTakenAtThenId(left: Photo, right: Photo): number {
+function byRoleThenTakenAtThenId(left: Photo, right: Photo): number {
+  const leftMandatory = left.role === PHOTO_ROLE.mandatory ? 0 : 1;
+  const rightMandatory = right.role === PHOTO_ROLE.mandatory ? 0 : 1;
+  if (leftMandatory !== rightMandatory) {
+    return leftMandatory - rightMandatory;
+  }
   if (left.takenAt !== right.takenAt) {
     return left.takenAt - right.takenAt;
   }

@@ -61,6 +61,7 @@ De concrete ingangen verschillen per functie:
 | PERM-11 | Na inloggen toont de gate de disclosure-wizard zolang er nog een niet-gezien en niet-verleend soort is (meldingen → locatie → camera).                  | `src/domeinen/settings/domain/permission-disclosure.ts`, `src/domeinen/onboarding/screens/onboarding-gate-screen.tsx`               | `src/domeinen/settings/domain/permission-disclosure.test.ts`                                                |
 | PERM-12 | “Later” of “Toestaan” markeert de stap gezien onder `settings.permissionDisclosure.seen`; uitloggen wist die voortgang.                                 | `src/domeinen/settings/service/permission-disclosure-preference.ts`, `src/bootstrap/container.ts`                                   | `src/domeinen/settings/service/permission-disclosure-preference.test.ts`, `src/bootstrap/container.test.ts` |
 | PERM-13 | `PushGateway.permission()` vraagt geen OS-dialoog; na accept van meldingen in de disclosure start `pushRuntime` opnieuw voor tokenregistratie.          | `src/domeinen/notifications/platform/rn/firebase-push-gateway.ts`, `src/domeinen/settings/screens/permission-disclosure-screen.tsx` | `src/domeinen/notifications/service/push-runtime.test.ts`                                                   |
+| PERM-14 | Op Android vraagt de app meldingen eerst via de systeemdialoog; pas als een verzoek geweigerd terugkomt, verwijst hij naar de systeeminstellingen.      | `src/domeinen/settings/domain/permission-step.ts`, `src/domeinen/settings/platform/rn/expo-device-permissions.ts`                   | `src/domeinen/settings/domain/permission-step.test.ts`                                                      |
 
 ## Randgevallen en bewuste keuzes
 
@@ -69,6 +70,11 @@ De concrete ingangen verschillen per functie:
   tonen via `LocationReader.getCurrent()`.
 - Disclosure en instellingen delen `DevicePermissions`. Het fotoscherm gebruikt nog de
   Expo-camerahook; push leest Firebase-status maar vraagt via Notifee/`DevicePermissions`.
+- Notifee meldt op Android alleen “toegestaan” of “geweigerd”; “nog niet gevraagd” bestaat alleen
+  op iOS. Een geweigerde Android-melding geldt daarom pas als blijvend na een verzoek. Heeft de
+  berger twee keer geweigerd, dan toont Android geen dialoog meer: de eerste tik op “Toestemming
+  vragen” in Instellingen doet dan zichtbaar niets, daarna verschijnt de knop naar de
+  systeeminstellingen.
 - Een geweigerde locatie wordt voor de 500-metercontrole hetzelfde behandeld als een ontbrekende
   GPS-fix. De drie bevestigingsredenen blijven daardoor: geen huidige positie, geen doelpositie en
   500 meter of verder weg.

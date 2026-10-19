@@ -19,12 +19,18 @@ describe('photo overview screen', () => {
   it('hides server photos of a type that has a pending mandatory override', () => {
     expect(source).toContain('pendingOverrideTypeKeys(phasePhotos)');
     expect(source).toContain('visibleServerPhotos');
+    expect(source).toContain('photo.isExtra === true');
     expect(source).toContain("isExtraOverride: '0'");
     expect(source).toContain('asOverrideDraft');
     expect(source).toContain('overrideExisting: photo.overrideExisting === true');
     expect(source).toContain('localsForOverview(phasePhotos)');
     expect(source).toContain('pickMandatoryAndExtra(requirements, usablePhotos)');
     expect(source).toContain('replacementDrafts');
+    expect(source).toContain('regularDrafts');
+    expect(source).toContain("t('photos.sendQueued')");
+    expect(source).toContain("t('photos.queuedBadge')");
+    expect(source).toContain('canRetake');
+    expect(source).toContain('extraTileLabel');
   });
 
   it('shows stand-position help only on the first mandatory take, not on retake', () => {

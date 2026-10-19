@@ -874,6 +874,40 @@ describe('photo service queue', () => {
     expect((await service.listByService('svc-1'))[0]?.status).toBe(PHOTO_STATUS.sent);
   });
 
+  it('does not let a temporarily failing queued photo block a later queued photo', async () => {
+    const upload = vi.fn(async (input: { serviceId: string }) => {
+      if (input.serviceId === 'svc-old') {
+        throw new NetworkError();
+      }
+    });
+    const { service, files, clock } = setup({ upload });
+    files.dump()['file:///camera/shot-a.jpg'] = new Uint8Array([1]);
+    files.dump()['file:///camera/shot-b.jpg'] = new Uint8Array([2]);
+
+    await service.capture({
+      serviceId: 'svc-old',
+      incidentId: 'inc-1',
+      allocationId: 'alloc-1',
+      phase: 'load',
+      position: { category: 'DASHBOARD' },
+      sourceUri: 'file:///camera/shot-a.jpg',
+    });
+    clock.advance(1);
+    await service.capture({
+      serviceId: 'svc-new',
+      incidentId: 'inc-1',
+      allocationId: 'alloc-1',
+      phase: 'load',
+      position: { category: 'ROOF' },
+      sourceUri: 'file:///camera/shot-b.jpg',
+    });
+    await service.submitBatch('svc-old', 'load');
+    await service.submitBatch('svc-new', 'load');
+
+    expect((await service.listByService('svc-old'))[0]?.status).toBe(PHOTO_STATUS.queued);
+    expect((await service.listByService('svc-new'))[0]?.status).toBe(PHOTO_STATUS.sent);
+  });
+
   it('marks a hard 4xx as failed without deleting the file', async () => {
     const upload = vi.fn().mockRejectedValue(new HttpError(400, null, 'bad'));
     const { service, files } = setup({ upload });
@@ -896,6 +930,35 @@ describe('photo service queue', () => {
     upload.mockResolvedValueOnce(undefined);
     await service.processNow();
     expect((await service.listByService('svc-1'))[0]?.status).toBe(PHOTO_STATUS.sent);
+  });
+
+  it('uploads a mandatory photo as primary even when an extra of the same type was taken first', async () => {
+    const { service, upload, files, clock } = setup();
+    files.dump()['file:///camera/extra.jpg'] = new Uint8Array([1]);
+    files.dump()['file:///camera/mandatory.jpg'] = new Uint8Array([2]);
+
+    await service.capture({
+      serviceId: 'svc-1',
+      incidentId: 'inc-1',
+      allocationId: 'alloc-1',
+      phase: 'load',
+      role: 'additional',
+      position: { category: 'ROOF' },
+      sourceUri: 'file:///camera/extra.jpg',
+    });
+    clock.advance(1);
+    await service.capture({
+      serviceId: 'svc-1',
+      incidentId: 'inc-1',
+      allocationId: 'alloc-1',
+      phase: 'load',
+      role: 'mandatory',
+      position: { category: 'ROOF' },
+      sourceUri: 'file:///camera/mandatory.jpg',
+    });
+    await service.submitBatch('svc-1', 'load');
+
+    expect(upload.mock.calls.map((call) => call[0].isExtra)).toEqual([true, false]);
   });
 
   it('marks an additional photo of the same type as extra after a sent mandatory', async () => {
@@ -1199,6 +1262,57 @@ describe('photos api list', () => {
         url: 'https://cdn.example/photo-2.jpg',
         phase: 'load',
         position: { category: 'TYRES', tyre: 'rechts-voor' },
+        isExtra: true,
+      },
+    ]);
+  });
+
+  it('recognises server labels with a suffix the way the old app did', async () => {
+    const requestJson = vi.fn(async (_path: string, schema: { parse(value: unknown): unknown }) =>
+      schema.parse([
+        {
+          url: 'https://cdn.example/roof-1.jpg',
+          phase: 'Aanvang',
+          position: null,
+          photoType: 'Dak_1',
+          isExtra: true,
+        },
+        {
+          url: 'https://cdn.example/rear-1.jpg',
+          phase: 'Aanvang',
+          position: 'rechts-achter_1',
+          photoType: 'Buitenkant',
+          isExtra: true,
+        },
+        {
+          url: 'https://cdn.example/form.jpg',
+          phase: 'Aanvang',
+          position: null,
+          photoType: 'Afgifteformulier',
+          isExtra: false,
+        },
+      ]),
+    );
+    const http = { request: vi.fn(), requestJson } as unknown as HttpClient;
+    const api = createPhotosApi(http, createUploadFiles().files, 'https://api.test');
+
+    await expect(
+      api.list({
+        incidentId: 'inc-1',
+        serviceId: 'svc-1',
+        phase: 'load',
+      }),
+    ).resolves.toEqual([
+      {
+        url: 'https://cdn.example/roof-1.jpg',
+        phase: 'load',
+        position: { category: 'ROOF' },
+        isExtra: true,
+      },
+      {
+        url: 'https://cdn.example/rear-1.jpg',
+        phase: 'load',
+        position: { category: 'EXTERIOR', angle: 'rechts-achter' },
         isExtra: true,
       },
     ]);

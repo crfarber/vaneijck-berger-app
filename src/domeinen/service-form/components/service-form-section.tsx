@@ -75,10 +75,7 @@ export function ServiceFormSectionBody({ children }: { children: ReactNode }) {
 const styles = StyleSheet.create({
   occluder: {
     paddingHorizontal: spacing.md,
-    paddingTop: spacing.sm,
-    backgroundColor: colors.background,
-    zIndex: 2,
-    elevation: 4,
+    backgroundColor: colors.surface,
   },
   occluderCollapsed: {
     marginBottom: spacing.md,
@@ -145,7 +142,7 @@ const styles = StyleSheet.create({
   body: {
     marginHorizontal: spacing.md,
     marginVertical: spacing.md,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.background,
     borderRadius: radius.xl,
     padding: spacing.md,
     zIndex: 0,

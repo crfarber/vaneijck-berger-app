@@ -27,9 +27,9 @@ import {
   PHOTO_PHASE,
   PHOTO_STATUS,
   deliveryPhotoRequirements,
+  isExtraForUpload,
   localsForOverview,
   matchLocalCopies,
-  missingPhotoPositions,
   pendingOverrideTypeKeys,
   pickMandatoryAndExtra,
   photoPositionForRequirement,
@@ -177,8 +177,9 @@ export function PhotoOverviewScreen({
   ]);
 
   const overrideTypes = pendingOverrideTypeKeys(phasePhotos);
-  // While overrides exist, show only the latest replacement per type — not earlier local sent
-  // siblings or server copies — so one or more retakes stay on mandatory tiles instead of Extra.
+  const serverPositions = serverPhotos.map((photo) => photo.position);
+  // While overrides exist, show only the latest replacement per mandatory type — not earlier
+  // local sent mandatory siblings. Additional photos of the same type stay under Extra.
   const localCurrentPhotos: OverviewPhoto[] = localsForOverview(phasePhotos).map((photo) => ({
     id: photo.id,
     position: photo.position,
@@ -186,11 +187,15 @@ export function PhotoOverviewScreen({
     uri: photo.displayUri,
     role: photo.role,
     source: 'local' as const,
-    isExtra: photo.isExtraOverride,
+    isExtra:
+      photo.overrideExisting === true
+        ? false
+        : (photo.isExtraOverride ?? isExtraForUpload(photo, phasePhotos, serverPositions)),
     overrideExisting: photo.overrideExisting === true,
   }));
+  // Hide only the non-extra server copy of an overridden type; server extras stay under Extra.
   const visibleServerPhotos = serverPhotos.filter(
-    (photo) => !overrideTypes.has(photoTypeKey(photo.position)),
+    (photo) => !overrideTypes.has(photoTypeKey(photo.position)) || photo.isExtra === true,
   );
   const localCopies = matchLocalCopies(visibleServerPhotos, localCurrentPhotos);
   const copiedLocalIds = new Set(localCopies.map((photo) => photo?.id));
@@ -254,10 +259,9 @@ export function PhotoOverviewScreen({
     photo: assigned.mandatory[index] ?? null,
   }));
   const extraPhotos = assigned.extra;
-  const missingRequired = missingPhotoPositions(
-    requirements,
-    usablePhotos.map((photo) => photo.position),
-  ).length;
+  // Count empty mandatory tiles, not "any photo of that type" — an extra of the same type
+  // must not satisfy a required slot.
+  const missingRequired = mandatoryPhotos.filter((entry) => entry.photo === null).length;
   const canLeave =
     loaded &&
     definitionsValid &&
@@ -353,6 +357,9 @@ export function PhotoOverviewScreen({
   const replacementDrafts = phasePhotos.filter(
     (photo) => photo.status === PHOTO_STATUS.draft && photo.overrideExisting === true,
   );
+  const regularDrafts = phasePhotos.filter(
+    (photo) => photo.status === PHOTO_STATUS.draft && photo.overrideExisting !== true,
+  );
   const primaryButtonLabel =
     replacementDrafts.length > 0
       ? t('photos.sendReplacement')
@@ -389,7 +396,7 @@ export function PhotoOverviewScreen({
           } satisfies StatusOutcome;
         }
       }
-      if (replacementDrafts.length === 0) {
+      if (regularDrafts.length > 0 || replacementDrafts.length === 0) {
         const ready = await photoService.attachLocation({ serviceId, phase });
         if (!ready) {
           return {
@@ -408,12 +415,18 @@ export function PhotoOverviewScreen({
           slow: false,
         },
       });
-      if (replacementDrafts.length > 0) {
-        for (const draft of replacementDrafts) {
-          await submitOverride(draft.id);
-        }
-      } else {
+      for (const draft of replacementDrafts) {
+        await submitOverride(draft.id);
+      }
+      if (regularDrafts.length > 0 || replacementDrafts.length === 0) {
         await submitBatch(phase);
+      }
+      const after = await photoService.listByService(serviceId);
+      const stillQueued = after.some(
+        (photo) => photo.phase === phase && photo.status === PHOTO_STATUS.queued,
+      );
+      if (stillQueued) {
+        return { tone: 'queued', message: t('photos.sendQueued') } satisfies StatusOutcome;
       }
       succeeded = true;
       return { tone: 'success', message: t('photos.sendSuccess') } satisfies StatusOutcome;
@@ -451,13 +464,6 @@ export function PhotoOverviewScreen({
               onPress={() => void submitPhotos()}
               disabled={!canLeave || busy}
             />
-            <Pressable
-              accessibilityRole="button"
-              onPress={leaveToServiceForm}
-              style={styles.cancelButton}
-            >
-              <Text style={styles.cancelText}>{t('common.cancel')}</Text>
-            </Pressable>
           </>
         }
       >
@@ -568,6 +574,13 @@ export function PhotoOverviewScreen({
                     key={photo.id}
                     photo={photo}
                     locked={locked}
+                    statusBadge={
+                      photo.status === PHOTO_STATUS.queued
+                        ? 'queued'
+                        : photo.source === 'server' || photo.status === PHOTO_STATUS.sent
+                          ? 'uploaded'
+                          : null
+                    }
                     onRetake={locked ? undefined : () => openExtraPhotoRetake(photo)}
                     onDelete={
                       locked
@@ -633,10 +646,14 @@ function MandatoryPhotoTile({
       ? 'todo'
       : photo.status === PHOTO_STATUS.sent
         ? 'uploaded'
-        : 'done';
+        : photo.status === PHOTO_STATUS.queued
+          ? 'queued'
+          : 'done';
   const highlightedIndex = standGridIndex(position);
   const VehicleIcon = VEHICLE_TYPES.find((entry) => entry.key === vehicleType)?.Icon ?? CarSVG;
   const zoomable = state !== 'todo' && photo !== null && canZoom(photo);
+  // Queued photos must finish uploading before retake — otherwise a duplicate lands under Extra.
+  const canRetake = state === 'done' || state === 'uploaded';
 
   return (
     <Pressable
@@ -677,12 +694,16 @@ function MandatoryPhotoTile({
               <View style={styles.uploadBadge}>
                 <Text style={styles.uploadBadgeText}>{t('photos.uploaded')}</Text>
               </View>
+            ) : state === 'queued' ? (
+              <View style={styles.uploadBadge}>
+                <Text style={styles.uploadBadgeText}>{t('photos.queuedBadge')}</Text>
+              </View>
             ) : (
               <View style={styles.checkBadge}>
                 <CheckIcon size={14} color={colors.background} />
               </View>
             )}
-            <RetakeButton onPress={onPress} />
+            {canRetake ? <RetakeButton onPress={onPress} /> : <View />}
           </View>
         </>
       )}
@@ -725,12 +746,14 @@ function ExtraPhotoTile({
   photo,
   variant = 'grid',
   locked = false,
+  statusBadge = null,
   onRetake,
   onDelete,
 }: {
   photo: OverviewPhoto;
   variant?: 'grid' | 'strip';
   locked?: boolean;
+  statusBadge?: 'queued' | 'uploaded' | null;
   onRetake?: () => void;
   onDelete?: () => void;
 }) {
@@ -740,6 +763,7 @@ function ExtraPhotoTile({
   const editable = !locked && !strip && onRetake !== undefined && onDelete !== undefined;
   const zoomable = canZoom(photo);
   const TileShell = zoomable || editable ? Pressable : View;
+  const label = extraTileLabel(photo, t('photos.extraSuffix'));
   return (
     <>
       <TileShell
@@ -764,8 +788,19 @@ function ExtraPhotoTile({
           resizeMode="cover"
         />
         {locked ? (
-          <View style={styles.lockBadge} accessibilityLabel={t('photos.locked')}>
-            <Ionicons name="lock-closed" size={14} color="#fff" />
+          <View style={styles.tileTopBadgeRow} pointerEvents="none">
+            {statusBadge !== null ? (
+              <View style={styles.uploadBadge}>
+                <Text style={styles.uploadBadgeText}>
+                  {statusBadge === 'queued' ? t('photos.queuedBadge') : t('photos.uploaded')}
+                </Text>
+              </View>
+            ) : (
+              <View />
+            )}
+            <View style={styles.lockBadgeInline} accessibilityLabel={t('photos.locked')}>
+              <Ionicons name="lock-closed" size={14} color="#fff" />
+            </View>
           </View>
         ) : null}
         {editable ? (
@@ -786,13 +821,18 @@ function ExtraPhotoTile({
           style={strip ? styles.stripFooter : [styles.extraFooter, styles.extraFooterPositioned]}
         >
           <Text style={[styles.extraFooterText, strip && styles.stripFooterText]} numberOfLines={1}>
-            {positionName(photo.position).toUpperCase()}
+            {label}
           </Text>
         </View>
       </TileShell>
       {zoomOpen ? <PhotoZoomViewer uri={photo.uri} onClose={() => setZoomOpen(false)} /> : null}
     </>
   );
+}
+
+function extraTileLabel(photo: OverviewPhoto, extraSuffix: string): string {
+  const base = positionName(photo.position).toUpperCase();
+  return photo.isExtra === true ? `${base} ${extraSuffix}` : base;
 }
 
 function PhotoImage({
@@ -963,6 +1003,14 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 6,
     right: 6,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.text,
+  },
+  lockBadgeInline: {
     width: 28,
     height: 28,
     borderRadius: 14,

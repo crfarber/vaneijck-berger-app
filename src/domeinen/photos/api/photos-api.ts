@@ -4,7 +4,15 @@ import type { HttpClient } from '@/shared/api/http-client';
 import type { MultipartUploadFiles } from '@/shared/platform/ports';
 import { commentForPhase } from '../domain/phase';
 import { isExteriorAngle, isTyrePosition } from '../domain/photo-type';
-import { PHOTO_PHASE, type PhotoPhase, type PhotoPosition } from '../domain/types';
+import {
+  EXTERIOR_ANGLES,
+  PHOTO_PHASE,
+  TYRE_POSITIONS,
+  type ExteriorAngle,
+  type PhotoPhase,
+  type PhotoPosition,
+  type TyrePosition,
+} from '../domain/types';
 
 export type UploadPhotoInput = {
   incidentId: string;
@@ -103,8 +111,31 @@ function normalizeToken(value: string): string {
   return value.trim().toLowerCase().replace(/_/g, '-').replace(/\s+/g, '-');
 }
 
+/** Longer markers first so "links-voor" wins over "voor" inside "links-voor-1". */
+const SERVER_TYPE_MARKERS = Object.keys(SERVER_TYPE_TO_CATEGORY).sort(
+  (left, right) => right.length - left.length,
+);
+const EXTERIOR_ANGLE_MARKERS = [...EXTERIOR_ANGLES].sort(
+  (left, right) => right.length - left.length,
+);
+const TYRE_POSITION_MARKERS = [...TYRE_POSITIONS].sort((left, right) => right.length - left.length);
+
+/**
+ * Match like the old app: a server label may carry a suffix (`Dak_1`). Unknown labels stay null
+ * (we do not fall back to OVERVIEW).
+ */
 function categoryFromPhotoType(photoType: string): PhotoPosition['category'] | null {
-  return SERVER_TYPE_TO_CATEGORY[normalizeToken(photoType)] ?? null;
+  const normalized = normalizeToken(photoType);
+  const exact = SERVER_TYPE_TO_CATEGORY[normalized];
+  if (exact !== undefined) {
+    return exact;
+  }
+  for (const marker of SERVER_TYPE_MARKERS) {
+    if (normalized.includes(marker)) {
+      return SERVER_TYPE_TO_CATEGORY[marker] ?? null;
+    }
+  }
+  return null;
 }
 
 function phaseFromServerLabel(value: string): PhotoPhase | null {
@@ -118,17 +149,43 @@ function phaseFromServerLabel(value: string): PhotoPhase | null {
   return null;
 }
 
+function findExteriorAngle(value: string): ExteriorAngle | null {
+  if (isExteriorAngle(value)) {
+    return value;
+  }
+  for (const angle of EXTERIOR_ANGLE_MARKERS) {
+    if (value.includes(angle)) {
+      return angle;
+    }
+  }
+  return null;
+}
+
+function findTyrePosition(value: string): TyrePosition | null {
+  if (isTyrePosition(value)) {
+    return value;
+  }
+  for (const tyre of TYRE_POSITION_MARKERS) {
+    if (value.includes(tyre)) {
+      return tyre;
+    }
+  }
+  return null;
+}
+
 function positionFromServer(
   category: PhotoPosition['category'],
   position: string | null | undefined,
 ): PhotoPosition | null {
   if (category === 'EXTERIOR') {
     const normalized = position ? normalizeToken(position) : '';
-    return isExteriorAngle(normalized) ? { category, angle: normalized } : null;
+    const angle = findExteriorAngle(normalized);
+    return angle !== null ? { category, angle } : null;
   }
   if (category === 'TYRES') {
     const normalized = position ? normalizeToken(position) : '';
-    return isTyrePosition(normalized) ? { category, tyre: normalized } : null;
+    const tyre = findTyrePosition(normalized);
+    return tyre !== null ? { category, tyre } : null;
   }
   return { category };
 }

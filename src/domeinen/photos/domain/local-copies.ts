@@ -19,8 +19,8 @@ export function matchLocalCopies<T extends { position: PhotoPosition; status: Ph
 
 /**
  * Photo types that have a local mandatory override (`overrideExisting`) in draft, queued, or sent.
- * The overview hides all server photos of those types so a replacement stays on the mandatory tile
- * instead of appearing under Extra next to (or instead of) the original.
+ * The overview hides the non-extra server photo of those types so a replacement stays on the
+ * mandatory tile; server extras of the same type remain under Extra.
  */
 export function pendingOverrideTypeKeys(
   local: readonly {

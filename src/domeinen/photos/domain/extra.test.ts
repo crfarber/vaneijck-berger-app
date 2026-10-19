@@ -77,6 +77,21 @@ describe('isExtraForUpload', () => {
     expect(isExtraForUpload(b, [b, a])).toBe(true);
   });
 
+  it('keeps a mandatory photo as primary even when an extra of the same type was taken first', () => {
+    const extraFirst = photo({
+      id: 'extra',
+      takenAt: 1,
+      role: 'additional',
+    });
+    const mandatoryLater = photo({
+      id: 'mandatory',
+      takenAt: 2,
+      role: 'mandatory',
+    });
+    expect(isExtraForUpload(mandatoryLater, [extraFirst, mandatoryLater])).toBe(false);
+    expect(isExtraForUpload(extraFirst, [extraFirst, mandatoryLater])).toBe(true);
+  });
+
   it('treats a photo missing from the list as extra when siblings already exist', () => {
     const existing = photo({ id: 'a', takenAt: 1 });
     const orphan = photo({ id: 'orphan', takenAt: 2 });

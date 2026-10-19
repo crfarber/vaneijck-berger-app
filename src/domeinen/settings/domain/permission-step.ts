@@ -45,3 +45,38 @@ export function nextPermissionStep(snapshot: PermissionSnapshot): PermissionStep
   }
   return PERMISSION_STEP.openSettings;
 }
+
+/** Notification authorization as the push library reports it, without its numeric codes. */
+export const NOTIFICATION_AUTHORIZATION = {
+  authorized: 'authorized',
+  provisional: 'provisional',
+  denied: 'denied',
+  notDetermined: 'not-determined',
+} as const;
+
+export type NotificationAuthorization =
+  (typeof NOTIFICATION_AUTHORIZATION)[keyof typeof NOTIFICATION_AUTHORIZATION];
+
+/**
+ * Android only reports authorized or denied: "not asked yet" is iOS-only, and Android itself
+ * decides whether the dialog still appears. So a denial on Android is only final once a request
+ * has come back denied; before that the app must still try the system dialog.
+ */
+export function notificationPermissionSnapshot(input: {
+  authorization: NotificationAuthorization;
+  platform: 'android' | 'ios';
+  afterRequest: boolean;
+}): PermissionSnapshot {
+  switch (input.authorization) {
+    case NOTIFICATION_AUTHORIZATION.authorized:
+    case NOTIFICATION_AUTHORIZATION.provisional:
+      return { status: PERMISSION_STATUS.granted, canAskAgain: false };
+    case NOTIFICATION_AUTHORIZATION.notDetermined:
+      return { status: PERMISSION_STATUS.undetermined, canAskAgain: true };
+    case NOTIFICATION_AUTHORIZATION.denied:
+      return {
+        status: PERMISSION_STATUS.denied,
+        canAskAgain: input.platform === 'android' && !input.afterRequest,
+      };
+  }
+}

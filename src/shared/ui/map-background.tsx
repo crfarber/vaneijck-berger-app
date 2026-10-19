@@ -30,7 +30,7 @@ export function MapBackground({ children }: { children: ReactNode }) {
  * behind a transparent stack lets the previous screen show through during the push animation.
  */
 export function mapBackgroundScreenLayout({ children }: { children: ReactNode }) {
-  return <MapBackground>{children}</MapBackground>;
+  return <>{children}</>;
 }
 
 const styles = StyleSheet.create({

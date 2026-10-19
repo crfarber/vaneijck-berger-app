@@ -119,7 +119,6 @@ export function LocationStatusButton() {
         title={t('location.sheetTitle')}
         closeLabel={t('common.cancel')}
         onClose={() => setVisible(false)}
-        height="50%"
         footer={
           <View style={styles.footer}>
             {status === GPS_STATUS.ask ? (
@@ -154,12 +153,14 @@ export function LocationStatusButton() {
             {status === GPS_STATUS.active ? t('location.active') : t('location.inactive')}
           </Text>
           {coordinate !== null ? (
-            <Text style={styles.coordinates}>
-              {t('location.coordinates', {
-                lat: coordinate.latitude.toFixed(6),
-                lng: coordinate.longitude.toFixed(6),
-              })}
-            </Text>
+            <View style={styles.coordinateContainer}>
+              <Text style={styles.coordinate}>
+                {t('location.latitude')}: {coordinate.latitude.toFixed(6)}
+              </Text>
+              <Text style={styles.coordinate}>
+                {t('location.longitude')}: {coordinate.longitude.toFixed(6)}
+              </Text>
+            </View>
           ) : null}
           {lastUpdatedAt !== null ? (
             <Text style={styles.meta}>
@@ -175,9 +176,26 @@ export function LocationStatusButton() {
 }
 
 const styles = StyleSheet.create({
-  body: { gap: spacing.md, paddingVertical: spacing.sm },
+  body: {
+    gap: spacing.md,
+    paddingVertical: spacing.sm,
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+  },
   status: { fontSize: 18, fontWeight: '700', color: colors.text, textAlign: 'center' },
-  coordinates: { fontSize: 15, color: colors.text, textAlign: 'center' },
+  coordinateContainer: {
+    alignItems: 'flex-start',
+    justifyContent: 'flex-start',
+    gap: spacing.sm,
+    flexDirection: 'row',
+  },
+  coordinate: {
+    fontSize: 15,
+    color: colors.text,
+    textAlign: 'center',
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
   meta: { fontSize: 12, color: colors.textMuted, textAlign: 'center' },
   footer: { gap: spacing.sm },
 });

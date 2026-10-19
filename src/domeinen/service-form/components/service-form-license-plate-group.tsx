@@ -1,6 +1,7 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { Ionicons } from '@expo/vector-icons';
+import { useCallback, useMemo, useRef, useState, type ComponentProps } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, StyleSheet, Text, View, type TextInput } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View, type TextInput } from 'react-native';
 import {
   canBeDutchLicensePlate,
   isDutchLicensePlate,
@@ -328,45 +329,77 @@ export function ServiceFormLicensePlateGroup({
     );
   };
 
+  const plateAction = showSummary ? (
+    <PlateAction
+      icon="refresh"
+      label={t('serviceForm.licensePlate.reset')}
+      onPress={resetGroup}
+      secondary
+    />
+  ) : uiState.phase === LicensePlatePhase.Foreign ? (
+    <PlateAction
+      icon="refresh"
+      label={t('serviceForm.licensePlate.useQuickSearch')}
+      onPress={resetGroup}
+      secondary
+    />
+  ) : group.config.allowForeignManual ? (
+    <PlateAction
+      icon="globe-outline"
+      label={t('serviceForm.licensePlate.foreignPlate')}
+      onPress={openForeign}
+      secondary
+    />
+  ) : null;
+
   return (
     <View style={styles.container}>
       {reportedPlate ? (
-        <View style={styles.reportedBlock}>
+        <View style={styles.plateBlock}>
           <Text style={styles.label}>{t('serviceForm.licensePlate.reportedLabel')}</Text>
-          <NumberPlate plateNumber={reportedPlate} />
+          <View style={styles.plateRow}>
+            <NumberPlate plateNumber={reportedPlate} style={styles.plateGrow} />
+            {showConfirm ? (
+              <>
+                <PlateAction
+                  icon="checkmark"
+                  label={t('serviceForm.licensePlate.acceptReported')}
+                  onPress={acceptReported}
+                />
+                <PlateAction
+                  icon="close"
+                  label={t('serviceForm.licensePlate.rejectReported')}
+                  onPress={rejectReported}
+                  secondary
+                />
+              </>
+            ) : null}
+          </View>
         </View>
       ) : null}
 
-      {showConfirm ? (
-        <View style={styles.actionRow}>
-          <View style={styles.actionButton}>
-            <Button label={t('serviceForm.licensePlate.acceptReported')} onPress={acceptReported} />
-          </View>
-          <View style={styles.actionButton}>
-            <Button
-              label={t('serviceForm.licensePlate.rejectReported')}
-              variant="secondary"
-              onPress={rejectReported}
-            />
-          </View>
-        </View>
-      ) : (
+      {showConfirm ? null : (
         <>
           {foundField ? (
             <View
               collapsable={false}
               ref={(node) => registerFieldRef?.(foundField.id, node)}
               onLayout={() => onFieldLayout?.(foundField.id)}
+              style={styles.plateBlock}
             >
               <Text style={styles.label}>{t('serviceForm.licensePlate.foundLabel')}</Text>
-              <NumberPlate
-                plateNumber={foundPlateValue}
-                editable
-                chrome={neutralizePlate ? 'foreign' : 'auto'}
-                onChangeText={onFoundPlateChange}
-                onBlur={() => onBlur(foundField)}
-                accessibilityLabel={t('serviceForm.licensePlate.foundLabel')}
-              />
+              <View style={styles.plateRow}>
+                <NumberPlate
+                  plateNumber={foundPlateValue}
+                  editable
+                  chrome={neutralizePlate ? 'foreign' : 'auto'}
+                  onChangeText={onFoundPlateChange}
+                  onBlur={() => onBlur(foundField)}
+                  accessibilityLabel={t('serviceForm.licensePlate.foundLabel')}
+                  style={styles.plateGrow}
+                />
+                {plateAction}
+              </View>
             </View>
           ) : null}
 
@@ -382,22 +415,15 @@ export function ServiceFormLicensePlateGroup({
               <Text style={styles.summary} accessibilityLiveRegion="polite">
                 {summaryText}
               </Text>
-              <View style={styles.summaryActions}>
-                {group.config.allowManual ? (
+              {group.config.allowManual ? (
+                <View style={styles.modeLink}>
                   <Button
                     label={t('serviceForm.licensePlate.notCorrect')}
                     variant="text"
                     onPress={() => dispatch({ type: 'openManual' })}
                   />
-                ) : (
-                  <View />
-                )}
-                <Button
-                  label={t('serviceForm.licensePlate.reset')}
-                  variant="text"
-                  onPress={resetGroup}
-                />
-              </View>
+                </View>
+              ) : null}
             </>
           ) : null}
 
@@ -419,28 +445,6 @@ export function ServiceFormLicensePlateGroup({
                 : null}
             </>
           ) : null}
-
-          {!showSummary &&
-          group.config.allowForeignManual &&
-          uiState.phase !== LicensePlatePhase.Foreign ? (
-            <View style={styles.modeLink}>
-              <Button
-                label={t('serviceForm.licensePlate.foreignPlate')}
-                variant="text"
-                onPress={openForeign}
-              />
-            </View>
-          ) : null}
-
-          {uiState.phase === LicensePlatePhase.Foreign ? (
-            <View style={styles.modeLink}>
-              <Button
-                label={t('serviceForm.licensePlate.useQuickSearch')}
-                variant="text"
-                onPress={resetGroup}
-              />
-            </View>
-          ) : null}
         </>
       )}
       {debugButton}
@@ -448,12 +452,45 @@ export function ServiceFormLicensePlateGroup({
   );
 }
 
+type PlateActionProps = {
+  icon: ComponentProps<typeof Ionicons>['name'];
+  label: string;
+  onPress: () => void;
+  secondary?: boolean;
+};
+
+function PlateAction({ icon, label, onPress, secondary = false }: PlateActionProps) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.plateAction,
+        secondary && styles.plateActionSecondary,
+        pressed && styles.pressed,
+      ]}
+    >
+      <Ionicons name={icon} size={20} color={colors.brandText} />
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
   container: { gap: spacing.sm },
-  reportedBlock: { gap: spacing.xs },
+  plateBlock: { gap: spacing.xs },
   label: { ...typography.label, color: colors.textMuted },
-  actionRow: { flexDirection: 'row', alignItems: 'stretch', gap: spacing.sm },
-  actionButton: { flex: 1, minWidth: 0 },
+  plateRow: { flexDirection: 'row', alignItems: 'stretch', gap: spacing.sm },
+  plateGrow: { flex: 1, width: 'auto' },
+  plateAction: {
+    width: 48,
+    borderRadius: radius.md,
+    backgroundColor: colors.brand,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  plateActionSecondary: { backgroundColor: colors.surface },
+  pressed: { opacity: 0.6 },
   status: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   statusText: { ...typography.label, color: colors.textMuted },
   summary: {
@@ -469,12 +506,6 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     alignSelf: 'stretch',
     width: '100%',
-  },
-  summaryActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.sm,
   },
   modeLink: { alignSelf: 'flex-end' },
 });
