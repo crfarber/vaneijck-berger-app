@@ -48,6 +48,7 @@ export {
 } from './domain/address-place-selection';
 export type { AddressComponentMapping, CountryLookupRow } from './domain/address-place-selection';
 export {
+  isPostalAddressLookupReady,
   normalizeDutchPostalCode,
   parsePostalAddressLookupResponse,
 } from './domain/postal-address-lookup';

@@ -1,7 +1,7 @@
 import Constants from 'expo-constants';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSession } from '@/domeinen/auth/ui';
@@ -13,10 +13,16 @@ import { FilesIcon } from '@/shared/ui/icons/files';
 import { GlobeIcon } from '@/shared/ui/icons/globe';
 import { ShieldIcon } from '@/shared/ui/icons/shield';
 import { Screen } from '@/shared/ui/screen';
+import { useScheduler } from '@/shared/ui/scheduler-context';
 import { useStatusOverlay } from '@/shared/ui/status-overlay-host';
 import { colors, spacing } from '@/shared/ui/theme';
 import { SettingsMenuRow } from '../components/settings-menu-row';
 import { SettingsWorkerBar } from '../components/settings-worker-bar';
+import {
+  DEVELOPER_MENU_UNLOCK_RESET_MS,
+  registerDeveloperMenuTap,
+  type DeveloperMenuUnlockProgress,
+} from '../domain/developer-menu-unlock';
 import { useSignOutGuard } from '../hooks/settings-context';
 
 const appVersion = Constants.expoConfig?.version ?? '';
@@ -33,6 +39,9 @@ type MenuItem = {
   route: '/unit' | '/language' | '/permissions' | '/reference-data-sync' | '/support' | '/debug';
   params?: { returnTo: 'allocation-unit-management' };
   icon: ReactNode;
+  /** Shown only after eight taps on the worker identity. */
+  requiresUnlock?: boolean;
+  /** Debug entry stays a Metro/dev convenience even after unlock. */
   devOnly?: boolean;
 };
 
@@ -57,29 +66,31 @@ const MENU_ITEMS: readonly MenuItem[] = [
     icon: <ShieldIcon size={20} color={colors.text} />,
   },
   {
-    key: 'sync',
-    labelKey: 'settings.referenceData.open',
-    route: '/reference-data-sync',
-    icon: <BroomWide size={20} color={colors.text} />,
-  },
-  {
     key: 'support',
     labelKey: 'support.open',
     route: '/support',
     icon: <FilesIcon size={20} color={colors.text} />,
   },
   {
+    key: 'sync',
+    labelKey: 'settings.referenceData.open',
+    route: '/reference-data-sync',
+    icon: <BroomWide size={20} color={colors.text} />,
+    requiresUnlock: true,
+  },
+  {
     key: 'debug',
     labelKey: 'debug.open',
     route: '/debug',
     icon: <DebugIcon size={20} color={colors.text} />,
+    requiresUnlock: true,
     devOnly: true,
   },
 ];
 
 /**
- * Worker strip (refreshable), then a general menu (language, permissions, sync, support, debug)
- * and the app version above sign-out.
+ * Worker strip (refreshable), then a general menu (language, permissions, support; sync/debug
+ * after eight taps on the worker identity) and the app version above sign-out.
  */
 export function SettingsScreen() {
   const { t } = useTranslation();
@@ -89,10 +100,55 @@ export function SettingsScreen() {
   const { data: worker, refetch, isRefetching } = useWorker();
   const [signingOut, setSigningOut] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const scheduler = useScheduler();
+  const [unlockProgress, setUnlockProgress] = useState<DeveloperMenuUnlockProgress>({
+    tapCount: 0,
+    unlocked: false,
+  });
+  const cancelUnlockReset = useRef<(() => void) | null>(null);
+
+  useEffect(() => {
+    return () => {
+      cancelUnlockReset.current?.();
+      cancelUnlockReset.current = null;
+    };
+  }, []);
 
   const userTypeLabel = userType === null ? '' : userType.toUpperCase();
   const workerName = worker?.dn_name?.trim() || t('settings.worker.unknown');
-  const visibleItems = MENU_ITEMS.filter((item) => item.devOnly !== true || __DEV__);
+  const visibleItems = MENU_ITEMS.filter((item) => {
+    if (item.requiresUnlock === true && !unlockProgress.unlocked) {
+      return false;
+    }
+    if (item.devOnly === true && !__DEV__) {
+      return false;
+    }
+    return true;
+  });
+
+  const onIdentityPress = (): void => {
+    if (unlockProgress.unlocked) {
+      return;
+    }
+    cancelUnlockReset.current?.();
+    cancelUnlockReset.current = null;
+    const next = registerDeveloperMenuTap(unlockProgress);
+    setUnlockProgress(next);
+    if (next.unlocked) {
+      Alert.alert(
+        t('settings.developerMenu.unlockedTitle'),
+        t('settings.developerMenu.unlockedMessage'),
+        [{ text: t('common.ok') }],
+      );
+      return;
+    }
+    cancelUnlockReset.current = scheduler.schedule(() => {
+      setUnlockProgress((current) =>
+        current.unlocked ? current : { tapCount: 0, unlocked: false },
+      );
+      cancelUnlockReset.current = null;
+    }, DEVELOPER_MENU_UNLOCK_RESET_MS);
+  };
 
   const refreshWorker = async (): Promise<void> => {
     if (refreshing || isRefetching) {
@@ -160,13 +216,17 @@ export function SettingsScreen() {
         />
       }
     >
-      <SettingsWorkerBar
-        name={workerName}
-        userTypeLabel={userTypeLabel}
-        refreshing={refreshing || isRefetching}
-        onRefresh={() => void refreshWorker()}
-        accessibilityLabel={t('settings.worker.refresh')}
-      />
+      {__DEV__ ? (
+        <SettingsWorkerBar
+          name={workerName}
+          userTypeLabel={userTypeLabel}
+          refreshing={refreshing || isRefetching}
+          onRefresh={() => void refreshWorker()}
+          onIdentityPress={onIdentityPress}
+          accessibilityLabel={t('settings.worker.refresh')}
+          identityAccessibilityLabel={t('settings.worker.unlockTap')}
+        />
+      ) : null}
       <Text style={styles.section}>{t('settings.section.general')}</Text>
       <View style={styles.list}>
         {visibleItems.map((item, index) => (

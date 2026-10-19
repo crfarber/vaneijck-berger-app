@@ -62,6 +62,7 @@ worden gecontroleerd.
 | [Overzicht](overzicht.md)                       | appstart, container, providers en navigatie                                           | `ba1383c`                   |
 | [PLTR](pltr.md)                                 | planbaar transport, fasen en acties                                                   | `c0127855`                  |
 | [Pushmeldingen](pushmeldingen.md)               | registratie, parsing, effecten en historie                                            | `ba1383c`                   |
+| [Standby-locatie](standby-locatie.md)           | standby-locatieadvies via push, banner en navigatie                                   | slice 20                    |
 | [Referentiedata](referentiedata.md)             | synchronisatie, opslag en formulierdefinities                                         | `ba1383c`                   |
 | [Statuscodes](statuscodes.md)                   | opdracht-, dienst- en beschikbaarheidsstatussen                                       | `ba1383c`                   |
 | [Stores](stores.md)                             | Query, Zustand, opslag en tokenbezit                                                  | `ba1383c`                   |

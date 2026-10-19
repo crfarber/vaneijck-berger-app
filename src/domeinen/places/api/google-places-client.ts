@@ -24,6 +24,14 @@ const detailsResponseSchema = z.object({
       name: z.string(),
       formatted_address: z.string().optional(),
       address_components: z.array(addressComponentSchema),
+      geometry: z
+        .object({
+          location: z.object({
+            lat: z.number(),
+            lng: z.number(),
+          }),
+        })
+        .optional(),
     })
     .optional(),
   error_message: z.string().optional(),
@@ -42,6 +50,8 @@ export type PlaceDetails = {
     short_name?: string;
     long_name?: string;
   }>;
+  /** Present when Place Details requested `geometry`. */
+  coordinate?: { latitude: number; longitude: number };
 };
 
 export type PlacesClient = {
@@ -98,7 +108,7 @@ export function createGooglePlacesClient(deps: PlacesClientDeps): PlacesClient {
       const raw = detailsResponseSchema.parse(
         await getJson('/details/json', {
           place_id: placeId,
-          fields: 'name,formatted_address,address_component',
+          fields: 'name,formatted_address,address_component,geometry',
           language: 'nl',
         }),
       );
@@ -108,10 +118,14 @@ export function createGooglePlacesClient(deps: PlacesClientDeps): PlacesClient {
       if (raw.status !== 'OK') {
         throw new Error(raw.error_message ?? `Places details ${raw.status}`);
       }
+      const location = raw.result.geometry?.location;
       return {
         name: raw.result.name,
         formattedAddress: raw.result.formatted_address,
         addressComponents: raw.result.address_components,
+        ...(location !== undefined
+          ? { coordinate: { latitude: location.lat, longitude: location.lng } }
+          : {}),
       };
     },
   };

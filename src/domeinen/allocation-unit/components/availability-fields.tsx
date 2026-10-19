@@ -102,7 +102,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
     backgroundColor: colors.background,
   },
-  choiceSelected: { borderColor: colors.text, backgroundColor: colors.brandAction },
+  choiceSelected: { backgroundColor: colors.brandAction },
   choiceLabel: { color: colors.text, fontSize: 18, fontWeight: '700' },
   choiceLabelSelected: { color: colors.brandLight },
   card: {

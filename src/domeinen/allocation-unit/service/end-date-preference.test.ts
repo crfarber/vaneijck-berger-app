@@ -56,6 +56,13 @@ describe('createEndDatePreference', () => {
     expect(store.dump()[REMEMBERED_END_DATE_KEY]).toBe(plusHours(3).toISOString());
   });
 
+  it('exposes the remembered ISO string for shift-end checks', async () => {
+    const preference = createEndDatePreference(createInMemoryStore());
+    expect(await preference.getRememberedEndDateIso()).toBeNull();
+    await preference.remember(plusHours(3));
+    expect(await preference.getRememberedEndDateIso()).toBe(plusHours(3).toISOString());
+  });
+
   it('clears the remembered end date on sign-out', async () => {
     const store = createInMemoryStore();
     const preference = createEndDatePreference(store);

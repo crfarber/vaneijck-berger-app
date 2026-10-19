@@ -196,16 +196,44 @@ describe('createPushRuntime', () => {
     expect(handler.handle).toHaveBeenCalledTimes(2);
   });
 
-  it('ignores a disabled token', async () => {
+  it('handles standby location advice and navigates on a cold-start tap', async () => {
     const { runtime, handler, banners, navigation, emit } = setup();
     await runtime.start();
 
-    emit(message({ data: { type: 'StandbyLocationAdvice' } }), 'initial');
+    emit(
+      message({
+        data: {
+          type: 'StandbyLocationAdvice',
+          latitude: '52.34',
+          longitude: '4.95',
+        },
+      }),
+      'initial',
+    );
 
-    await Promise.resolve();
-    expect(handler.handle).not.toHaveBeenCalled();
+    await vi.waitFor(() => expect(handler.handle).toHaveBeenCalledOnce());
     expect(banners).toEqual([]);
-    expect(navigation.openAllocations).not.toHaveBeenCalled();
+    expect(navigation.openAllocations).toHaveBeenCalledOnce();
+  });
+
+  it('injects a message through the same path as a real push (debug)', async () => {
+    const { runtime, handler, banners } = setup();
+    await runtime.start();
+
+    await runtime.inject(
+      message({
+        data: {
+          type: 'StandbyLocationAdvice',
+          latitude: '52.34151',
+          longitude: '4.95544',
+        },
+        notification: { title: 'Standby', body: 'Test' },
+      }),
+      'foreground',
+    );
+
+    expect(handler.handle).toHaveBeenCalledOnce();
+    expect(banners).toHaveLength(1);
   });
 
   it('does not log the payload (the old app logged the raw message, including personal data)', async () => {

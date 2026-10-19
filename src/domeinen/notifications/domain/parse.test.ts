@@ -187,4 +187,35 @@ describe('parseNotification', () => {
   it('gives empty title and body when there is no visible notification', () => {
     expect(parseNotification({ data: {} })).toMatchObject({ title: '', body: '' });
   });
+
+  it('parses standby location advice coordinates from the payload', () => {
+    const parsed = parseNotification({
+      data: {
+        type: 'StandbyLocationAdvice',
+        standbyLocationId: 'loc-1',
+        latitude: '52.34151',
+        longitude: '4.95544',
+        street: 'Diemerkade',
+        houseNo: '12',
+        city: 'DIEMEN',
+      },
+    });
+    expect(parsed.token).toBe('StandbyLocationAdvice');
+    expect(parsed.standbyAdvice).toEqual({
+      standbyLocationId: 'loc-1',
+      latitude: 52.34151,
+      longitude: 4.95544,
+      street: 'Diemerkade',
+      houseNo: '12',
+      city: 'DIEMEN',
+      name: undefined,
+      postalCode: undefined,
+    });
+  });
+
+  it('omits standbyAdvice when coordinates are missing', () => {
+    const parsed = parseNotification({ data: { type: 'StandbyLocationAdvice' } });
+    expect(parsed.token).toBe('StandbyLocationAdvice');
+    expect(parsed.standbyAdvice).toBeUndefined();
+  });
 });

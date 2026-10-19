@@ -1,3 +1,5 @@
+import type { StandbyLocationAdviceFields } from '@/domeinen/standby-location';
+
 /** The kinds of push message the backend sends. */
 export const NOTIFICATION_TOKENS = [
   'NewIncident',
@@ -31,7 +33,7 @@ export const NOTIFICATION_DISPLAY_MODE: Readonly<
   VehicleDeliverance: 'default',
   NewTms: 'default',
   WorkerStatus: 'hiddenBanner',
-  StandbyLocationAdvice: 'disabled',
+  StandbyLocationAdvice: 'default',
 };
 
 /** Where a message came from. Taps (`opened`, `initial`, `notifee-press`) may navigate. */
@@ -57,4 +59,6 @@ export type ParsedNotification = {
   serviceId?: string;
   title: string;
   body: string;
+  /** Present when the token is `StandbyLocationAdvice` and coordinates parsed successfully. */
+  standbyAdvice?: StandbyLocationAdviceFields;
 };

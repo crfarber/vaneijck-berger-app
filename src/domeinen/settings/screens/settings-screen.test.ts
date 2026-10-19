@@ -10,4 +10,10 @@ describe('settings screen', () => {
     expect(source).toContain("router.push({ pathname: '/unit', params: item.params })");
     expect(source).not.toContain("'/allocation-unit-management'");
   });
+
+  it('hides sync and debug until the worker identity unlocks them', () => {
+    expect(source).toContain('requiresUnlock: true');
+    expect(source).toContain('onIdentityPress={onIdentityPress}');
+    expect(source).toContain('registerDeveloperMenuTap');
+  });
 });

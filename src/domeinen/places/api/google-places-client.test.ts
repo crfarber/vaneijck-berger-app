@@ -27,22 +27,26 @@ describe('createGooglePlacesClient', () => {
     expect(fetchImpl).not.toHaveBeenCalled();
   });
 
-  it('returns place details', async () => {
-    const fetchImpl = vi.fn(async () =>
-      Response.json({
+  it('returns place details including coordinates when geometry is present', async () => {
+    const fetchImpl = vi.fn(async (input: RequestInfo | URL) => {
+      void input;
+      return Response.json({
         status: 'OK',
         result: {
           name: 'Van Eijck',
           formatted_address: 'Teststraat 1',
           address_components: [{ types: ['route'], long_name: 'Teststraat' }],
+          geometry: { location: { lat: 52.1, lng: 5.1 } },
         },
-      }),
-    );
+      });
+    });
     const client = createGooglePlacesClient({ apiKey: 'key', fetch: fetchImpl });
     expect(await client.details('p1')).toEqual({
       name: 'Van Eijck',
       formattedAddress: 'Teststraat 1',
       addressComponents: [{ types: ['route'], long_name: 'Teststraat' }],
+      coordinate: { latitude: 52.1, longitude: 5.1 },
     });
+    expect(String(fetchImpl.mock.lastCall?.[0])).toContain('geometry');
   });
 });

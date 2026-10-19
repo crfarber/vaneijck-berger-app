@@ -7,6 +7,7 @@ import {
   type AllocationsApi,
 } from '@/domeinen/allocations';
 import { workerQueryKey } from '@/domeinen/notifications';
+import type { StandbyLocationService } from '@/domeinen/standby-location';
 import { HttpError } from '@/shared/api/errors';
 import { createQueryNotificationActions } from './notification-actions';
 
@@ -21,9 +22,14 @@ const allocation = (id: string, incidentId: string): Allocation => ({
 function setup(get: AllocationsApi['get'] = async () => allocation('a1', 'i1')) {
   const queryClient = new QueryClient();
   const allocations = { get } as unknown as AllocationsApi;
+  const standbyLocation = {
+    apply: vi.fn(),
+    expire: vi.fn(),
+  } as unknown as StandbyLocationService;
   return {
     queryClient,
-    actions: createQueryNotificationActions({ queryClient, allocations }),
+    standbyLocation,
+    actions: createQueryNotificationActions({ queryClient, allocations, standbyLocation }),
   };
 }
 
@@ -85,5 +91,23 @@ describe('createQueryNotificationActions', () => {
     expect(invalidate).toHaveBeenCalledWith({ queryKey: allocationKeys.list() });
     expect(invalidate).toHaveBeenCalledWith({ queryKey: workerQueryKey });
     expect(invalidate).toHaveBeenCalledWith({ queryKey: vehicleReleaseKeys.list() });
+  });
+
+  it('applies standby advice with blocking derived from the cache', () => {
+    const { queryClient, actions, standbyLocation } = setup();
+    const advice = { standbyLocationId: 'loc-1', latitude: 52, longitude: 5 };
+
+    actions.applyStandbyAdvice(advice);
+    expect(standbyLocation.apply).toHaveBeenCalledWith(advice, { hasBlockingItems: false });
+
+    queryClient.setQueryData(allocationKeys.list(), [allocation('a1', 'i1')]);
+    actions.applyStandbyAdvice(advice);
+    expect(standbyLocation.apply).toHaveBeenLastCalledWith(advice, { hasBlockingItems: true });
+  });
+
+  it('expires standby advice', () => {
+    const { actions, standbyLocation } = setup();
+    actions.expireStandbyAdvice();
+    expect(standbyLocation.expire).toHaveBeenCalledTimes(1);
   });
 });

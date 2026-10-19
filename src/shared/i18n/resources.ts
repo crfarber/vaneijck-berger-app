@@ -201,6 +201,27 @@ export const nl = {
     sessionStore: 'Session store',
     tokenProvider: 'TokenProvider',
     queryCache: 'Query cache',
+    fakeStandby: 'Fake standby-locatie',
+    clearStandby: 'Wis standby-locatie',
+    standbyTitle: 'Standby test',
+    standbyAddressHint:
+      'Optioneel: vul postcode en huisnummer in. Leeg = Diemen-mock. Anders: CRM-adres + Places-GPS.',
+    standbyPostalCode: 'Postcode',
+    standbyPostalCodePlaceholder: '1234 AB',
+    standbyHouseNumber: 'Huisnr',
+    standbyHouseNumberPlaceholder: '12',
+    standbySetVisible:
+      'Fake standby gezet ({{address}}). De banner zou zichtbaar moeten zijn op de opdrachtenlijst.',
+    standbySetHidden:
+      'Fake standby gezet ({{address}}), maar de banner is niet zichtbaar (status {{status}}, blocking: {{blocking}}).',
+    standbyCleared: 'Standby-locatie gewist.',
+    standbyOpenAllocations: 'Naar opdrachten',
+    standbyResolve: {
+      'invalid-input': 'Vul een geldige Nederlandse postcode en een huisnummer in.',
+      'address-not-found': 'Dit adres is niet gevonden via de postcode-check.',
+      'places-unavailable': 'Google Places is niet geconfigureerd; GPS kan niet worden opgezocht.',
+      'no-coordinates': 'Er zijn geen GPS-coördinaten gevonden voor dit adres.',
+    },
   },
   unit: {
     registerTitle: 'Eenheid registreren',
@@ -685,6 +706,11 @@ export const nl = {
       refreshedMessage: 'Je gegevens zijn opnieuw opgehaald.',
       refreshFailedTitle: 'Verversen mislukt',
       refreshFailedMessage: 'Je gegevens konden niet opnieuw worden opgehaald.',
+      unlockTap: 'Werkergegevens',
+    },
+    developerMenu: {
+      unlockedTitle: 'Ontwikkelaar',
+      unlockedMessage: 'Synchronisatie en debug zijn nu zichtbaar.',
     },
     permissions: {
       open: 'Toestemmingen',
@@ -836,6 +862,19 @@ export const nl = {
       yesterday: 'Gisteren',
       older: 'Ouder',
     },
+    types: {
+      StandbyLocationAdvice: 'Standby-locatieadvies',
+    },
+  },
+  standbyLocation: {
+    bannerLabel: 'Standby-locatie',
+    bannerSubtitle: 'Ga naar deze locatie en blijf beschikbaar',
+    navigate: 'Navigeer',
+    arrived: 'Aangekomen',
+    mapTitle: 'Standby-locatie',
+    openAppleMaps: 'Apple Maps',
+    openGoogleMaps: 'Google Maps',
+    openWaze: 'Waze',
   },
 } as const;
 
@@ -1041,6 +1080,27 @@ export const en: Translations = {
     sessionStore: 'Session store',
     tokenProvider: 'TokenProvider',
     queryCache: 'Query cache',
+    fakeStandby: 'Fake standby location',
+    clearStandby: 'Clear standby location',
+    standbyTitle: 'Standby test',
+    standbyAddressHint:
+      'Optional: enter postcode and house number. Empty = Diemen mock. Otherwise: CRM address + Places GPS.',
+    standbyPostalCode: 'Postcode',
+    standbyPostalCodePlaceholder: '1234 AB',
+    standbyHouseNumber: 'House no.',
+    standbyHouseNumberPlaceholder: '12',
+    standbySetVisible:
+      'Fake standby set ({{address}}). The banner should be visible on the assignments list.',
+    standbySetHidden:
+      'Fake standby set ({{address}}), but the banner is not visible (status {{status}}, blocking: {{blocking}}).',
+    standbyCleared: 'Standby location cleared.',
+    standbyOpenAllocations: 'Open assignments',
+    standbyResolve: {
+      'invalid-input': 'Enter a valid Dutch postcode and a house number.',
+      'address-not-found': 'This address was not found via the postcode check.',
+      'places-unavailable': 'Google Places is not configured; GPS cannot be resolved.',
+      'no-coordinates': 'No GPS coordinates were found for this address.',
+    },
   },
   unit: {
     registerTitle: 'Register unit',
@@ -1523,6 +1583,11 @@ export const en: Translations = {
       refreshedMessage: 'Your details were fetched again.',
       refreshFailedTitle: 'Refresh failed',
       refreshFailedMessage: 'Your details could not be fetched again.',
+      unlockTap: 'Worker details',
+    },
+    developerMenu: {
+      unlockedTitle: 'Developer',
+      unlockedMessage: 'Sync and debug are now visible.',
     },
     permissions: {
       open: 'Permissions',
@@ -1673,6 +1738,19 @@ export const en: Translations = {
       yesterday: 'Yesterday',
       older: 'Older',
     },
+    types: {
+      StandbyLocationAdvice: 'Standby location advice',
+    },
+  },
+  standbyLocation: {
+    bannerLabel: 'Standby location',
+    bannerSubtitle: 'Go to this location and stay available',
+    navigate: 'Navigate',
+    arrived: 'Arrived',
+    mapTitle: 'Standby location',
+    openAppleMaps: 'Apple Maps',
+    openGoogleMaps: 'Google Maps',
+    openWaze: 'Waze',
   },
 };
 

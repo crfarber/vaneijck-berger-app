@@ -298,6 +298,18 @@ locatie-disclosure-route (open vraag 31).
 - **Klaar als:** de vier knoppen werken op het opdrachtenscherm; een pushbericht verschijnt in de
   historie en verdwijnt bij uitloggen (container-test).
 
+## Slice 20: standby-locatieadvies (gebouwd)
+
+Gereed: push `StandbyLocationAdvice` activeert een persistent advies (nieuw domein
+`standby-location`). Op de opdrachtenlijst verschijnt een banner met adres en navigatie
+(Apple/Google/Waze). Het advies vervalt bij allocation-pushes, einde dienst of blocking store;
+wissen bij aankomst binnen 500 m of uitloggen. Gedrag overgenomen van oude branch 40430, code
+opnieuw geschreven ([ADR 0030](decisions/0030-standby-locatieadvies.md), open vraag 13).
+
+- **Klaar als:** domain/service-tests voor parse, state machine en afstand; push-plan en handler
+  passen apply/expire toe; banner op het opdrachtenscherm; uitloggen wist de sleutel
+  (container-test).
+
 ## Doorlopend
 
 Elke slice werkt [flows](functioneel/flows.md), [statussen](functioneel/statussen.md), [API-contract](functioneel/api-contract.md) en de [open vragen](functioneel/open-vragen.md) bij, en voegt zijn regressietests voor oude fouten toe aan [bekende-fouten-oude-app.md](functioneel/bekende-fouten-oude-app.md).

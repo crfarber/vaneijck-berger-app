@@ -9,6 +9,7 @@ export type LogCategory =
   | 'http'
   | 'sync'
   | 'notifications'
+  | 'standby-location'
   | 'location'
   | 'photos'
   | 'navigation'

@@ -2,6 +2,8 @@ import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, SectionList, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { StandbyLocationBanner } from '@/domeinen/standby-location/ui';
+import { hasBlockingAllocationItems } from '@/domeinen/standby-location';
 import { Button } from '@/shared/ui/button';
 import { CollapsibleSectionHeader } from '@/shared/ui/collapsible-section-header';
 import { colors, radius, spacing, type } from '@/shared/ui/theme';
@@ -56,8 +58,18 @@ export function AllocationsScreen({ toolbar }: { toolbar?: ReactNode } = {}) {
     };
   });
 
-  const toolbarHeader =
-    toolbar !== undefined ? <View style={styles.toolbar}>{toolbar}</View> : null;
+  const hasBlockingItems = hasBlockingAllocationItems({
+    activeCount: active.count,
+    pendingCount: pending.count,
+    vehicleReleaseCount: vehicleReleases.count,
+  });
+
+  const listHeader = (
+    <View>
+      {toolbar !== undefined ? <View style={styles.toolbar}>{toolbar}</View> : null}
+      <StandbyLocationBanner hasBlockingItems={hasBlockingItems} />
+    </View>
+  );
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['bottom']}>
@@ -75,7 +87,7 @@ export function AllocationsScreen({ toolbar }: { toolbar?: ReactNode } = {}) {
           keyExtractor={(item) =>
             isVehicleRelease(item) ? item.dn_locationId : item.dn_allocationid
           }
-          ListHeaderComponent={toolbarHeader}
+          ListHeaderComponent={listHeader}
           renderItem={({ item, section }) =>
             isVehicleRelease(item) ? (
               <VehicleReleaseRow location={item} />

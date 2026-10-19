@@ -66,10 +66,15 @@ describe('decideIncoming', () => {
     });
   });
 
-  it('ignores a disabled token completely, even on a tap', () => {
+  it('processes standby location advice like a normal message', () => {
     expect(decide('initial', { notification: notification('StandbyLocationAdvice') })).toEqual({
-      process: false,
+      process: true,
       showBanner: false,
+      navigate: true,
+    });
+    expect(decide('foreground', { notification: notification('StandbyLocationAdvice') })).toEqual({
+      process: true,
+      showBanner: true,
       navigate: false,
     });
   });

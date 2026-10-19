@@ -1,3 +1,4 @@
+import { parseStandbyLocationAdvice } from '@/domeinen/standby-location';
 import type { NotificationToken, ParsedNotification, RemoteMessage } from './types';
 
 type Payload = Record<string, unknown>;
@@ -84,15 +85,21 @@ export function getNotificationId(message: RemoteMessage): string | null {
 export function parseNotification(message: RemoteMessage): ParsedNotification {
   const payload = extractPayload(message);
   const type = getNotificationType(payload);
+  const token = resolveToken(type);
+  const standbyAdvice =
+    token === 'StandbyLocationAdvice'
+      ? (parseStandbyLocationAdvice(payload) ?? undefined)
+      : undefined;
 
   return {
     id: getNotificationId(message),
-    token: resolveToken(type),
+    token,
     hasExplicitType: type !== null,
     allocationId: text(payload.allocationId),
     incidentId: text(payload.incidentId),
     serviceId: text(payload.serviceid) ?? text(payload.serviceId),
     title: message.notification?.title ?? '',
     body: message.notification?.body ?? '',
+    ...(standbyAdvice !== undefined ? { standbyAdvice } : {}),
   };
 }

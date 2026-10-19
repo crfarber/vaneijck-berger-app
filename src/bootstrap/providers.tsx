@@ -8,6 +8,7 @@ import { AllocationsApiProvider } from '@/domeinen/allocations/ui';
 import { AuthProvider } from '@/domeinen/auth/ui';
 import { LocationProvider } from '@/domeinen/location/ui';
 import { NotificationHistoryProvider } from '@/domeinen/notifications/ui';
+import { StandbyLocationProvider } from '@/domeinen/standby-location/ui';
 import { PhotosProvider } from '@/domeinen/photos/ui';
 import { PlacesProvider } from '@/domeinen/places/ui';
 import { ServiceFormProvider } from '@/domeinen/service-form/ui';
@@ -19,9 +20,22 @@ import { HapticsProvider } from '@/shared/ui/haptics-context';
 import { StatusOverlayProvider } from '@/shared/ui/status-overlay-host';
 import { FeedbackProvider } from '@/shared/ui/toast-host';
 import { SchedulerProvider } from '@/shared/ui/scheduler-context';
+import {
+  allocationKeys,
+  createAllocationSections,
+  vehicleReleaseKeys,
+  type Allocation,
+  type VehicleReleaseLocation,
+} from '@/domeinen/allocations';
+import { hasBlockingAllocationItems, isStandbyBannerVisible } from '@/domeinen/standby-location';
 import type { Container } from './container';
 import { copyAccessTokenToClipboard } from './dev/copy-access-token';
-import { DevToolsProvider } from './dev/dev-tools-context';
+import { DevToolsProvider, type FakeStandbyInput } from './dev/dev-tools-context';
+import {
+  DEFAULT_FAKE_STANDBY_ADDRESS,
+  fakeStandbyLocationMessage,
+} from './dev/fake-standby-notification';
+import { resolveStandbyAddressFromPostal } from './dev/resolve-standby-address';
 import { createPostalAddressLookup } from './postal-address-lookup';
 
 /** Tells the session when the app returns to the foreground, so an expired token is renewed at once. */
@@ -54,6 +68,60 @@ export function AppProviders({
           tokenProvider: container.tokenProvider,
           clipboard: Clipboard,
         }),
+      async fakeStandbyLocationAdvice(input?: FakeStandbyInput) {
+        const postalCode = input?.postalCode?.trim() ?? '';
+        const houseNumber = input?.houseNumber?.trim() ?? '';
+        const useLookup = postalCode.length > 0 || houseNumber.length > 0;
+        let address = DEFAULT_FAKE_STANDBY_ADDRESS;
+        if (useLookup) {
+          const resolved = await resolveStandbyAddressFromPostal(
+            { postalCode, houseNumber },
+            {
+              lookupPostalAddress: createPostalAddressLookup((code, number) =>
+                container.allocationsApi.checkZipcode(code, number),
+              ),
+              places: container.placesClient,
+            },
+          );
+          if (!resolved.ok) {
+            return {
+              status: null,
+              hasBlockingItems: false,
+              bannerVisible: false,
+              label: '',
+              resolveError: resolved.reason,
+            };
+          }
+          address = resolved.address;
+        }
+        await container.pushRuntime.inject(
+          fakeStandbyLocationMessage(container.clock.now(), address),
+          'foreground',
+        );
+        const state = container.standbyLocation.getState();
+        const allocations =
+          container.queryClient.getQueryData<Allocation[]>(allocationKeys.list()) ?? [];
+        const releases =
+          container.queryClient.getQueryData<VehicleReleaseLocation[]>(vehicleReleaseKeys.list()) ??
+          [];
+        const [active, pending, vehicleReleases] = createAllocationSections(allocations, releases);
+        const hasBlockingItems = hasBlockingAllocationItems({
+          activeCount: active.count,
+          pendingCount: pending.count,
+          vehicleReleaseCount: vehicleReleases.count,
+        });
+        return {
+          status: state.status,
+          hasBlockingItems,
+          bannerVisible: isStandbyBannerVisible({
+            status: state.status,
+            pendingAdvice: state.pendingAdvice,
+            hasBlockingItems,
+          }),
+          label: `${address.street} ${address.houseNo}, ${address.city}`,
+        };
+      },
+      clearStandbyLocationAdvice: () => container.standbyLocation.clear(),
     }),
     [container],
   );
@@ -132,20 +200,23 @@ export function AppProviders({
                                     <NotificationHistoryProvider
                                       value={container.notificationHistory}
                                     >
-                                      <SupportProvider value={container.supportLog}>
-                                        <AllocationUnitProvider
-                                          value={{
-                                            service: container.allocationUnitService,
-                                            clock: container.clock,
-                                            endDatePreference: container.endDatePreference,
-                                            recentTruckPreference: container.recentTruckPreference,
-                                            homebasePreference: container.homebasePreference,
-                                            lastUnitPreference: container.lastUnitPreference,
-                                          }}
-                                        >
-                                          {children}
-                                        </AllocationUnitProvider>
-                                      </SupportProvider>
+                                      <StandbyLocationProvider value={container.standbyLocation}>
+                                        <SupportProvider value={container.supportLog}>
+                                          <AllocationUnitProvider
+                                            value={{
+                                              service: container.allocationUnitService,
+                                              clock: container.clock,
+                                              endDatePreference: container.endDatePreference,
+                                              recentTruckPreference:
+                                                container.recentTruckPreference,
+                                              homebasePreference: container.homebasePreference,
+                                              lastUnitPreference: container.lastUnitPreference,
+                                            }}
+                                          >
+                                            {children}
+                                          </AllocationUnitProvider>
+                                        </SupportProvider>
+                                      </StandbyLocationProvider>
                                     </NotificationHistoryProvider>
                                   </LocationProvider>
                                 </SettingsProvider>

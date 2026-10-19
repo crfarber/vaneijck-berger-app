@@ -1,11 +1,11 @@
-import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import { Pressable } from 'react-native-gesture-handler';
 import type { ServiceContact, VehicleSummary } from '@/domeinen/services';
 import { colors, radius, spacing } from '@/shared/ui/theme';
 import { formatIncidentCreatedAt } from '../domain/incident-card';
 import { useIncidentAge } from '../hooks/use-incident-age';
+
+export { CardActionButton } from '@/shared/ui/card-action-button';
 
 export function LocationBlock({ lines }: { lines: readonly string[] }) {
   if (lines.length === 0) {
@@ -89,34 +89,6 @@ export function PhasePill({ label, complete = false }: { label: string; complete
   );
 }
 
-/** Blue icon tile plus dark label — same shape on the incident, service and PLTR cards. */
-export function CardActionButton({
-  label,
-  icon,
-  onPress,
-}: {
-  label: string;
-  icon: keyof typeof Ionicons.glyphMap;
-  onPress: () => void;
-}) {
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      onPress={onPress}
-      hitSlop={12}
-      style={styles.actionButton}
-    >
-      <View style={styles.actionIcon}>
-        <Ionicons name={icon} size={18} color={colors.background} />
-      </View>
-      <View style={styles.actionLabel}>
-        <Text style={styles.actionText}>{label.toUpperCase()}</Text>
-      </View>
-    </Pressable>
-  );
-}
-
 const styles = StyleSheet.create({
   block: { gap: spacing.xs },
   locationMain: { color: colors.text, fontSize: 15, fontWeight: '600' },
@@ -135,33 +107,4 @@ const styles = StyleSheet.create({
   pillComplete: { backgroundColor: colors.success },
   pillText: { color: colors.brandText, fontSize: 12, fontWeight: '700' },
   pillCompleteText: { color: colors.background },
-  actionButton: {
-    flexDirection: 'row',
-    alignItems: 'stretch',
-    borderRadius: radius.xxl,
-    overflow: 'hidden',
-  },
-  actionIcon: {
-    width: 30,
-    height: 30,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.brandAction,
-    borderTopLeftRadius: radius.xxl,
-    borderBottomLeftRadius: radius.xxl,
-  },
-  actionLabel: {
-    height: 30,
-    paddingRight: spacing.md,
-    justifyContent: 'center',
-    paddingHorizontal: spacing.sm,
-    backgroundColor: colors.brandDark,
-    borderTopRightRadius: radius.xxl,
-    borderBottomRightRadius: radius.xxl,
-  },
-  actionText: {
-    color: colors.background,
-    fontSize: 12,
-    fontWeight: '700',
-  },
 });

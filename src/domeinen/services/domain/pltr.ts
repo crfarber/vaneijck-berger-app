@@ -16,7 +16,8 @@ import { getServiceParty, getServiceVehicle, type VehicleSummary } from './servi
  * - The footer compared `label === null`, but a missing action is `null` itself, so `label` was
  *   `undefined` and the button fell through to "next step". No action means no button.
  *   HULPVERLENING_AFGEROND opens the closing screen instead of that fallback.
- * - `MapModal` hid Apple Maps on iOS (`Platform.OS !== 'ios'`). The three links are always offered.
+ * - `MapModal` hid Apple Maps on Android (`Platform.OS !== 'ios'`). Link URLs stay platform-agnostic;
+ *   the sheets that open them drop Apple Maps outside iOS.
  */
 
 export const PLTR_PHASE = {
@@ -140,7 +141,7 @@ export const pltrVehicle = getServiceVehicle;
  */
 export const pltrPartyLabel = getServiceParty;
 
-/** Apple Maps, Google Maps and Waze. Always all three; the platform does not drop one. */
+/** Apple Maps, Google Maps and Waze URLs. Callers hide Apple Maps outside iOS. */
 export function externalMapLinks(coordinate: Coordinate): ExternalMapLinks {
   const { latitude, longitude } = coordinate;
   return {

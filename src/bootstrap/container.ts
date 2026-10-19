@@ -72,6 +72,10 @@ import {
   type PushRuntime,
 } from '@/domeinen/notifications';
 import {
+  createStandbyLocationService,
+  type StandbyLocationService,
+} from '@/domeinen/standby-location';
+import {
   createPhotosApi,
   createPhotoRepository,
   migrateLegacyPhotos,
@@ -199,6 +203,7 @@ export type Container = {
   locationReader: LocationReader;
   clock: Clock;
   notificationHistory: NotificationHistory;
+  standbyLocation: StandbyLocationService;
   /** Non-blocking result feedback (toasts). */
   feedback: ToastQueue;
   /** Blocking full-screen status for send actions (processing / success / queued / error). */
@@ -485,6 +490,11 @@ export function createContainer(input: ContainerInput): Container {
     clock,
     logger,
   });
+  const standbyLocation = createStandbyLocationService({
+    store: input.keyValueStore,
+    clock,
+    logger,
+  });
 
   const authService = createAuthService({
     provider: tokenProvider,
@@ -505,6 +515,7 @@ export function createContainer(input: ContainerInput): Container {
       await outbox.clearAll();
       await serviceFormDrafts.clearAll();
       await notificationHistory.clear();
+      await standbyLocation.clear();
       await permissionDisclosurePreference.clear();
       await endDatePreference.clear();
       await homebasePreference.clear();
@@ -533,6 +544,7 @@ export function createContainer(input: ContainerInput): Container {
       void outbox.clearAll();
       void serviceFormDrafts.clearAll();
       void notificationHistory.clear();
+      void standbyLocation.clear();
       void permissionDisclosurePreference.clear();
       void endDatePreference.clear();
       void homebasePreference.clear();
@@ -543,6 +555,7 @@ export function createContainer(input: ContainerInput): Container {
       startPhotosAfterMigration();
       outbox.start();
       void notificationHistory.hydrate();
+      void standbyLocation.hydrate();
     }
     if (event.type === 'signed-out') {
       photoService.stop();
@@ -573,7 +586,11 @@ export function createContainer(input: ContainerInput): Container {
     gateway: input.pushGateway,
     register: (token) => createPushRegistrationApi(http).register(token),
     handler: createNotificationHandler(
-      createQueryNotificationActions({ queryClient, allocations: allocationsApi }),
+      createQueryNotificationActions({
+        queryClient,
+        allocations: allocationsApi,
+        standbyLocation,
+      }),
       logger,
     ),
     deduplicator: createNotificationDeduplicator(),
@@ -696,6 +713,7 @@ export function createContainer(input: ContainerInput): Container {
     locationReader: input.locationReader,
     clock,
     notificationHistory,
+    standbyLocation,
     feedback,
     statusOverlay,
     scheduler,

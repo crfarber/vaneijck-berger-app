@@ -1,12 +1,13 @@
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { Alert, Linking, StyleSheet, Text, View } from 'react-native';
 import { Pressable } from 'react-native-gesture-handler';
-import { externalMapLinks } from '@/domeinen/services';
+import type { Coordinate } from '@/domeinen/location';
 import { colors, radius, spacing } from '@/shared/ui/theme';
 import type { ServiceCardModel } from '../domain/service-card';
 import { CardActionButton } from './card-blocks';
+import { NavigateMapsSheet } from './navigate-maps-sheet';
 
 /**
  * Dark service face from the old `IncidentServiceCard`: number, party, vehicle, driver, and
@@ -28,6 +29,7 @@ export function ServiceCard({
   pendingConnection?: boolean;
 }) {
   const { t } = useTranslation();
+  const [mapsCoordinate, setMapsCoordinate] = useState<Coordinate | null>(null);
   const type = t(`allocationType.${model.typeKey}`);
   const heading = model.number ?? type;
   const canNavigate = showNavigate && Boolean(model.coordinate);
@@ -37,18 +39,7 @@ export function ServiceCard({
     if (!model.coordinate) {
       return;
     }
-    const links = externalMapLinks(model.coordinate);
-    const open = (url: string): void => {
-      void Linking.openURL(url).catch(() => {
-        Alert.alert(t('common.somethingWrong'));
-      });
-    };
-    Alert.alert(t('pltr.navigate'), undefined, [
-      { text: t('pltr.maps.apple'), onPress: () => open(links.apple) },
-      { text: t('pltr.maps.google'), onPress: () => open(links.google) },
-      { text: t('pltr.maps.waze'), onPress: () => open(links.waze) },
-      { text: t('common.cancel'), style: 'cancel' },
-    ]);
+    setMapsCoordinate(model.coordinate);
   };
 
   const callClient = (): void => {
@@ -129,6 +120,7 @@ export function ServiceCard({
         <View style={styles.card}>{body}</View>
       )}
       {footer ? <View style={styles.footer}>{footer}</View> : null}
+      <NavigateMapsSheet coordinate={mapsCoordinate} onClose={() => setMapsCoordinate(null)} />
     </View>
   );
 }

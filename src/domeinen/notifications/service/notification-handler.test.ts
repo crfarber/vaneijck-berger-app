@@ -20,6 +20,8 @@ function setup() {
     removeAllocation: vi.fn(async () => undefined),
     reloadWorker: vi.fn(async () => undefined),
     reloadVehicleReleases: vi.fn(async () => undefined),
+    applyStandbyAdvice: vi.fn(),
+    expireStandbyAdvice: vi.fn(),
   };
   const logger = createLogger({ clock: createFakeClock() });
   return { actions, logger, handler: createNotificationHandler(actions, logger) };
@@ -123,14 +125,34 @@ describe('createNotificationHandler', () => {
     expect(actions.refreshAllocations).toHaveBeenCalledTimes(1);
   });
 
-  it('does nothing for a disabled message', async () => {
+  it('applies standby advice when coordinates are present', async () => {
+    const { handler, actions } = setup();
+    const advice = { standbyLocationId: 'loc-1', latitude: 52, longitude: 5 };
+
+    const outcome = await handler.handle(
+      parsed({ token: 'StandbyLocationAdvice', standbyAdvice: advice }),
+    );
+
+    expect(actions.applyStandbyAdvice).toHaveBeenCalledWith(advice);
+    expect(actions.expireStandbyAdvice).not.toHaveBeenCalled();
+    expect(outcome.resolved).toBe(true);
+  });
+
+  it('does nothing for standby advice without coordinates', async () => {
     const { handler, actions } = setup();
 
     const outcome = await handler.handle(parsed({ token: 'StandbyLocationAdvice' }));
 
     expect(outcome.resolved).toBe(true);
-    for (const action of Object.values(actions)) {
-      expect(action).not.toHaveBeenCalled();
-    }
+    expect(actions.applyStandbyAdvice).not.toHaveBeenCalled();
+  });
+
+  it('expires standby when an allocation arrives', async () => {
+    const { handler, actions } = setup();
+
+    await handler.handle(parsed({ token: 'NewIncident', allocationId: 'a1' }));
+
+    expect(actions.fetchAllocation).toHaveBeenCalledWith('a1');
+    expect(actions.expireStandbyAdvice).toHaveBeenCalledTimes(1);
   });
 });

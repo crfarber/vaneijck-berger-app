@@ -9,6 +9,8 @@ export type EndDatePreference = {
    * onboarding, or when it is missing, malformed, past or too far away, it is now plus 8 hours.
    */
   getProposedEndDate(options: { isOnboarding: boolean; now: Date }): Promise<Date>;
+  /** Raw ISO string from storage, or null when missing. Used for standby shift-end checks. */
+  getRememberedEndDateIso(): Promise<string | null>;
   remember(endDate: Date): Promise<void>;
   /** Drops the remembered end date on sign-out. */
   clear(): Promise<void>;
@@ -31,6 +33,11 @@ export function createEndDatePreference(store: KeyValueStore): EndDatePreference
         }
       }
       return getDefaultEndDate(now);
+    },
+
+    async getRememberedEndDateIso() {
+      const stored = await store.getItem(REMEMBERED_END_DATE_KEY);
+      return stored !== null && stored.trim() !== '' ? stored : null;
     },
 
     async remember(endDate) {

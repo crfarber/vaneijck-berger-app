@@ -1,13 +1,15 @@
+import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { Alert, Linking, StyleSheet, Text, View } from 'react-native';
 import { Pressable } from 'react-native-gesture-handler';
-import { externalMapLinks } from '@/domeinen/services';
+import type { Coordinate } from '@/domeinen/location';
 import { SwipeIcon } from '@/shared/ui/icons/swipe-icon';
 import { colors, radius, spacing } from '@/shared/ui/theme';
 import { formatIncidentClock, type IncidentCardModel } from '../domain/incident-card';
 import { useIncidentAge } from '../hooks/use-incident-age';
 import { CardActionButton } from './card-blocks';
+import { NavigateMapsSheet } from './navigate-maps-sheet';
 import { ClockSVG } from '@/shared/ui/icons/clock';
 
 export function IncidentCard({
@@ -78,6 +80,7 @@ function StandardIncidentCard({
   swipeable: boolean;
 }) {
   const { t } = useTranslation();
+  const [mapsCoordinate, setMapsCoordinate] = useState<Coordinate | null>(null);
   const title = model.title ?? t('allocations.unnamed');
   const clock = model.createdOn ? formatIncidentClock(model.createdOn) : undefined;
   const age = useIncidentAge(model.createdOn);
@@ -86,18 +89,7 @@ function StandardIncidentCard({
     if (!model.coordinate) {
       return;
     }
-    const links = externalMapLinks(model.coordinate);
-    const open = (url: string): void => {
-      void Linking.openURL(url).catch(() => {
-        Alert.alert(t('common.somethingWrong'));
-      });
-    };
-    Alert.alert(t('pltr.navigate'), undefined, [
-      { text: t('pltr.maps.apple'), onPress: () => open(links.apple) },
-      { text: t('pltr.maps.google'), onPress: () => open(links.google) },
-      { text: t('pltr.maps.waze'), onPress: () => open(links.waze) },
-      { text: t('common.cancel'), style: 'cancel' },
-    ]);
+    setMapsCoordinate(model.coordinate);
   };
 
   const call = (): void => {
@@ -203,6 +195,7 @@ function StandardIncidentCard({
         <View style={styles.mainPressable}>{main}</View>
       )}
       {footer}
+      <NavigateMapsSheet coordinate={mapsCoordinate} onClose={() => setMapsCoordinate(null)} />
     </View>
   );
 }
@@ -225,6 +218,7 @@ function PltrIncidentCard({
   preview: boolean;
 }) {
   const { t } = useTranslation();
+  const [mapsCoordinate, setMapsCoordinate] = useState<Coordinate | null>(null);
   const title = model.title ?? t('allocations.unnamed');
   const clock = model.createdOn ? formatIncidentClock(model.createdOn) : undefined;
   const age = useIncidentAge(model.createdOn);
@@ -242,18 +236,7 @@ function PltrIncidentCard({
     if (!model.coordinate) {
       return;
     }
-    const links = externalMapLinks(model.coordinate);
-    const open = (url: string): void => {
-      void Linking.openURL(url).catch(() => {
-        Alert.alert(t('common.somethingWrong'));
-      });
-    };
-    Alert.alert(t('pltr.navigate'), undefined, [
-      { text: t('pltr.maps.apple'), onPress: () => open(links.apple) },
-      { text: t('pltr.maps.google'), onPress: () => open(links.google) },
-      { text: t('pltr.maps.waze'), onPress: () => open(links.waze) },
-      { text: t('common.cancel'), style: 'cancel' },
-    ]);
+    setMapsCoordinate(model.coordinate);
   };
 
   const call = (): void => {
@@ -352,6 +335,7 @@ function PltrIncidentCard({
         <View style={styles.mainPressable}>{main}</View>
       )}
       {footer}
+      <NavigateMapsSheet coordinate={mapsCoordinate} onClose={() => setMapsCoordinate(null)} />
     </View>
   );
 }

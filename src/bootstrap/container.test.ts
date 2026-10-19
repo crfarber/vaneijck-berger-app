@@ -715,11 +715,19 @@ describe('push notifications', () => {
     expect(container.notificationHistory.unreadCount()).toBe(1);
     expect(container.notificationHistory.getState().notifications[0]?.id).toBe('history-1');
 
+    container.standbyLocation.apply(
+      { standbyLocationId: 'loc-1', latitude: 52.34, longitude: 4.95 },
+      { hasBlockingItems: false },
+    );
+    expect(container.standbyLocation.getState().status).toBe('active');
+
     await container.authService.signOut();
     await flushPromises();
 
     expect(container.notificationHistory.unreadCount()).toBe(0);
     expect(container.notificationHistory.getState().notifications).toEqual([]);
+    expect(container.standbyLocation.getState().pendingAdvice).toBeNull();
+    expect(container.standbyLocation.getState().status).toBeNull();
   });
 });
 

@@ -46,6 +46,11 @@ export type PushRuntime = {
    */
   start(): Promise<void>;
   stop(): void;
+  /**
+   * Simulates an incoming FCM message (debug screen). Uses the same parse → history → effects
+   * path as a real push.
+   */
+  inject(message: RemoteMessage, source?: NotificationSource): Promise<void>;
 };
 
 export type PushRuntimeDeps = {
@@ -172,6 +177,10 @@ export function createPushRuntime(deps: PushRuntimeDeps): PushRuntime {
     stop() {
       generation += 1;
       detach();
+    },
+
+    inject(message, source = 'foreground') {
+      return receive(message, source);
     },
   };
 }

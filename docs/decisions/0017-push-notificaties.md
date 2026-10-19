@@ -33,8 +33,9 @@ documentatie van die app, niet in die hook.
 - **Permissie geweigerd** is een afgeronde staat. Er komt geen foutscherm en er wordt niet
   geregistreerd. De uitleg vooraf en het instellingenscherm blijven slice 10.
 - **Ontvangst** loopt door dezelfde `decideIncoming`-regels als de oude dispatcher: een herhaling
-  wordt genegeerd, behalve een tik (die opent alsnog de opdrachtenlijst). Een uitgeschakeld type
-  (`StandbyLocationAdvice`) doet niets. De voorgrondbanner gebruikt Notifee met de tekst van het
+  wordt genegeerd, behalve een tik (die opent alsnog de opdrachtenlijst). `StandbyLocationAdvice`
+  hoort bij [ADR 0030](0030-standby-locatieadvies.md) (niet meer uitgeschakeld). De voorgrondbanner
+  gebruikt Notifee met de tekst van het
   bericht, of de vaste zin uit i18n als die ontbreekt. De payload wordt niet gelogd.
 - **Cache:** `NotificationActions` schrijft in de Query-cache van de opdrachtenlijst (één opdracht
   ophalen, alles verversen, verwijderen, voertuigafgifte verversen). `WorkerStatus` invalidert de

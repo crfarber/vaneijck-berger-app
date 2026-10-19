@@ -12,9 +12,9 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import type { Coordinate } from '@/domeinen/location';
 import {
   buildPltrCards,
-  externalMapLinks,
   pltrPrimaryAction,
   type PltrAction,
   type PltrCard,
@@ -24,6 +24,7 @@ import { ScreenFooter } from '@/shared/ui/screen-footer';
 import { useStatusOverlay } from '@/shared/ui/status-overlay-host';
 import { colors, spacing, type } from '@/shared/ui/theme';
 import { IncidentCard } from '../components/incident-card';
+import { NavigateMapsSheet } from '../components/navigate-maps-sheet';
 import { PltrPhaseCard } from '../components/pltr-phase-card';
 import { resolveIncidentCardModel } from '../domain/incident-card';
 import { useAcceptService } from '../hooks/use-accept-service';
@@ -50,6 +51,7 @@ export function PltrScreen({
   const queryClient = useQueryClient();
   const statusOverlay = useStatusOverlay();
   const [manualRefreshing, setManualRefreshing] = useState(false);
+  const [mapsCoordinate, setMapsCoordinate] = useState<Coordinate | null>(null);
   const { sections, isPending: allocationsPending } = useAllocations();
   const [active, pending] = sections;
   const allocation = [...active.data, ...pending.data].find(
@@ -118,18 +120,7 @@ export function PltrScreen({
     if (!card.coordinate) {
       return;
     }
-    const links = externalMapLinks(card.coordinate);
-    const open = (url: string): void => {
-      void Linking.openURL(url).catch(() => {
-        Alert.alert(t('common.somethingWrong'));
-      });
-    };
-    Alert.alert(t('pltr.navigate'), undefined, [
-      { text: t('pltr.maps.apple'), onPress: () => open(links.apple) },
-      { text: t('pltr.maps.google'), onPress: () => open(links.google) },
-      { text: t('pltr.maps.waze'), onPress: () => open(links.waze) },
-      { text: t('common.cancel'), style: 'cancel' },
-    ]);
+    setMapsCoordinate(card.coordinate);
   };
 
   const call = (card: PltrCard): void => {
@@ -212,6 +203,7 @@ export function PltrScreen({
               ) : null}
             </ScreenFooter>
           ) : null}
+          <NavigateMapsSheet coordinate={mapsCoordinate} onClose={() => setMapsCoordinate(null)} />
         </>
       )}
     </SafeAreaView>

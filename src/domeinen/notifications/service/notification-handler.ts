@@ -1,3 +1,4 @@
+import type { StandbyLocationAdviceFields } from '@/domeinen/standby-location';
 import type { Logger } from '@/shared/logging/logger';
 import { planEffects, type NotificationEffect } from '../domain/plan';
 import type { ParsedNotification } from '../domain/types';
@@ -10,6 +11,8 @@ export type NotificationActions = {
   removeAllocation(target: { allocationId?: string; incidentId?: string }): Promise<void> | void;
   reloadWorker(): Promise<void>;
   reloadVehicleReleases(): Promise<void>;
+  applyStandbyAdvice(advice: StandbyLocationAdviceFields): void;
+  expireStandbyAdvice(): void;
 };
 
 export type NotificationOutcome = {
@@ -67,6 +70,12 @@ export function createNotificationHandler(
         case 'reload-vehicle-releases':
           await actions.reloadVehicleReleases();
           return true;
+        case 'apply-standby-advice':
+          actions.applyStandbyAdvice(effect.advice);
+          return true;
+        case 'expire-standby-advice':
+          actions.expireStandbyAdvice();
+          return true;
       }
     } catch (error) {
       logger?.error('notifications', 'Notification effect failed', { effect: effect.type, error });
@@ -80,7 +89,12 @@ export function createNotificationHandler(
       // Effects are independent: one failing must not stop the others.
       for (const effect of planEffects(notification)) {
         const worked = await run(effect);
-        if (!worked && effect.type !== 'reload-worker') {
+        if (
+          !worked &&
+          effect.type !== 'reload-worker' &&
+          effect.type !== 'apply-standby-advice' &&
+          effect.type !== 'expire-standby-advice'
+        ) {
           resolved = false;
         }
       }

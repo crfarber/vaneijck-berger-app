@@ -1,3 +1,4 @@
+import type { StandbyLocationAdviceFields } from '@/domeinen/standby-location';
 import { NOTIFICATION_DISPLAY_MODE } from './types';
 import type {
   NotificationDisplayMode,
@@ -13,7 +14,9 @@ export type NotificationEffect =
   | { type: 'refresh-allocations' }
   | { type: 'remove-allocation'; allocationId?: string; incidentId?: string }
   | { type: 'reload-worker' }
-  | { type: 'reload-vehicle-releases' };
+  | { type: 'reload-vehicle-releases' }
+  | { type: 'apply-standby-advice'; advice: StandbyLocationAdviceFields }
+  | { type: 'expire-standby-advice' };
 
 export function getDisplayMode(token: NotificationToken | null): NotificationDisplayMode {
   return token === null ? 'default' : NOTIFICATION_DISPLAY_MODE[token];
@@ -29,12 +32,16 @@ export function isTapSource(source: NotificationSource | undefined): boolean {
   return source === 'opened' || source === 'initial' || source === 'notifee-press';
 }
 
+function withExpireStandby(effects: NotificationEffect[]): NotificationEffect[] {
+  return [...effects, { type: 'expire-standby-advice' }];
+}
+
 export function planEffects(notification: ParsedNotification): NotificationEffect[] {
   const { token, allocationId, incidentId } = notification;
 
   if (token === null) {
     // Unknown or missing type: we cannot tell what changed, so look at everything.
-    return [{ type: 'refresh-allocations' }];
+    return withExpireStandby([{ type: 'refresh-allocations' }]);
   }
   if (isDisabled(getDisplayMode(token))) {
     return [];
@@ -47,26 +54,31 @@ export function planEffects(notification: ParsedNotification): NotificationEffec
     case 'DissolvedIncident':
     case 'AllocationDissolved':
       // Without any id we cannot tell which one to remove, so look at everything.
+      // Dissolve does not expire standby (a finished assignment must not revive it either).
       return allocationId || incidentId
         ? [{ type: 'remove-allocation', allocationId, incidentId }]
         : [{ type: 'refresh-allocations' }];
 
     case 'VehicleDeliverance':
-      return [
+      return withExpireStandby([
         { type: 'reload-vehicle-releases' },
         ...(allocationId ? [{ type: 'fetch-allocation' as const, allocationId }] : []),
-      ];
+      ]);
 
     case 'NewIncident':
     case 'ChangedIncident':
     case 'AcceptService':
     case 'NewTms':
       // The old app did nothing at all when such a message carried no allocation id.
-      return allocationId
-        ? [{ type: 'fetch-allocation', allocationId }]
-        : [{ type: 'refresh-allocations' }];
+      return withExpireStandby(
+        allocationId
+          ? [{ type: 'fetch-allocation', allocationId }]
+          : [{ type: 'refresh-allocations' }],
+      );
 
     case 'StandbyLocationAdvice':
-      return [];
+      return notification.standbyAdvice !== undefined
+        ? [{ type: 'apply-standby-advice', advice: notification.standbyAdvice }]
+        : [];
   }
 }

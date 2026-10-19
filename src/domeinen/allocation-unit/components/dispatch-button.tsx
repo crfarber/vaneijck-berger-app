@@ -27,7 +27,6 @@ export function DispatchButton({ canReportIssue }: { canReportIssue: boolean }) 
         title={t('unit.callDispatch.title')}
         closeLabel={t('common.cancel')}
         onClose={() => setVisible(false)}
-        height="40%"
         footer={
           <View style={styles.footer}>
             <Button
