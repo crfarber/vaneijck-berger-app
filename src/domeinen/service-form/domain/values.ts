@@ -138,3 +138,10 @@ export function cloneServiceFormAnswers(answers: ServiceFormAnswers): ServiceFor
   });
   return cloned;
 }
+
+export function resolvePhaseOneServiceFormAnswers(
+  currentAnswers: ServiceFormAnswers,
+  snapshot: ServiceFormAnswers | null,
+): ServiceFormAnswers {
+  return cloneServiceFormAnswers(snapshot ?? currentAnswers);
+}

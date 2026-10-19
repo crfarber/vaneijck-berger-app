@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
-import type { QueryFunctionContext } from '@tanstack/react-query';
+import type { QueryClient, QueryFunctionContext } from '@tanstack/react-query';
 import type { RdwApi } from '@/domeinen/rdw';
+import type { StatusOverlay } from '@/shared/feedback/status-overlay';
 import type { AllocationsApi } from '../api/allocations-api';
 import { allocationQueryStaleTime } from '../domain/query-keys';
 import type { Service } from '../domain/types';
@@ -12,6 +13,24 @@ export const serviceKeys = {
   all: ['services'] as const,
   byIncident: (incidentId: string) => [...serviceKeys.all, incidentId] as const,
 };
+
+export async function showServicesRefresh(
+  client: QueryClient,
+  incidentId: string,
+  overlay: StatusOverlay,
+  message: string,
+): Promise<void> {
+  const query = client.getQueryCache().find({ queryKey: serviceKeys.byIncident(incidentId) });
+  const pending = query?.state.fetchStatus === 'fetching' ? query.promise : undefined;
+  if (pending === undefined) {
+    return;
+  }
+
+  await overlay.run(message, async () => {
+    await pending.catch(() => undefined);
+    return { tone: 'none' };
+  });
+}
 
 export function createServicesQueryOptions(
   api: Pick<AllocationsApi, 'getServicesByIncidentId' | 'getService'>,

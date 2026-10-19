@@ -11,6 +11,7 @@ const NOW = Date.UTC(2026, 8, 22, 12, 0, 0);
 function setup(
   overrides: Partial<AllocationUnitApi> = {},
   referenceDataOverrides: Partial<ReferenceDataService> = {},
+  hasActiveWork = async (): Promise<boolean> => false,
 ) {
   const api: AllocationUnitApi = {
     getCurrent: vi.fn(async () => null),
@@ -36,11 +37,47 @@ function setup(
     ...referenceDataOverrides,
   };
   const clock = createFakeClock(NOW);
-  const service = createAllocationUnitService({ api, referenceDataService, clock });
+  const service = createAllocationUnitService({ api, referenceDataService, clock, hasActiveWork });
   return { service, api, referenceDataService, clock };
 }
 
 describe('registerExternal', () => {
+  it.each(['external', 'internal'] as const)(
+    'blocks %s registration before any mutation when active work exists',
+    async (kind) => {
+      const { service, api } = setup({}, {}, async () => true);
+      const input = { endDate: new Date(NOW), availability: DEFAULT_AVAILABILITY };
+      const result =
+        kind === 'external'
+          ? await service.registerExternal({ ...input, plateNumber: 'AB-12-CD' })
+          : await service.registerInternal({
+              ...input,
+              vehicleId: 'truck',
+              trailerId: null,
+              homebaseLocationId: 'home',
+            });
+      expect(result).toEqual({ ok: false, error: 'active-incident' });
+      expect(api.registerExternal).not.toHaveBeenCalled();
+      expect(api.updateExternal).not.toHaveBeenCalled();
+      expect(api.registerInternal).not.toHaveBeenCalled();
+      expect(api.updateInternal).not.toHaveBeenCalled();
+    },
+  );
+
+  it('does not register when checking active work fails', async () => {
+    const { service, api } = setup({}, {}, async () => {
+      throw new Error('offline');
+    });
+    expect(
+      await service.registerExternal({
+        plateNumber: 'AB-12-CD',
+        endDate: new Date(NOW),
+        availability: DEFAULT_AVAILABILITY,
+      }),
+    ).toEqual({ ok: false, error: 'request-failed' });
+    expect(api.registerExternal).not.toHaveBeenCalled();
+  });
+
   it('registers a new unit when none exists', async () => {
     const { service, api } = setup({ getCurrent: vi.fn(async () => null) });
     const endDate = new Date(NOW + 8 * 3_600_000);

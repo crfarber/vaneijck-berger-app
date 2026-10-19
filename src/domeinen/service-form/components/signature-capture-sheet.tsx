@@ -17,14 +17,16 @@ export function SignatureCaptureSheet({
   onClose: () => void;
 }) {
   return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      presentationStyle="fullScreen"
-      onRequestClose={onClose}
-    >
-      {visible ? <SignatureCaptureBody onCapture={onCapture} onClose={onClose} /> : null}
-    </Modal>
+    <SafeAreaView>
+      <Modal
+        visible={visible}
+        animationType="slide"
+        presentationStyle="fullScreen"
+        onRequestClose={onClose}
+      >
+        {visible ? <SignatureCaptureBody onCapture={onCapture} onClose={onClose} /> : null}
+      </Modal>
+    </SafeAreaView>
   );
 }
 
@@ -73,7 +75,6 @@ function SignatureCaptureBody({
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
         <Text style={styles.title}>{t('serviceForm.signature.captureTitle')}</Text>
-        <Button label={t('serviceForm.select.close')} variant="secondary" onPress={onClose} />
       </View>
       <View style={styles.pad}>
         <SignatureInk
@@ -116,6 +117,7 @@ function SignatureCaptureBody({
             void handleSave();
           }}
         />
+        <Button label={t('serviceForm.select.close')} variant="secondary" onPress={onClose} />
       </View>
     </SafeAreaView>
   );

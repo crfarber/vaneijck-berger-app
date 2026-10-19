@@ -34,7 +34,11 @@ export function useOnboardingGate({
   reportedOpenWork = false,
 }: { reportedOpenWork?: boolean } = {}): OnboardingGate {
   const userType = useSession((state) => state.userType);
-  const { sections, isPending: allocationsPending } = useAllocations();
+  const {
+    sections,
+    isSuccess: allocationsReady,
+    isFetching: allocationsFetching,
+  } = useAllocations({ refetchOnMount: 'always' });
   const service = useAllocationUnitService();
   const queryClient = useQueryClient();
   const activeWork = hasActiveAllocations(sections);
@@ -44,7 +48,7 @@ export function useOnboardingGate({
   const query = useQuery({
     queryKey: [...onboardingGateKey, activeWork, hasReportedOpenWork],
     queryFn: () => service.checkReregister(activeWork),
-    enabled: !allocationsPending,
+    enabled: allocationsReady && !allocationsFetching,
   });
 
   const reportOpenWork = useCallback((): void => {
@@ -53,7 +57,22 @@ export function useOnboardingGate({
     void queryClient.invalidateQueries({ queryKey: onboardingGateKey });
   }, [queryClient]);
 
-  if (allocationsPending || userType === null || query.data === undefined) {
+  if (userType === null) {
+    return { status: 'checking' };
+  }
+
+  if (!allocationsReady || allocationsFetching) {
+    return {
+      status: 'ready',
+      step: 'allocations',
+      notice: 'none',
+      reregister: query.data ?? { kind: 'not-needed' },
+      recheck: () => void query.refetch(),
+      reportOpenWork,
+    };
+  }
+
+  if (query.data === undefined) {
     return { status: 'checking' };
   }
 
@@ -61,6 +80,7 @@ export function useOnboardingGate({
     reregister: query.data,
     userType,
     backendReportedOpenWork: hasReportedOpenWork,
+    hasActiveWork: activeWork,
   });
 
   return {

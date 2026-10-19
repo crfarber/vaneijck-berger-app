@@ -200,7 +200,7 @@ describe('buildPersonNameAnswers / clear / summary', () => {
       }),
     ).toEqual({
       dn_driversalutationcode: { value: 1, displayValue: 'De heer', table: 'dn_salutation' },
-      dn_driverinitials: { value: '', displayValue: '' },
+      dn_driverinitials: { value: 'J.', displayValue: 'J.' },
       dn_driverfirstname: { value: 'Jan', displayValue: 'Jan' },
       dn_drivermiddlename: { value: 'de', displayValue: 'de' },
       dn_driverlastname: { value: 'Vries', displayValue: 'Vries' },

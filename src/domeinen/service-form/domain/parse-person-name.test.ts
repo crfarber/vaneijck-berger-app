@@ -30,7 +30,7 @@ describe('parsePersonName', () => {
   it('splits two tokens into first and last name', () => {
     expect(parsePersonName('Jan Vries')).toEqual({
       salutationKey: null,
-      initials: null,
+      initials: 'J.',
       firstName: 'Jan',
       middleName: null,
       lastName: 'Vries',
@@ -40,7 +40,7 @@ describe('parsePersonName', () => {
   it('parses Dutch tussenvoegsel', () => {
     expect(parsePersonName('Jan de Vries')).toEqual({
       salutationKey: null,
-      initials: null,
+      initials: 'J.',
       firstName: 'Jan',
       middleName: 'de',
       lastName: 'Vries',
@@ -57,10 +57,34 @@ describe('parsePersonName', () => {
     });
   });
 
+  it.each([
+    ['dhr CR Farber', 'C.R.', 'Farber'],
+    ['Dhr C R Farber', 'C.R.', 'Farber'],
+    ['De heer C. R. Färber', 'C.R.', 'Färber'],
+  ])('parses spaced or unpunctuated initials in %s', (input, initials, lastName) => {
+    expect(parsePersonName(input)).toEqual({
+      salutationKey: PERSON_SALUTATION_KEY.deHeer,
+      initials,
+      firstName: null,
+      middleName: null,
+      lastName,
+    });
+  });
+
+  it('normalizes a typographic apostrophe in a Dutch tussenvoegsel', () => {
+    expect(parsePersonName('Mevr R. ’t Hooft')).toEqual({
+      salutationKey: PERSON_SALUTATION_KEY.mevrouw,
+      initials: 'R.',
+      firstName: null,
+      middleName: "'t",
+      lastName: 'Hooft',
+    });
+  });
+
   it('parses salutation aliases before the name', () => {
     expect(parsePersonName('Dhr. Jan de Vries')).toEqual({
       salutationKey: PERSON_SALUTATION_KEY.deHeer,
-      initials: null,
+      initials: 'J.',
       firstName: 'Jan',
       middleName: 'de',
       lastName: 'Vries',
@@ -74,7 +98,7 @@ describe('parsePersonName', () => {
   it('keeps multiple given names before a particle together', () => {
     expect(parsePersonName('Jan Piet de Vries')).toEqual({
       salutationKey: null,
-      initials: null,
+      initials: 'J.P.',
       firstName: 'Jan Piet',
       middleName: 'de',
       lastName: 'Vries',
@@ -84,7 +108,7 @@ describe('parsePersonName', () => {
   it('is conservative for foreign names without a known particle', () => {
     expect(parsePersonName('Carlos García López')).toEqual({
       salutationKey: null,
-      initials: null,
+      initials: 'C.',
       firstName: 'Carlos',
       middleName: null,
       lastName: 'García López',
@@ -94,7 +118,7 @@ describe('parsePersonName', () => {
   it('does not treat von/du/di as Dutch tussenvoegsel', () => {
     expect(parsePersonName('Ludwig von Beethoven')).toEqual({
       salutationKey: null,
-      initials: null,
+      initials: 'L.',
       firstName: 'Ludwig',
       middleName: null,
       lastName: 'von Beethoven',
@@ -105,7 +129,7 @@ describe('parsePersonName', () => {
     expect(parsePersonName('Herr Schmidt').salutationKey).toBeNull();
     expect(parsePersonName('Herr Schmidt')).toEqual({
       salutationKey: null,
-      initials: null,
+      initials: 'H.',
       firstName: 'Herr',
       middleName: null,
       lastName: 'Schmidt',

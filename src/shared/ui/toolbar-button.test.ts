@@ -16,7 +16,7 @@ describe('toolbar button glass appearance', () => {
   });
 
   it('retains translucent status and selection colors', () => {
-    expect(source).toContain('defaultTint: { backgroundColor: colors.brandDarker }');
+    expect(source).toContain('defaultTint: { backgroundColor: colors.brandDark }');
     expect(source).toContain('`${colors.danger}BF`');
     expect(source).toContain('`${colors.success}BF`');
     expect(source).toContain('`${colors.brand}BF`');

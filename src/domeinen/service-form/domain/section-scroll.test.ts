@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { scrollOffsetBelowSectionHeader, serviceFormStickyHeaderIndices } from './section-scroll';
+import {
+  scrollOffsetBelowSectionHeader,
+  serviceFormStickyHeaderIndices,
+  serviceFormStickySectionId,
+} from './section-scroll';
 
 describe('serviceFormStickyHeaderIndices', () => {
   it('sticks each section header and skips the body that follows an open section', () => {
@@ -22,5 +26,18 @@ describe('scrollOffsetBelowSectionHeader', () => {
 
   it('does not scroll above the start of the form', () => {
     expect(scrollOffsetBelowSectionHeader(40, 60)).toBe(0);
+  });
+});
+
+describe('serviceFormStickySectionId', () => {
+  it('returns only the section whose header has reached the scroll top', () => {
+    const offsets = new Map([
+      ['first', 24],
+      ['second', 200],
+    ]);
+
+    expect(serviceFormStickySectionId(['first', 'second'], offsets, 23)).toBeNull();
+    expect(serviceFormStickySectionId(['first', 'second'], offsets, 24)).toBe('first');
+    expect(serviceFormStickySectionId(['first', 'second'], offsets, 200)).toBe('second');
   });
 });

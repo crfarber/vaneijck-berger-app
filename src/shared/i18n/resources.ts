@@ -391,6 +391,11 @@ export const nl = {
   },
   serviceForm: {
     title: 'Dienst verwerken',
+    finish: {
+      title: 'Verwerking afgerond',
+      start: 'Start',
+      delivery: 'Afleveren',
+    },
     loading: 'Formulier laden…',
     notFound: 'Deze opdracht of dienst is niet meer beschikbaar.',
     noDefinition:
@@ -402,7 +407,6 @@ export const nl = {
     clear: 'Leegmaken',
     next: 'Volgende',
     submit: 'Verzenden',
-    readyToSubmit: 'Klaar om te verzenden',
     submitFailed: 'Het formulier kon niet worden verzonden.',
     submitBlocked: 'Deze dienst kan niet meer worden verwerkt.',
     unsupportedField: 'Het veldtype “{{type}}” wordt nog niet ondersteund.',
@@ -463,13 +467,10 @@ export const nl = {
       saveFailed: 'Handtekening opslaan is mislukt. Probeer het opnieuw.',
       name: 'Naam',
       email: 'E-mail',
-      notAvailable: 'Niet beschikbaar',
       available: 'Beschikbaar',
-      noEmail: 'Geen e-mailbevestiging',
-      withEmail: 'Met e-mail',
-      termsAccepted: 'Voorwaarden geaccepteerd',
-      termsRejected: 'Voorwaarden niet geaccepteerd',
-      termsRequired: 'Accepteer eerst de voorwaarden.',
+      noEmailConfirmation: 'Geen e-mailbevestiging',
+      acceptTerms: 'Voorwaarden accepteren',
+      termsAccepted: 'Voorwaarden accepteren',
     },
     actions: {
       quickView: 'Snel invullen',
@@ -1229,6 +1230,11 @@ export const en: Translations = {
   },
   serviceForm: {
     title: 'Process service',
+    finish: {
+      title: 'Processing finished',
+      start: 'Start',
+      delivery: 'Delivery',
+    },
     loading: 'Loading form…',
     notFound: 'This assignment or service is no longer available.',
     noDefinition:
@@ -1240,7 +1246,6 @@ export const en: Translations = {
     clear: 'Clear',
     next: 'Next',
     submit: 'Submit',
-    readyToSubmit: 'Ready to submit',
     submitFailed: 'The form could not be sent.',
     submitBlocked: 'This service can no longer be processed.',
     unsupportedField: 'The field type “{{type}}” is not supported yet.',
@@ -1301,13 +1306,10 @@ export const en: Translations = {
       saveFailed: 'Saving the signature failed. Please try again.',
       name: 'Name',
       email: 'Email',
-      notAvailable: 'Not available',
       available: 'Available',
-      noEmail: 'No email confirmation',
-      withEmail: 'With email confirmation',
-      termsAccepted: 'Terms accepted',
-      termsRejected: 'Terms not accepted',
-      termsRequired: 'Please accept the terms first.',
+      noEmailConfirmation: 'No email confirmation',
+      acceptTerms: 'Accept terms',
+      termsAccepted: 'Accept terms',
     },
     actions: {
       quickView: 'Quick form',

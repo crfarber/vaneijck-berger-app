@@ -32,7 +32,6 @@ import {
   photoPositionToRouteParam,
   photoPhaseFromServiceStatus,
   photoTypeKey,
-  reconcileHistoryPositions,
   standGridIndex,
   type PhotoPosition,
   type PhotoRole,
@@ -92,12 +91,11 @@ export function PhotoOverviewScreen({
   );
   const [serverPhotos, setServerPhotos] = useState<ServerPhotoSummary[]>([]);
   const [serverLoadPhotos, setServerLoadPhotos] = useState<ServerPhotoSummary[]>([]);
-  const [serverLookupComplete, setServerLookupComplete] = useState(false);
   const [lookupFailed, setLookupFailed] = useState(false);
   const phasePhotos = photos.filter((photo) => photo.phase === phase);
   const loadPhotos = photos.filter((photo) => photo.phase === PHOTO_PHASE.load);
-  const phasePhotoVersion = phasePhotos.map((photo) => `${photo.id}:${photo.status}`).join('|');
-  const loadPhotoVersion = loadPhotos.map((photo) => `${photo.id}:${photo.status}`).join('|');
+  const mandatoryKey = mandatoryNames?.join('\n') ?? null;
+  const loadMandatoryKey = loadMandatoryNames?.join('\n') ?? null;
 
   const toggleSection = (key: PhotoSectionKey): void => {
     setCollapsedSections((previous) => {
@@ -109,25 +107,47 @@ export function PhotoOverviewScreen({
   };
 
   useEffect(() => {
-    if (!loaded || !incidentId) return;
+    if (!loaded || !incidentId || mandatoryKey === null || loadMandatoryKey === null) return;
     let active = true;
     const fetchMissing = async (): Promise<void> => {
       try {
-        const [current, load] = await Promise.all([
-          photoService.listServerPhotos({ allocationId, incidentId, serviceId, phase }),
+        const positions = (key: string): PhotoPosition[] =>
+          (key === '' ? [] : key.split('\n'))
+            .map(photoPositionForRequirement)
+            .filter((position) => position !== null);
+        const load =
           phase === PHOTO_PHASE.delivery
-            ? photoService.listServerPhotos({
-                allocationId,
-                incidentId,
-                serviceId,
-                phase: PHOTO_PHASE.load,
-              })
-            : Promise.resolve([]),
-        ]);
+            ? await photoService.listServerPhotos(
+                {
+                  allocationId,
+                  incidentId,
+                  serviceId,
+                  phase: PHOTO_PHASE.load,
+                },
+                positions(loadMandatoryKey),
+              )
+            : [];
+        const localLoadPhotos = photos.filter(
+          (photo) => photo.phase === PHOTO_PHASE.load && photo.status !== PHOTO_STATUS.failed,
+        );
+        const loadCopies = matchLocalCopies(load, localLoadPhotos);
+        const copiedLoadIds = new Set(loadCopies.map((photo) => photo?.id));
+        const loadPositions = [
+          ...load.map((photo) => photo.position),
+          ...localLoadPhotos
+            .filter((photo) => !copiedLoadIds.has(photo.id))
+            .map((photo) => photo.position),
+        ];
+        const required = positions(mandatoryKey);
+        const current = await photoService.listServerPhotos(
+          { allocationId, incidentId, serviceId, phase },
+          phase === PHOTO_PHASE.delivery
+            ? deliveryPhotoRequirements(required, loadPositions)
+            : required,
+        );
         if (active) {
           setServerPhotos(current.filter((photo) => photo.phase === phase));
           setServerLoadPhotos(load.filter((photo) => photo.phase === PHOTO_PHASE.load));
-          setServerLookupComplete(true);
           setLookupFailed(false);
         }
       } catch {
@@ -145,8 +165,9 @@ export function PhotoOverviewScreen({
     serviceId,
     phase,
     photoService,
-    phasePhotoVersion,
-    loadPhotoVersion,
+    photos,
+    mandatoryKey,
+    loadMandatoryKey,
   ]);
 
   const localCurrentPhotos: OverviewPhoto[] = phasePhotos.map((photo) => ({
@@ -159,10 +180,12 @@ export function PhotoOverviewScreen({
     isExtra: photo.isExtraOverride,
   }));
   const localCopies = matchLocalCopies(serverPhotos, localCurrentPhotos);
-  const showServerLoadPhotos = loadPhotos.length === 0;
+  const copiedLocalIds = new Set(localCopies.map((photo) => photo?.id));
+  const loadCopies = matchLocalCopies(serverLoadPhotos, loadPhotos);
+  const remoteLoadPhotos = serverLoadPhotos.filter((_, index) => loadCopies[index] === null);
   const remoteUris = useServerPhotoUris(allocationId, [
     ...serverPhotos.filter((_, index) => localCopies[index] === null).map((photo) => photo.url),
-    ...(showServerLoadPhotos ? serverLoadPhotos.map((photo) => photo.url) : []),
+    ...remoteLoadPhotos.map((photo) => photo.url),
   ]);
   const remoteImage = (url: string): Pick<OverviewPhoto, 'uri' | 'imageState'> => {
     const uri = remoteUris[url];
@@ -181,8 +204,7 @@ export function PhotoOverviewScreen({
       isExtra: photo.isExtra,
     };
   });
-  const includeLocalPhoto = (photo: OverviewPhoto): boolean =>
-    photo.status !== PHOTO_STATUS.sent || !serverLookupComplete || serverPhotos.length === 0;
+  const includeLocalPhoto = (photo: OverviewPhoto): boolean => !copiedLocalIds.has(photo.id);
   const currentPhotos: OverviewPhoto[] = [
     ...localCurrentPhotos.filter(
       (photo) => photo.role !== 'additional' && includeLocalPhoto(photo),
@@ -192,11 +214,12 @@ export function PhotoOverviewScreen({
       (photo) => photo.role === 'additional' && includeLocalPhoto(photo),
     ),
   ];
-  const loadPositions = reconcileHistoryPositions(
-    loadPhotos,
-    serverLoadPhotos.map((photo) => photo.position),
-    serverLookupComplete,
-  );
+  const loadPositions = [
+    ...loadPhotos
+      .filter((photo) => photo.status !== PHOTO_STATUS.failed)
+      .map((photo) => photo.position),
+    ...remoteLoadPhotos.map((photo) => photo.position),
+  ];
   const loadRequiredPositions = loadMandatoryNames?.map(photoPositionForRequirement) ?? [];
   const requiredPositions = mandatoryNames?.map(photoPositionForRequirement) ?? [];
   const definitionsValid =
@@ -399,7 +422,7 @@ export function PhotoOverviewScreen({
           <>
             <CollapsibleSectionHeader
               title={`${t('photos.loadReference')}`}
-              count={loadPhotos.length || serverLoadPhotos.length}
+              count={loadPhotos.length + remoteLoadPhotos.length}
               collapsed={collapsedSections.has('load')}
               onPress={() => toggleSection('load')}
             />
@@ -411,31 +434,30 @@ export function PhotoOverviewScreen({
                 style={styles.loadStrip}
                 contentContainerStyle={styles.loadStripContent}
               >
-                {!showServerLoadPhotos
-                  ? loadPhotos.map((photo) => (
-                      <ExtraPhotoTile
-                        key={photo.id}
-                        variant="strip"
-                        photo={{
-                          id: photo.id,
-                          position: photo.position,
-                          status: photo.status,
-                          uri: photo.displayUri,
-                        }}
-                      />
-                    ))
-                  : serverLoadPhotos.map((photo, index) => (
-                      <ExtraPhotoTile
-                        key={`load-server-${index}`}
-                        variant="strip"
-                        photo={{
-                          id: `load-server-${index}`,
-                          position: photo.position,
-                          status: PHOTO_STATUS.sent,
-                          ...remoteImage(photo.url),
-                        }}
-                      />
-                    ))}
+                {loadPhotos.map((photo) => (
+                  <ExtraPhotoTile
+                    key={photo.id}
+                    variant="strip"
+                    photo={{
+                      id: photo.id,
+                      position: photo.position,
+                      status: photo.status,
+                      uri: photo.displayUri,
+                    }}
+                  />
+                ))}
+                {remoteLoadPhotos.map((photo, index) => (
+                  <ExtraPhotoTile
+                    key={`load-server-${index}`}
+                    variant="strip"
+                    photo={{
+                      id: `load-server-${index}`,
+                      position: photo.position,
+                      status: PHOTO_STATUS.sent,
+                      ...remoteImage(photo.url),
+                    }}
+                  />
+                ))}
               </ScrollView>
             ) : null}
           </>
@@ -570,7 +592,7 @@ function MandatoryPhotoTile({
                   ]}
                 >
                   {vehicle ? (
-                    <VehicleIcon size={14} color={active ? colors.text : colors.brandDarker} />
+                    <VehicleIcon size={14} color={active ? colors.text : colors.brandDark} />
                   ) : null}
                 </View>
               );

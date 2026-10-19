@@ -265,8 +265,7 @@ export type ServiceFormErrorCode =
   | 'min-value'
   | 'required'
   | 'signature-email-required'
-  | 'signature-name-required'
-  | 'terms-required';
+  | 'signature-name-required';
 
 export type ServiceFormError = {
   code: ServiceFormErrorCode;

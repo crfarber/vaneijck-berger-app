@@ -1,7 +1,7 @@
 import { Redirect, router, useLocalSearchParams, useNavigation } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Alert, StyleSheet, View } from 'react-native';
 import {
   ExtendShiftScreen,
   matchLastUnitSnapshot,
@@ -9,7 +9,7 @@ import {
   useLastUnitPreference,
 } from '@/domeinen/allocation-unit/ui';
 import type { LastUnitSnapshot } from '@/domeinen/allocation-unit';
-import { hasActiveAllocations } from '@/domeinen/allocations';
+import { createAllocationSections, hasActiveAllocations } from '@/domeinen/allocations';
 import { AllocationsScreen, useAllocations } from '@/domeinen/allocations/ui';
 import { useSession } from '@/domeinen/auth/ui';
 import { usePermissionDisclosureGate } from '@/domeinen/settings/ui';
@@ -41,7 +41,7 @@ export function OnboardingGateScreen() {
   const disclosure = usePermissionDisclosureGate();
   const gate = useOnboardingGate({ reportedOpenWork: openWork === '1' });
   const userType = useSession((state) => state.userType);
-  const { sections } = useAllocations();
+  const { sections, refetch } = useAllocations();
   const activeWork = hasActiveAllocations(sections);
   const lastUnitPreference = useLastUnitPreference();
   const unitService = useAllocationUnitService();
@@ -49,6 +49,27 @@ export function OnboardingGateScreen() {
   const [reuseSnapshot, setReuseSnapshot] = useState<LastUnitSnapshot | null>(null);
   const step = gate.status === 'ready' ? gate.step : null;
   const notice = gate.status === 'ready' ? gate.notice : 'none';
+
+  const openRegistration = useCallback(
+    async (reuseLast: boolean): Promise<void> => {
+      if (activeWork || notice !== 'register-unit') {
+        return;
+      }
+      const [allocations] = await refetch();
+      if (!allocations.isSuccess || allocations.data === undefined) {
+        Alert.alert(t('common.somethingWrong'));
+        return;
+      }
+      if (hasActiveAllocations(createAllocationSections(allocations.data, []))) {
+        setReuseSnapshot(null);
+        showNoValidUnitContinueAlert(noValidUnitContinueAlertTexts(t));
+        return;
+      }
+      setReuseSnapshot(null);
+      router.push(reuseLast ? '/unit?mode=onboarding&reuse=last' : '/unit?mode=onboarding');
+    },
+    [activeWork, notice, refetch, t],
+  );
 
   useScreenTitle(
     step === 'allocations' || step === null
@@ -58,13 +79,13 @@ export function OnboardingGateScreen() {
         : t('unit.registerTitle'),
   );
 
-  const reuseSnapshotStale =
-    userType === null || (disclosure === 'done' && gate.status === 'ready' && notice === 'none');
+  const reuseSnapshotStale = userType === null || notice !== 'register-unit' || activeWork;
   if (reuseSnapshotStale && reuseSnapshot !== null) {
     setReuseSnapshot(null);
   }
 
   useEffect(() => {
+    let cancelled = false;
     if (userType === null) {
       clearNoValidUnitContinueNotice();
       clearRegisterUnitNotice();
@@ -81,16 +102,22 @@ export function OnboardingGateScreen() {
       clearRegisterUnitNotice();
       return;
     }
-    if (notice === 'register-unit') {
+    if (notice === 'register-unit' && !activeWork) {
       if (worker === undefined) {
         return;
       }
       void (async () => {
         const stored = await lastUnitPreference.load();
+        if (cancelled) {
+          return;
+        }
         let fleetTruckIds: ReadonlySet<string> | undefined;
         if (userType === 'internal') {
           const fleet = await unitService.getFleet();
           fleetTruckIds = new Set(fleet.map((vehicle) => vehicle.id));
+        }
+        if (cancelled) {
+          return;
         }
         const matched =
           worker === null
@@ -108,15 +135,30 @@ export function OnboardingGateScreen() {
           return;
         }
         showRegisterUnitAlert(registerUnitAlertTexts(t), () => {
-          router.push('/unit?mode=onboarding');
+          if (!cancelled) {
+            void openRegistration(false);
+          }
         });
-      })();
-      return;
+      })().catch(() => undefined);
+      return () => {
+        cancelled = true;
+      };
     }
     if (notice === 'no-valid-unit-continue') {
       showNoValidUnitContinueAlert(noValidUnitContinueAlertTexts(t));
     }
-  }, [disclosure, gate.status, lastUnitPreference, notice, t, unitService, userType, worker]);
+  }, [
+    activeWork,
+    disclosure,
+    gate.status,
+    lastUnitPreference,
+    notice,
+    openRegistration,
+    t,
+    unitService,
+    userType,
+    worker,
+  ]);
 
   if (disclosure === 'checking' || gate.status === 'checking') {
     return (
@@ -146,17 +188,15 @@ export function OnboardingGateScreen() {
               />
             }
           />
-          {reuseSnapshot !== null ? (
+          {reuseSnapshot !== null && notice === 'register-unit' && !activeWork ? (
             <RegisterUnitPromptSheet
               visible
               snapshot={reuseSnapshot}
               onUseThis={() => {
-                closeReuseSheet();
-                router.push('/unit?mode=onboarding&reuse=last');
+                void openRegistration(true);
               }}
               onChooseOther={() => {
-                closeReuseSheet();
-                router.push('/unit?mode=onboarding');
+                void openRegistration(false);
               }}
               onDismiss={closeReuseSheet}
             />

@@ -25,6 +25,9 @@ oude stores of schermen over te nemen.
   `queued` en wordt hervat. Andere 4xx: `failed`, bestand blijft.
 - Geen bruikbare locatie: foto blijft in de wachtrij; bij drain wordt `LocationReader` opnieuw
   gevraagd.
+- In een development-simulator gebruikt alleen de fotoservice bij een ontbrekende of ongeldige fix
+  de vaste testlocatie Den Haag Centraal. De gedeelde locatielezer blijft ongewijzigd voor GPS-status
+  en nabijheidscontrole; fysieke apparaten en releasebuilds krijgen geen fallback.
 - Het overzicht haalt serverfoto's ook naast lokale concepten op. Verplichte verzonden foto's zijn
   vervangbaar; verzonden extra's zijn locked. Fase 2 toont alle fase-1-foto's als aanklikbare
   history en maakt iedere occurrence verplicht. Een eenfasige afgifte toont geen history.

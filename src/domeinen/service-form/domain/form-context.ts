@@ -10,6 +10,12 @@ export const SERVICE_FORM_PHASE = { load: 1, delivery: 2 } as const;
 
 export type ServiceFormPhase = (typeof SERVICE_FORM_PHASE)[keyof typeof SERVICE_FORM_PHASE];
 
+/** The legacy finish screen always offered Start and Delivery, in that order. */
+export const SERVICE_FORM_FINISH_PHASES = [
+  SERVICE_FORM_PHASE.load,
+  SERVICE_FORM_PHASE.delivery,
+] as const;
+
 /** Sorted phase numbers from a raw `dataDefinition` phase list. */
 export function phaseNumbersFromDefinition(
   phases: readonly { readonly phase?: number }[] | undefined,

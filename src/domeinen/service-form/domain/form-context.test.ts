@@ -5,6 +5,7 @@ import {
   phaseNumbersFromDefinition,
   serviceFormLanguageCode,
   serviceFormPhaseForStatus,
+  SERVICE_FORM_FINISH_PHASES,
 } from './form-context';
 
 describe('phaseNumbersFromDefinition', () => {
@@ -54,6 +55,12 @@ describe('isLastServiceFormPhase', () => {
 
   it('treats any phase as last when the definition lists none', () => {
     expect(isLastServiceFormPhase(1, [])).toBe(true);
+  });
+});
+
+describe('finish form phases', () => {
+  it('offers the legacy start and delivery phases in that order', () => {
+    expect(SERVICE_FORM_FINISH_PHASES).toEqual([1, 2]);
   });
 });
 

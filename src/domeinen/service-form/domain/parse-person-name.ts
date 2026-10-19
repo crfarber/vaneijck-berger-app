@@ -78,18 +78,99 @@ const NL_TUSSENVOEGSELS: readonly string[] = [
   'aan',
 ];
 
+const INITIAL_ABBREVIATIONS: Readonly<Record<string, string>> = {
+  chr: 'Chr.',
+  th: 'Th.',
+  ph: 'Ph.',
+  ij: 'IJ.',
+  joh: 'Joh.',
+  jac: 'Jac.',
+};
+
 const normalizeSpaces = (value: string): string => value.trim().replace(/\s+/g, ' ');
 
 const normalizeMatch = (value: string): string =>
-  normalizeSpaces(value).toLowerCase().replace(/\./g, '').replace(/'/g, "'");
+  normalizeSpaces(value).toLowerCase().replace(/\./g, '').replace(/[’‘]/g, "'");
 
-const isInitialsToken = (token: string): boolean => {
+const normalizeInitialToken = (token: string, nextToken?: string): string | null => {
   const trimmed = token.trim();
   if (!trimmed) {
-    return false;
+    return null;
   }
-  // J. / A.B. / AB. / A.B
-  return /^[A-Za-z](?:\.?[A-Za-z])*\.?$/.test(trimmed) && trimmed.includes('.');
+
+  const abbreviation = INITIAL_ABBREVIATIONS[trimmed.replace(/\.$/, '').toLowerCase()];
+  if (abbreviation) {
+    return abbreviation;
+  }
+
+  if (/^(?:\p{L}\.)+\p{L}?\.?$/u.test(trimmed) && trimmed.includes('.')) {
+    return [...trimmed.replace(/\./g, '')].map((letter) => `${letter.toUpperCase()}.`).join('');
+  }
+
+  if (/^\p{L}\.?$/u.test(trimmed)) {
+    return `${trimmed.replace(/\.$/, '').toUpperCase()}.`;
+  }
+
+  const compact = trimmed.replace(/\.$/, '');
+  if (
+    /^[A-Z]{2,6}$/.test(compact) ||
+    (/^[a-z]{2,6}$/.test(compact) && nextToken !== undefined && isTussenvoegselStart(nextToken))
+  ) {
+    return [...compact].map((letter) => `${letter.toUpperCase()}.`).join('');
+  }
+
+  if (/^[A-Z][a-z]{1,3}\.$/.test(trimmed)) {
+    return trimmed;
+  }
+
+  return null;
+};
+
+const isTussenvoegselStart = (token: string): boolean => {
+  const normalized = normalizeMatch(token);
+  return NL_TUSSENVOEGSELS.some((particle) => particle.split(' ')[0] === normalized);
+};
+
+const readLeadingInitials = (
+  tokens: readonly string[],
+): { value: string; count: number } | null => {
+  const first = tokens[0];
+  if (!first) {
+    return null;
+  }
+
+  const firstValue = normalizeInitialToken(first, tokens[1]);
+  if (!firstValue) {
+    return null;
+  }
+
+  let count = 1;
+  let value = firstValue;
+  if (/^\p{L}\.?$/u.test(first)) {
+    const letters = [first.replace(/\.$/, '').toUpperCase()];
+    while (count < tokens.length) {
+      const token = tokens[count];
+      if (!token || !/^\p{L}\.?$/u.test(token)) {
+        break;
+      }
+      letters.push(token.replace(/\.$/, '').toUpperCase());
+      count += 1;
+    }
+    value = letters.map((letter) => `${letter}.`).join('');
+  }
+
+  return { value, count };
+};
+
+const deriveInitials = (firstName: string | null): string | null => {
+  if (!firstName) {
+    return null;
+  }
+  const letters = firstName
+    .split(/[\s-]+/)
+    .map((part) => Array.from(part)[0])
+    .filter((letter): letter is string => Boolean(letter));
+  return letters.length > 0 ? letters.map((letter) => `${letter.toUpperCase()}.`).join('') : null;
 };
 
 const findSalutationPrefix = (
@@ -151,9 +232,9 @@ const findTussenvoegsel = (
         continue;
       }
       const slice = tokens.slice(start, start + parts.length);
-      const candidate = slice.map((part) => part.toLowerCase().replace(/\./g, '')).join(' ');
+      const candidate = normalizeMatch(slice.join(' '));
       if (candidate === particle) {
-        return { start, length: parts.length, value: slice.join(' ') };
+        return { start, length: parts.length, value: slice.join(' ').replace(/[’‘]/g, "'") };
       }
     }
   }
@@ -172,7 +253,7 @@ export function parsePersonName(input: string): ParsedPersonName {
     middleName: null,
     lastName: null,
   };
-  const trimmed = normalizeSpaces(input);
+  const trimmed = normalizeSpaces(input).replace(/[’‘]/g, "'");
   if (!trimmed) {
     return empty;
   }
@@ -191,13 +272,9 @@ export function parsePersonName(input: string): ParsedPersonName {
   }
 
   const tokens = remainder.split(' ');
-  let initials: string | null = null;
-  let nameTokens = tokens;
-
-  if (tokens[0] && isInitialsToken(tokens[0])) {
-    initials = tokens[0].endsWith('.') ? tokens[0] : `${tokens[0]}.`;
-    nameTokens = tokens.slice(1);
-  }
+  const leadingInitials = readLeadingInitials(tokens);
+  const initials = leadingInitials?.value ?? null;
+  const nameTokens = leadingInitials ? tokens.slice(leadingInitials.count) : tokens;
 
   if (nameTokens.length === 0) {
     return { salutationKey, initials, firstName: null, middleName: null, lastName: null };
@@ -217,19 +294,21 @@ export function parsePersonName(input: string): ParsedPersonName {
   if (particle) {
     const firstParts = nameTokens.slice(0, particle.start);
     const lastParts = nameTokens.slice(particle.start + particle.length);
+    const firstName = firstParts.length > 0 ? firstParts.join(' ') : null;
     return {
       salutationKey,
-      initials,
-      firstName: firstParts.length > 0 ? firstParts.join(' ') : null,
+      initials: initials ?? deriveInitials(firstName),
+      firstName,
       middleName: particle.value,
       lastName: lastParts.length > 0 ? lastParts.join(' ') : null,
     };
   }
 
+  const firstName = nameTokens[0] ?? null;
   return {
     salutationKey,
-    initials,
-    firstName: nameTokens[0] ?? null,
+    initials: initials ?? deriveInitials(firstName),
+    firstName,
     middleName: null,
     lastName: nameTokens.slice(1).join(' ') || null,
   };

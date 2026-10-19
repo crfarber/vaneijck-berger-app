@@ -76,7 +76,7 @@ export function ServiceFormHeader({
 const styles = StyleSheet.create({
   header: {
     padding: spacing.md,
-    backgroundColor: colors.brandDarker,
+    backgroundColor: colors.brandDark,
   },
   heading: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   text: { flex: 1, gap: 2 },

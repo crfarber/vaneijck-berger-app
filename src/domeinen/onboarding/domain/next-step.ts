@@ -30,6 +30,7 @@ export function decideOnboarding(input: {
   reregister: ReregisterOutcome;
   userType: UserType;
   backendReportedOpenWork: boolean;
+  hasActiveWork?: boolean;
 }): OnboardingDecision {
   const { reregister, userType, backendReportedOpenWork } = input;
 
@@ -44,7 +45,7 @@ export function decideOnboarding(input: {
   }
 
   // required — unless the backend already confirmed open work (escape hatch from a failing form).
-  if (backendReportedOpenWork) {
+  if (backendReportedOpenWork || input.hasActiveWork) {
     return { step: 'allocations', notice: 'no-valid-unit-continue' };
   }
 

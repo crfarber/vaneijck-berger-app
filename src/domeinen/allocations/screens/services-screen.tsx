@@ -1,10 +1,12 @@
-import { useMemo, useState, type ReactNode } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, SectionList, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { getServiceBucket } from '@/domeinen/services';
 import { Button } from '@/shared/ui/button';
 import { CollapsibleSectionHeader } from '@/shared/ui/collapsible-section-header';
+import { useStatusOverlay } from '@/shared/ui/status-overlay-host';
 import { colors, spacing, type } from '@/shared/ui/theme';
 import { ServiceRow } from '../components/service-row';
 import { IncidentCard } from '../components/incident-card';
@@ -12,7 +14,7 @@ import { resolveIncidentCardModel } from '../domain/incident-card';
 import { useAcceptService } from '../hooks/use-accept-service';
 import { useAllocations } from '../hooks/use-allocations';
 import { useOpenService } from '../hooks/use-open-service';
-import { useServices } from '../hooks/use-services';
+import { showServicesRefresh, useServices } from '../hooks/use-services';
 import type { Service } from '../domain/types';
 
 /** Alles behalve "pending" wordt als "active" gezien — een afgeronde service blijft zichtbaar, net als
@@ -34,6 +36,9 @@ export function ServicesScreen({
   toolbar?: ReactNode;
 }) {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
+  const statusOverlay = useStatusOverlay();
+  const [manualRefreshing, setManualRefreshing] = useState(false);
   const { sections: allocationSections, isPending: allocationsPending } = useAllocations();
   const [active, pending] = allocationSections;
   const allocation = [...active.data, ...pending.data].find(
@@ -42,6 +47,34 @@ export function ServicesScreen({
 
   const incidentId = allocation?.incident.dn_incidentid ?? '';
   const servicesQuery = useServices(incidentId, allocation?.services ?? null);
+  useEffect(() => {
+    if (allocation && servicesQuery.isFetching && !manualRefreshing) {
+      void showServicesRefresh(
+        queryClient,
+        incidentId,
+        statusOverlay,
+        t('feedback.processing.openService'),
+      );
+    }
+  }, [
+    allocation,
+    servicesQuery.isFetching,
+    manualRefreshing,
+    queryClient,
+    incidentId,
+    statusOverlay,
+    t,
+  ]);
+
+  const refreshManually = async () => {
+    setManualRefreshing(true);
+    try {
+      await servicesQuery.refetch();
+    } finally {
+      setManualRefreshing(false);
+    }
+  };
+
   const { accept, busyServiceId } = useAcceptService(incidentId);
   const services = servicesQuery.data ?? allocation?.services ?? [];
   const { open, openPreview } = useOpenService({
@@ -136,8 +169,8 @@ export function ServicesScreen({
           renderSectionFooter={() => null}
           ItemSeparatorComponent={() => <View style={styles.separator} />}
           contentContainerStyle={styles.list}
-          refreshing={servicesQuery.isRefetching}
-          onRefresh={() => void servicesQuery.refetch()}
+          refreshing={manualRefreshing}
+          onRefresh={() => void refreshManually()}
         />
       )}
     </SafeAreaView>

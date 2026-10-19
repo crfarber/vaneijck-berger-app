@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import type { QueryFunctionContext } from '@tanstack/react-query';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import type { AllocationsApi } from '../api/allocations-api';
 import { allocationKeys, allocationQueryStaleTime, vehicleReleaseKeys } from '../domain/query-keys';
 import { createAllocationSections } from '../domain/sections';
@@ -29,10 +29,16 @@ export function createVehicleReleaseQueryOptions(api: Pick<AllocationsApi, 'list
  * their own query — a location whose fetch fails should not blank the allocations the berger
  * actually has to act on (the API already drops just that one location, see `listVehicleReleases`).
  */
-export function useAllocations() {
+export function useAllocations(options: { refetchOnMount?: 'always' } = {}) {
   const api = useAllocationsApi();
-  const allocations = useQuery(createAllocationListQueryOptions(api));
+  const allocations = useQuery({ ...createAllocationListQueryOptions(api), ...options });
   const vehicleReleases = useQuery(createVehicleReleaseQueryOptions(api));
+  const refetchAllocations = allocations.refetch;
+  const refetchVehicleReleases = vehicleReleases.refetch;
+  const refetch = useCallback(
+    () => Promise.all([refetchAllocations(), refetchVehicleReleases()]),
+    [refetchAllocations, refetchVehicleReleases],
+  );
 
   const sections = useMemo(
     () => createAllocationSections(allocations.data ?? [], vehicleReleases.data ?? []),
@@ -43,6 +49,6 @@ export function useAllocations() {
     ...allocations,
     isRefetching: allocations.isRefetching || vehicleReleases.isRefetching,
     sections,
-    refetch: () => Promise.all([allocations.refetch(), vehicleReleases.refetch()]),
+    refetch,
   };
 }

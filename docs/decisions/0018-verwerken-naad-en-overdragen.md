@@ -1,7 +1,8 @@
 # 0018. De naad naar verwerken, overdragen aan een collega, postcode controleren
 
-**Status:** gebouwd; actieve diensten openen `ServiceFormScreen` (slices 12/18). De oude
-`ProcessingService.js`/`ProcessingFinish.js` blijven alleen naslag in `legacy/`.
+**Status:** gebouwd; actieve diensten openen `ServiceFormScreen` (slices 12/18), afgeronde
+diensten openen dezelfde schermimplementatie in finishmodus. De oude
+`ProcessingService.js`/`ProcessingFinish.js` blijven alleen gedragsnaslag in `legacy/`.
 
 ## Context
 
@@ -47,17 +48,20 @@ deed vermoeden:
     eigen gewoonte); mag hij niet meer verstuurd worden (iemand anders was sneller, of de status
     veranderde ondertussen), dan verlaat de app dat scherm meteen — exact het gedrag van
     `ProcessingServiceWrapper`'s eigen effect bij het openen.
-  - **`finish`**: een dienst die al op HULPVERLENING_AFGEROND staat opent `ServiceFinishScreen` —
-    de naad van `ProcessingFinishedWrapper`, met precies het ene signaal dat die naad ook had
-    (geen data, geen aparte mutatie: die zit al in de dienst zelf).
+  - **`finish`**: een dienst die al op HULPVERLENING_AFGEROND staat opent `ServiceFormScreen` in
+    finishmodus. Die toont Start en Afleveren apart en read-only; de Finish-knop ruimt de fase-1-
+    snapshot op en voert daarna dezelfde exitflow als `ProcessingFinishedWrapper` uit.
   - Alles daartussen (de meeste actieve diensten, nog in fase 1) opent sinds slice 12
     `ServiceFormScreen` via `useOpenService` — geen "nog gebouwd"-melding meer.
 
 ## Gevolgen
 
-- **`ServiceFinishScreen` is geen port van `ProcessingFinish.js`.** Het toont de dienst en één knop
-  die het echte, geanalyseerde uitgangssignaal van de naad afvuurt. De eigen inhoud van dat
-  formulier (wat het team daar laat zien vóór die knop) is niet meegenomen.
+- **De finishweergave volgt de legacywerking, niet de legacycode.** `ServiceFormScreen` toont op
+  één scherm de fase 1- en fase 2-gegevens via Start/Afleveren; Start gebruikt de volledige
+  fase-1-snapshot wanneer die bestaat en anders de actuele dienstdata. Afleveren gebruikt altijd
+  de actuele dienstdata. Finish verwijdert de
+  snapshot en voert de wrapper-exit uit; de door `ProcessingFinish.js` gebouwde statuspayload wordt
+  door de wrapper genegeerd en veroorzaakt geen extra CRM-mutatie.
 - **De PLTR-variant van "incident" als bestemming** (`getExitTarget`'s `variant: 'pltr'`) deelt het
   pad `/allocations/[id]` met het gewone dienstenscherm. Sinds slice 7 kiest dat scherm het
   PLTR-scherm als het type planbaar transport is ([ADR 0019](0019-pltr.md)).

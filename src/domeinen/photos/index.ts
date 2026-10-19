@@ -64,6 +64,7 @@ export type {
 export { utcStringFromEpoch } from './domain/utc';
 export { createInMemoryPhotoFiles } from './service/photo-files';
 export type { PhotoFiles } from './service/photo-files';
+export { createPhotoLocationReader } from './service/photo-location-reader';
 export { createPhotoRepository } from './service/photo-repository';
 export type { PhotoRepository } from './service/photo-repository';
 export { createPhotoService, migrateLegacyPhotos } from './service/photo-service';

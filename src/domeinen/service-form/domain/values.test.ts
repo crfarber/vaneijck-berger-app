@@ -3,6 +3,7 @@ import {
   buildInitialServiceFormAnswer,
   buildInitialServiceFormAnswers,
   cloneServiceFormAnswers,
+  resolvePhaseOneServiceFormAnswers,
   resolveServiceFormValueToShow,
 } from './values';
 import type { ServiceFormField } from './types';
@@ -88,5 +89,34 @@ describe('serviceFormValues', () => {
     }
 
     expect(original.dn_name.value).toBe('A');
+  });
+
+  it('uses the whole phase-one snapshot when present without mutating either source', () => {
+    const current = {
+      dn_shared: { value: 'current', displayValue: 'Current' },
+      dn_fallback: { value: 'fallback', displayValue: 'Fallback' },
+    };
+    const snapshot = {
+      dn_shared: { value: 'start', displayValue: 'Start' },
+    };
+
+    const resolved = resolvePhaseOneServiceFormAnswers(current, snapshot);
+    const resolvedShared = resolved.dn_shared;
+    if (!resolvedShared) {
+      throw new Error('Expected the shared phase-one answer');
+    }
+    resolvedShared.value = 'changed';
+
+    expect(current.dn_shared.value).toBe('current');
+    expect(snapshot.dn_shared.value).toBe('start');
+    expect(resolved).toEqual({
+      dn_shared: { value: 'changed', displayValue: 'Start' },
+    });
+  });
+
+  it('uses current service values only when the phase-one snapshot is missing', () => {
+    const current = { dn_fallback: { value: 'fallback', displayValue: 'Fallback' } };
+
+    expect(resolvePhaseOneServiceFormAnswers(current, null)).toEqual(current);
   });
 });

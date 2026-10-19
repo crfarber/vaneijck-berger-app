@@ -141,6 +141,8 @@ export type ContainerInput = {
   /** Azure AD on the device, or null when it is not configured for this build. */
   internalAuth: InternalAuth | null;
   locationReader: LocationReader;
+  /** Optional photo-only location source; defaults to the shared device reader. */
+  photoLocationReader?: LocationReader;
   /** Location, notification and camera permission, including the system-settings link. */
   devicePermissions: DevicePermissions;
   /** System share sheet for the redacted support log. */
@@ -382,7 +384,7 @@ export function createContainer(input: ContainerInput): Container {
     api: createPhotosApi(http, input.multipartUploadFiles, config.apiBaseUrl),
     files: input.photoFiles,
     repository: securePhotoRepository,
-    locationReader: input.locationReader,
+    locationReader: input.photoLocationReader ?? input.locationReader,
     clock,
     scheduler,
     logger,
@@ -593,6 +595,8 @@ export function createContainer(input: ContainerInput): Container {
     api: createAllocationUnitApi(http),
     referenceDataService,
     clock,
+    hasActiveWork: async () =>
+      hasActiveAllocations(createAllocationSections(await allocationsApi.list(), [])),
     logger,
   });
   const allocationActionsService = createAllocationActionsService({

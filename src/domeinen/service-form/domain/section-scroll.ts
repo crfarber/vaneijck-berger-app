@@ -16,6 +16,23 @@ export function serviceFormStickyHeaderIndices(
   return indices;
 }
 
+/** Returns the last section header that has reached the top of the scroll viewport. */
+export function serviceFormStickySectionId(
+  sectionIds: readonly string[],
+  headerOffsets: ReadonlyMap<string, number>,
+  scrollOffset: number,
+): string | null {
+  let stickySectionId: string | null = null;
+  for (const sectionId of sectionIds) {
+    const headerOffset = headerOffsets.get(sectionId);
+    if (headerOffset === undefined || headerOffset > scrollOffset) {
+      break;
+    }
+    stickySectionId = sectionId;
+  }
+  return stickySectionId;
+}
+
 /** Scroll offset that places a field just under a sticky section header. */
 export function scrollOffsetBelowSectionHeader(fieldY: number, headerHeight: number): number {
   return Math.max(0, fieldY - headerHeight);

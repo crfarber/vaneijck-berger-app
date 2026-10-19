@@ -1,7 +1,7 @@
 # Wiki berger-app
 
-> Gecontroleerd op: `4cf3132b` (2026-10-13)
-> Bijgewerkt op: `4cf3132b` (2026-10-13; sectiereset, open-service, PLTR-preview, tijdzone, fitContent-sheet — inclusief werkboom)
+> Gecontroleerd op: `c0127855` (2026-10-16)
+> Bijgewerkt op: `c0127855` (2026-10-16; simulator-GPS voor fotodocumentatie)
 > Bronnen: `docs/wiki/`, `.agents/skills/wiki/onderwerpen.md`, `.agents/skills/wiki/pagina-sjabloon.md`, `docs/architecture.md`, `docs/conventions.md`
 > Zie ook: [architectuur](../architecture.md), [conventies](../conventions.md), [roadmap](../roadmap.md)
 
@@ -36,39 +36,39 @@ worden gecontroleerd.
 
 ### Alle pagina's
 
-| Pagina                                          | Waarover                                                                | Gecontroleerd               |
-| ----------------------------------------------- | ----------------------------------------------------------------------- | --------------------------- |
-| [Wiki-index](README.md)                         | leesroutes, paginaoverzicht en uitleg van claimstatussen                | `4cf3132b`                  |
-| [API en fouten](api-en-fouten.md)               | HTTP-client, fouttypen, retry en sessieverloop                          | `c0687077`                  |
-| [Applicatieflow](applicatieflow.md)             | end-to-end gebruikersreis en terugnavigatie vanuit het eenheidoverzicht | `c1506088` (terugnavigatie) |
-| [Beschikbaarheid](beschikbaarheid.md)           | medewerkerstatus, opties en wijzigen                                    | `ba1383c`                   |
-| [Builds](builds.md)                             | varianten, runtimeconfiguratie en buildprofielen                        | `ba1383c`                   |
-| [Componenten en routes](componenten.md)         | alle actuele routes, schermen en UI-componenten                         | `4cf3132b`                  |
-| [Diensten](diensten.md)                         | diensten laden, accepteren, weigeren en afronden                        | `4cf3132b`                  |
-| [Feedback en dialogen](feedback.md)             | toasts, procesoverlay, bevestigingen en sheets                          | `4cf3132b`                  |
-| [Foto's](fotos.md)                              | schermstroom, fotofasen, lokale opslag en uploadwachtrij                | `ba1383c`                   |
-| [Internationalisatie](i18n.md)                  | Nederlands, Engels en taal richting CRM                                 | `ba1383c`                   |
-| [Inloggen](inloggen.md)                         | externe en interne login, sessie en tokenverversing                     | `ba1383c`                   |
-| [Instellingen](instellingen.md)                 | taal, toestemmingen, support, debug en uitloggen                        | `ba1383c`                   |
-| [Klantacceptatie](klantacceptatie.md)           | deelbare handmatige acceptatiescenario's                                | `ba1383c`                   |
-| [Locatie](locatie.md)                           | GPS, afstandscontrole, doelkeuze en kaartlinks                          | `ba1383c`                   |
-| [Logging en privacy](logging-en-privacy.md)     | logging, redactie en privacygrenzen                                     | `ba1383c`                   |
-| [Offline werken](offline.md)                    | bewaarde querydata, mutaties en fotowachtrij                            | `ba1383c`                   |
-| [Onboarding en eenheid](onboarding.md)          | gate, voertuig, uitvoerlocatie, beschikbaarheid en eindtijd             | `ba1383c`                   |
-| [Ontwikkelstatus](ontwikkelstatus.md)           | gebouwd, gedeeltelijk en ontbrekende validatie                          | `ba1383c`                   |
-| [Opdrachten](opdrachten.md)                     | lijst, accepteren, afwijzen, afronden en overdragen                     | `4cf3132b`                  |
-| [Opslagsleutels](opslagsleutels.md)             | duurzame sleutels en wat uitloggen wist                                 | `ba1383c`                   |
-| [Outbox](outbox.md)                             | duurzame mutatiewachtrij en aflevervolgorde                             | `ba1383c`                   |
-| [Overzicht](overzicht.md)                       | appstart, container, providers en navigatie                             | `ba1383c`                   |
-| [PLTR](pltr.md)                                 | planbaar transport, fasen en acties                                     | `4cf3132b`                  |
-| [Pushmeldingen](pushmeldingen.md)               | registratie, parsing, effecten en historie                              | `ba1383c`                   |
-| [Referentiedata](referentiedata.md)             | synchronisatie, opslag en formulierdefinities                           | `ba1383c`                   |
-| [Statuscodes](statuscodes.md)                   | opdracht-, dienst- en beschikbaarheidsstatussen                         | `ba1383c`                   |
-| [Stores](stores.md)                             | Query, Zustand, opslag en tokenbezit                                    | `ba1383c`                   |
-| [Support](support.md)                           | geredigeerd log bekijken en delen                                       | `ba1383c`                   |
-| [Testen](testen.md)                             | testopzet, fakes, coverage en architectuurtest                          | `ba1383c`                   |
-| [Toestemmingen](toestemmingen.md)               | locatie, meldingen en camera                                            | `ba1383c`                   |
-| [Verwerkingsformulier](verwerkingsformulier.md) | dynamisch formulier, concept, sectiereset, adres, handtekening, submit  | `4cf3132b`                  |
+| Pagina                                          | Waarover                                                                              | Gecontroleerd               |
+| ----------------------------------------------- | ------------------------------------------------------------------------------------- | --------------------------- |
+| [Wiki-index](README.md)                         | leesroutes, paginaoverzicht en uitleg van claimstatussen                              | `4cf3132b`                  |
+| [API en fouten](api-en-fouten.md)               | HTTP-client, fouttypen, retry en sessieverloop                                        | `c0687077`                  |
+| [Applicatieflow](applicatieflow.md)             | gebruikersreis, technische flows en foto/GPS-stroom voor klantcontrole                | `c0127855` (flowdiagrammen) |
+| [Beschikbaarheid](beschikbaarheid.md)           | medewerkerstatus, opties en wijzigen                                                  | `ba1383c`                   |
+| [Builds](builds.md)                             | varianten, runtimeconfiguratie en buildprofielen                                      | `ba1383c`                   |
+| [Componenten en routes](componenten.md)         | alle actuele routes, schermen en UI-componenten                                       | `c0127855`                  |
+| [Diensten](diensten.md)                         | diensten laden, accepteren, weigeren en afronden                                      | `c0127855`                  |
+| [Feedback en dialogen](feedback.md)             | toasts, procesoverlay, bevestigingen en sheets                                        | `4cf3132b`                  |
+| [Foto's](fotos.md)                              | schermstroom, fotofasen, lokale opslag, uploadwachtrij en simulator-GPS               | `c0127855`                  |
+| [Internationalisatie](i18n.md)                  | Nederlands, Engels en taal richting CRM                                               | `ba1383c`                   |
+| [Inloggen](inloggen.md)                         | externe en interne login, sessie en tokenverversing                                   | `ba1383c`                   |
+| [Instellingen](instellingen.md)                 | taal, toestemmingen, support, debug en uitloggen                                      | `ba1383c`                   |
+| [Klantacceptatie](klantacceptatie.md)           | deelbare handmatige acceptatiescenario's                                              | `ba1383c`                   |
+| [Locatie](locatie.md)                           | GPS, afstandscontrole, doelkeuze en kaartlinks                                        | `ba1383c`                   |
+| [Logging en privacy](logging-en-privacy.md)     | logging, redactie en privacygrenzen                                                   | `ba1383c`                   |
+| [Offline werken](offline.md)                    | bewaarde querydata, mutaties en fotowachtrij                                          | `ba1383c`                   |
+| [Onboarding en eenheid](onboarding.md)          | gate, voertuig, uitvoerlocatie, beschikbaarheid en eindtijd                           | `ba1383c`                   |
+| [Ontwikkelstatus](ontwikkelstatus.md)           | gebouwd, gedeeltelijk en ontbrekende validatie                                        | `ba1383c`                   |
+| [Allocations](opdrachten.md)                    | worker allocations (toegewezen incidenten), acties en overdracht                      | `4cf3132b`                  |
+| [Opslagsleutels](opslagsleutels.md)             | duurzame sleutels en wat uitloggen wist                                               | `c0127855`                  |
+| [Outbox](outbox.md)                             | duurzame mutatiewachtrij en aflevervolgorde                                           | `ba1383c`                   |
+| [Overzicht](overzicht.md)                       | appstart, container, providers en navigatie                                           | `ba1383c`                   |
+| [PLTR](pltr.md)                                 | planbaar transport, fasen en acties                                                   | `c0127855`                  |
+| [Pushmeldingen](pushmeldingen.md)               | registratie, parsing, effecten en historie                                            | `ba1383c`                   |
+| [Referentiedata](referentiedata.md)             | synchronisatie, opslag en formulierdefinities                                         | `ba1383c`                   |
+| [Statuscodes](statuscodes.md)                   | opdracht-, dienst- en beschikbaarheidsstatussen                                       | `ba1383c`                   |
+| [Stores](stores.md)                             | Query, Zustand, opslag en tokenbezit                                                  | `ba1383c`                   |
+| [Support](support.md)                           | geredigeerd log bekijken en delen                                                     | `ba1383c`                   |
+| [Testen](testen.md)                             | testopzet, fakes, coverage en architectuurtest                                        | `ba1383c`                   |
+| [Toestemmingen](toestemmingen.md)               | locatie, meldingen en camera                                                          | `ba1383c`                   |
+| [Verwerkingsformulier](verwerkingsformulier.md) | dynamisch formulier, concept, sectiereset, adres, handtekening, submit en finishmodus | `c0127855`                  |
 
 ### Betekenis van signalen
 

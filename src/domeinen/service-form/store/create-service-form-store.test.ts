@@ -14,6 +14,16 @@ describe('createServiceFormStore', () => {
     expect(second.getState().answers.dn_name).toBeUndefined();
   });
 
+  it('opens every supplied section for the read-only finish summary', () => {
+    const store = createServiceFormStore();
+    store.getState().initialize({}, ['section-1', 'section-2']);
+
+    expect(store.getState().expandedSections).toEqual({
+      'section-1': true,
+      'section-2': true,
+    });
+  });
+
   it('updates nested state immutably and resets transient state', () => {
     const store = createServiceFormStore();
     store.getState().initialize({ dn_name: answer }, 'section-1');
@@ -120,22 +130,6 @@ describe('createServiceFormStore', () => {
     store.getState().reset();
     expect(store.getState().termsAcceptanceRequired).toBe(true);
     expect(store.getState().acceptedTermsAndConditions).toBe(false);
-  });
-
-  it('clears terms-required field errors when terms are accepted', () => {
-    const store = createServiceFormStore();
-    store.getState().initialize({}, 'section-1', true);
-    store.getState().setErrors({
-      signature_receiver: {
-        code: 'terms-required',
-        message: 'Accepteer eerst de voorwaarden.',
-      },
-    });
-
-    store.getState().setAcceptedTermsAndConditions(true);
-
-    expect(store.getState().acceptedTermsAndConditions).toBe(true);
-    expect(store.getState().errors.signature_receiver).toBeUndefined();
   });
 
   it('defaults acceptedTermsAndConditions to true when terms acceptance is not required', () => {

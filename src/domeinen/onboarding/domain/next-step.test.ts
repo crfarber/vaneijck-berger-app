@@ -2,6 +2,17 @@ import { describe, expect, it } from 'vitest';
 import { decideOnboarding } from './next-step';
 
 describe('decideOnboarding', () => {
+  it('ignores an outdated registration requirement while active work exists', () => {
+    expect(
+      decideOnboarding({
+        reregister: { kind: 'required', reason: 'no-unit' },
+        userType: 'external',
+        backendReportedOpenWork: false,
+        hasActiveWork: true,
+      }),
+    ).toEqual({ step: 'allocations', notice: 'no-valid-unit-continue' });
+  });
+
   it('goes straight to the assignments list when the unit is fine', () => {
     expect(
       decideOnboarding({

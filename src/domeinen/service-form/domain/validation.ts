@@ -10,15 +10,6 @@ import type {
 
 /** Field-level validation, ported from `utils/serviceFormValidation.ts`. */
 
-/** Optional signature/terms flags shared by field and form validators. */
-export type ServiceFormFieldValidationOptions = {
-  hideSignature?: Record<string, true>;
-  noEmailConfirmation?: Record<string, true>;
-  /** When true, visible signature fields also require accepted transport terms. */
-  termsAcceptanceRequired?: boolean;
-  acceptedTermsAndConditions?: boolean;
-};
-
 export function isServiceFormAnswerEmpty(answer: ServiceFormAnswer | undefined): boolean {
   return (
     answer === undefined ||
@@ -42,10 +33,6 @@ export function isServiceFormFieldFilled(
   requiredFieldOverrides: ServiceFormRequiredOverrides = {},
   hideSignature: Record<string, true> = {},
   noEmailConfirmation: Record<string, true> = {},
-  options: Pick<
-    ServiceFormFieldValidationOptions,
-    'termsAcceptanceRequired' | 'acceptedTermsAndConditions'
-  > = {},
 ): boolean {
   if (field.readOnly) {
     return true;
@@ -67,7 +54,6 @@ export function isServiceFormFieldFilled(
       requiredFieldOverrides,
       hideSignature,
       noEmailConfirmation,
-      options,
     ) === null
   );
 }
@@ -116,10 +102,6 @@ export function validateServiceFormField(
   requiredFieldOverrides: ServiceFormRequiredOverrides = {},
   hideSignature: Record<string, true> = {},
   noEmailConfirmation: Record<string, true> = {},
-  options: Pick<
-    ServiceFormFieldValidationOptions,
-    'termsAcceptanceRequired' | 'acceptedTermsAndConditions'
-  > = {},
 ): ServiceFormError | null {
   if (field.readOnly) {
     return null;
@@ -147,12 +129,6 @@ export function validateServiceFormField(
       return {
         code: 'signature-email-required',
         message: 'E-mailadres bij de handtekening is verplicht.',
-      };
-    }
-    if (options.termsAcceptanceRequired && !options.acceptedTermsAndConditions) {
-      return {
-        code: 'terms-required',
-        message: 'Accepteer eerst de voorwaarden.',
       };
     }
   }
@@ -189,10 +165,6 @@ export function validateVisibleServiceForm(
   requiredFieldOverrides: ServiceFormRequiredOverrides = {},
   hideSignature: Record<string, true> = {},
   noEmailConfirmation: Record<string, true> = {},
-  options: Pick<
-    ServiceFormFieldValidationOptions,
-    'termsAcceptanceRequired' | 'acceptedTermsAndConditions'
-  > = {},
 ): ServiceFormErrors {
   const errors: ServiceFormErrors = {};
   fields.forEach((field) => {
@@ -205,33 +177,11 @@ export function validateVisibleServiceForm(
       requiredFieldOverrides,
       hideSignature,
       noEmailConfirmation,
-      options,
     );
     if (error) {
       errors[field.key] = error;
     }
   });
-
-  // Terms sit on the signature UI; if every signature was skipped the per-field check never
-  // runs, so attach the error to the first visible signature slot so submit still blocks.
-  if (
-    options.termsAcceptanceRequired &&
-    !options.acceptedTermsAndConditions &&
-    !Object.values(errors).some((error) => error.code === 'terms-required')
-  ) {
-    const signatureField = fields.find(
-      (field) =>
-        visibleFieldIds.has(field.id) &&
-        field.type.toLowerCase() === 'signature' &&
-        !field.readOnly,
-    );
-    if (signatureField && errors[signatureField.key] === undefined) {
-      errors[signatureField.key] = {
-        code: 'terms-required',
-        message: 'Accepteer eerst de voorwaarden.',
-      };
-    }
-  }
 
   return errors;
 }

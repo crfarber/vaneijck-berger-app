@@ -37,7 +37,7 @@ export type ServiceFormState = {
   uiResetEpoch: number;
   initialize: (
     answers: ServiceFormAnswers,
-    initialExpandedSectionId?: string,
+    initialExpandedSectionIds?: string | readonly string[],
     requiresTermsAcceptance?: boolean,
     draft?: ServiceFormDraft | null,
   ) => void;
@@ -101,19 +101,25 @@ export const createServiceFormStore = () =>
     ...initialState,
     initialize: (
       answers,
-      initialExpandedSectionId,
+      initialExpandedSectionIds,
       requiresTermsAcceptance = false,
       draft = null,
     ) => {
       const baseline = cloneServiceFormAnswers(answers);
       const mergedAnswers = { ...baseline, ...cloneServiceFormAnswers(draft?.answers ?? {}) };
       const draftExpandedSections = draft?.expandedSections ?? {};
+      const initialSectionIds =
+        typeof initialExpandedSectionIds === 'string'
+          ? [initialExpandedSectionIds]
+          : (initialExpandedSectionIds ?? []);
+      const initialExpandedSections: Record<string, true> = {};
+      initialSectionIds.forEach((sectionId) => {
+        initialExpandedSections[sectionId] = true;
+      });
       const expandedSections: Record<string, true> =
         Object.keys(draftExpandedSections).length > 0
           ? { ...draftExpandedSections }
-          : initialExpandedSectionId
-            ? { [initialExpandedSectionId]: true }
-            : {};
+          : initialExpandedSections;
 
       return set({
         answers: cloneServiceFormAnswers(mergedAnswers),
@@ -199,19 +205,7 @@ export const createServiceFormStore = () =>
         delete errors[fieldKey];
         return { noEmailConfirmation, errors };
       }),
-    setAcceptedTermsAndConditions: (accepted) =>
-      set((state) => {
-        if (accepted) {
-          const errors = { ...state.errors };
-          for (const [fieldKey, error] of Object.entries(errors)) {
-            if (error.code === 'terms-required') {
-              delete errors[fieldKey];
-            }
-          }
-          return { acceptedTermsAndConditions: true, errors };
-        }
-        return { acceptedTermsAndConditions: false };
-      }),
+    setAcceptedTermsAndConditions: (accepted) => set({ acceptedTermsAndConditions: accepted }),
     reset: () =>
       set((state) => ({
         answers: cloneServiceFormAnswers(state.initialAnswers),

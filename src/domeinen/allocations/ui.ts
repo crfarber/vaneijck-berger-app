@@ -20,7 +20,6 @@ export { colleagueKeys, useReassign } from './hooks/use-reassign';
 export { serviceKeys, useServices } from './hooks/use-services';
 export { AllocationDetailScreen } from './screens/allocation-detail-screen';
 export { AllocationsScreen } from './screens/allocations-screen';
-export { ServiceFinishScreen } from './screens/service-finish-screen';
 export { ServicesScreen } from './screens/services-screen';
 export { PreviewBanner } from './components/preview-banner';
 export { ServiceDeclineSheet } from './components/service-decline-sheet';

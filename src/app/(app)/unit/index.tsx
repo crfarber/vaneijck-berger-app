@@ -40,7 +40,13 @@ export default function UnitIndexRoute() {
   const unitService = useAllocationUnitService();
   const { data: worker } = useWorker();
   const completeAccept = useCompleteAllocationAccept();
-  const { sections } = useAllocations();
+  const {
+    sections,
+    isSuccess: allocationsReady,
+    isFetching: allocationsFetching,
+  } = useAllocations({
+    refetchOnMount: 'always',
+  });
   const hasActiveWork = hasActiveAllocations(sections);
   const isOnboarding = mode === 'onboarding';
   const isAccepting = mode === 'accept';
@@ -77,7 +83,7 @@ export default function UnitIndexRoute() {
 
   const openRegistration = useCallback(
     (replace: boolean, reuseIntent?: ReturnType<typeof toUnitReuseIntent>) => {
-      if (userType === null) {
+      if (userType === null || hasActiveWork || !allocationsReady || allocationsFetching) {
         return;
       }
 
@@ -100,11 +106,18 @@ export default function UnitIndexRoute() {
         router.push(route);
       }
     },
-    [registrationCallbacks, start, userType],
+    [allocationsFetching, allocationsReady, hasActiveWork, registrationCallbacks, start, userType],
   );
 
   useEffect(() => {
     if ((!isOnboarding && !isAccepting) || extendOnly || userType === null) {
+      return;
+    }
+    if (hasActiveWork) {
+      router.replace('/?openWork=1');
+      return;
+    }
+    if (!allocationsReady || allocationsFetching) {
       return;
     }
     if (registrationStarted.current) {
@@ -122,6 +135,7 @@ export default function UnitIndexRoute() {
     }
 
     registrationStarted.current = true;
+    let cancelled = false;
     void (async () => {
       const stored = await lastUnitPreference.load();
       let fleetTruckIds: ReadonlySet<string> | undefined;
@@ -137,14 +151,24 @@ export default function UnitIndexRoute() {
               userType,
               fleetTruckIds,
             });
+      if (cancelled) {
+        return;
+      }
       if (matched === null) {
         openRegistration(true);
         return;
       }
       openRegistration(true, toUnitReuseIntent(matched));
     })();
+    return () => {
+      cancelled = true;
+      registrationStarted.current = false;
+    };
   }, [
+    allocationsFetching,
+    allocationsReady,
     extendOnly,
+    hasActiveWork,
     isAccepting,
     isOnboarding,
     lastUnitPreference,

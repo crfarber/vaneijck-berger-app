@@ -4,6 +4,13 @@ import { describe, expect, it } from 'vitest';
 const source = readFileSync(new URL('./photo-overview-screen.tsx', import.meta.url), 'utf8');
 
 describe('photo overview screen', () => {
+  it('resolves server photos locally first using the phase requirements', () => {
+    expect(source).toContain('positions(loadMandatoryKey)');
+    expect(source).toContain('deliveryPhotoRequirements(required, loadPositions)');
+    expect(source).toContain('!copiedLocalIds.has(photo.id)');
+    expect(source).toContain('remoteLoadPhotos.map((photo, index)');
+  });
+
   it('shows the local copy of a sent photo instead of fetching it from the server', () => {
     expect(source).toContain('matchLocalCopies(serverPhotos, localCurrentPhotos)');
     expect(source).toContain('...(copy ? { uri: copy.uri } : remoteImage(photo.url))');

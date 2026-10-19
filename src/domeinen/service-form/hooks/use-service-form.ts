@@ -34,10 +34,6 @@ export function useServiceForm(form: NormalizedServiceForm, pleaseSelectLabel: s
   const setFieldsRequired = useServiceFormStore((state) => state.setFieldsRequired);
   const hideSignature = useServiceFormStore((state) => state.hideSignature);
   const noEmailConfirmation = useServiceFormStore((state) => state.noEmailConfirmation);
-  const termsAcceptanceRequired = useServiceFormStore((state) => state.termsAcceptanceRequired);
-  const acceptedTermsAndConditions = useServiceFormStore(
-    (state) => state.acceptedTermsAndConditions,
-  );
 
   const fields = useMemo(() => form.sections.flatMap((section) => section.fields), [form.sections]);
   const visibility = useMemo(() => evaluateServiceFormVisibility(form, answers), [answers, form]);
@@ -51,17 +47,13 @@ export function useServiceForm(form: NormalizedServiceForm, pleaseSelectLabel: s
         requiredFieldOverrides,
         hideSignature,
         noEmailConfirmation,
-        termsAcceptanceRequired,
-        acceptedTermsAndConditions,
       }),
     [
-      acceptedTermsAndConditions,
       answers,
       fields,
       hideSignature,
       noEmailConfirmation,
       requiredFieldOverrides,
-      termsAcceptanceRequired,
       visibility.visibleFieldIds,
     ],
   );
@@ -71,17 +63,13 @@ export function useServiceForm(form: NormalizedServiceForm, pleaseSelectLabel: s
         requiredFieldOverrides,
         hideSignature,
         noEmailConfirmation,
-        termsAcceptanceRequired,
-        acceptedTermsAndConditions,
       }),
     [
-      acceptedTermsAndConditions,
       answers,
       fields,
       hideSignature,
       noEmailConfirmation,
       requiredFieldOverrides,
-      termsAcceptanceRequired,
       visibility.visibleFieldIds,
     ],
   );
@@ -104,10 +92,6 @@ export function useServiceForm(form: NormalizedServiceForm, pleaseSelectLabel: s
             state.requiredFieldOverrides,
             state.hideSignature,
             state.noEmailConfirmation,
-            {
-              termsAcceptanceRequired: state.termsAcceptanceRequired,
-              acceptedTermsAndConditions: state.acceptedTermsAndConditions,
-            },
           ),
         );
       }
@@ -129,10 +113,6 @@ export function useServiceForm(form: NormalizedServiceForm, pleaseSelectLabel: s
         state.requiredFieldOverrides,
         state.hideSignature,
         state.noEmailConfirmation,
-        {
-          termsAcceptanceRequired: state.termsAcceptanceRequired,
-          acceptedTermsAndConditions: state.acceptedTermsAndConditions,
-        },
       ),
     );
   };
@@ -146,10 +126,6 @@ export function useServiceForm(form: NormalizedServiceForm, pleaseSelectLabel: s
       state.requiredFieldOverrides,
       state.hideSignature,
       state.noEmailConfirmation,
-      {
-        termsAcceptanceRequired: state.termsAcceptanceRequired,
-        acceptedTermsAndConditions: state.acceptedTermsAndConditions,
-      },
     );
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;

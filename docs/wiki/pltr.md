@@ -1,6 +1,6 @@
 # PLTR
 
-> Gecontroleerd op: `4cf3132b` (2026-10-13; werkboom, PLTR-14 preview)
+> Gecontroleerd op: `c0127855` (2026-10-16; finishmodus)
 > Bronnen: `src/domeinen/services/domain/pltr.ts`, `src/domeinen/services/domain/service-types.ts`, `src/domeinen/allocations/screens/pltr-screen.tsx`, `src/domeinen/allocations/screens/allocation-detail-screen.tsx`, `src/domeinen/allocations/hooks/`, `src/app/(app)/allocations/`
 > Zie ook: [ADR 0019](../decisions/0019-pltr.md), [flows](../functioneel/flows.md#3-een-opdracht-uitvoeren-regels-klaar-schermen-volgen), [statussen](../functioneel/statussen.md#types-dn_servicetypecode-van-de-eerste-dienst)
 
@@ -25,7 +25,7 @@ flowchart TD
   I -->|tijdelijke fout| J[Outbox]
   G -->|laden of afleveren| K[useOpenService]
   K --> L[ServiceFormScreen]
-  G -->|afronden| M[ServiceFinishScreen]
+  G -->|afronden| M[ServiceFormScreen finishmodus]
 ```
 
 Het scherm gebruikt de eerste dienst van de opdracht. Het diensttype kiest de PLTR-variant; de

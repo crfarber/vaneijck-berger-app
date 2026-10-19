@@ -5,6 +5,8 @@ import type { Clock } from '@/shared/platform/ports';
 import type { ListServerPhotosInput, PhotosApi, ServerPhotoSummary } from '../api/photos-api';
 import { isExtraForUpload } from '../domain/extra';
 import { commentForPhase } from '../domain/phase';
+import { matchLocalCopies } from '../domain/local-copies';
+import { missingPhotoPositions } from '../domain/photo-position-options';
 import { toImagePosition } from '../domain/photo-type';
 import {
   PHOTO_ROLE,
@@ -41,7 +43,10 @@ export type CapturePhotoInput = {
 export type PhotoService = {
   listByService(serviceId: string): Promise<Photo[]>;
   displayUri(filePath: string): Promise<string>;
-  listServerPhotos(input: ListServerPhotosInput): Promise<ServerPhotoSummary[]>;
+  listServerPhotos(
+    input: ListServerPhotosInput,
+    localFirstRequirements?: readonly PhotoPosition[],
+  ): Promise<ServerPhotoSummary[]>;
   /**
    * Display URI for a server photo without a local copy. Downloads it once and keeps it encrypted
    * until the allocation is cleared; a url outside our API is returned unchanged.
@@ -331,16 +336,63 @@ export function createPhotoService(deps: PhotoServiceDeps): PhotoService {
       return files.displayUri(filePath);
     },
 
-    async listServerPhotos(input) {
+    async listServerPhotos(input, localFirstRequirements) {
+      const scope = input.allocationId;
+      const epoch = scope === undefined ? undefined : remoteEpoch(scope);
+      let local: Photo[] = [];
+      if (localFirstRequirements !== undefined && scope !== undefined) {
+        local = (await this.listByService(input.serviceId)).filter(
+          (photo) => photo.phase === input.phase && photo.status !== PHOTO_STATUS.failed,
+        );
+        const cachedResult = await repository.loadServer(input);
+        const cached = cachedResult ?? [];
+        const copies = matchLocalCopies(cached, local);
+        const available = await Promise.all(
+          cached.map(async (photo, index) =>
+            copies[index] || (await files.remoteDisplayUri(scope, photo.url)) !== null
+              ? photo
+              : null,
+          ),
+        );
+        const stored = available.filter((photo) => photo !== null);
+        const storedWithoutCopies = stored.filter((photo) => {
+          const index = cached.indexOf(photo);
+          return copies[index] === null;
+        });
+        if (
+          (local.length > 0 || stored.length > 0 || cachedResult?.length === 0) &&
+          missingPhotoPositions(localFirstRequirements, [
+            ...local.map((photo) => photo.position),
+            ...storedWithoutCopies.map((photo) => photo.position),
+          ]).length === 0
+        ) {
+          return stored;
+        }
+      }
+      let photos: ServerPhotoSummary[];
       try {
-        const photos = await api.list(input);
-        await repository.saveServer(input, photos);
-        return photos;
+        photos = await api.list(input);
+        if (scope === undefined || epoch === remoteEpoch(scope)) {
+          await repository.saveServer(input, photos);
+        }
       } catch (error) {
         const cached = await repository.loadServer(input);
-        if (cached !== null) return cached;
-        throw error;
+        if (cached === null) throw error;
+        photos = cached;
       }
+      if (
+        localFirstRequirements !== undefined &&
+        scope !== undefined &&
+        epoch === remoteEpoch(scope)
+      ) {
+        const copies = matchLocalCopies(photos, local);
+        await Promise.allSettled(
+          photos
+            .filter((_, index) => copies[index] === null)
+            .map((photo) => this.serverPhotoUri({ allocationId: scope, url: photo.url })),
+        );
+      }
+      return photos;
     },
 
     serverPhotoUri({ allocationId, url }) {

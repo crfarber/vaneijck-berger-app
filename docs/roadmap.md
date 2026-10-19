@@ -91,8 +91,11 @@ het scherm laadt en niet crasht is te controleren zonder een opdracht met echte 
 op echte navigatie ([ADR 0018](decisions/0018-verwerken-naad-en-overdragen.md)): een actieve dienst
 aantikken haalt hem eerst vers op en verlaat het scherm meteen als hij niet meer verstuurd mag
 worden (`blocked`, ported van `ProcessingServiceWrapper`'s eigen effect); staat hij al op
-HULPVERLENING_AFGEROND, dan opent `ServiceFinishScreen` — de naad van `ProcessingFinishedWrapper`,
-met precies het ene signaal dat die naad ook had. Een wachtende opdracht kan nu ook worden
+HULPVERLENING_AFGEROND, dan opent `ServiceFormScreen` in finishmodus, met de exitsemantiek van
+`ProcessingFinishedWrapper`: Start en Afleveren tonen de twee fasen afzonderlijk en read-only;
+Start gebruikt de volledige fase-1-snapshot als die bestaat en anders actuele dienstdata, Afleveren
+gebruikt altijd actuele dienstdata. Finish ruimt de snapshot op en voert de wrapper-exit uit zonder
+extra CRM-mutatie. Een wachtende opdracht kan nu ook worden
 overgedragen aan een collega (`ReassignScreen`, nieuw domein `worker` voor
 `dn_canforwardallocationcode`) in plaats van geaccepteerd of afgewezen. Postcode controleren
 (`POST /api/check/zipcode`) is toegevoegd als kale, geteste API-functie.

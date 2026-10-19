@@ -63,6 +63,7 @@ export type { FieldGroup, FieldKind } from './domain/field-kind';
 export {
   isLastServiceFormPhase,
   phaseNumbersFromDefinition,
+  SERVICE_FORM_FINISH_PHASES,
   SERVICE_FORM_PHASE,
   serviceFormLanguageCode,
   serviceFormPhaseForStatus,
@@ -149,6 +150,7 @@ export {
   buildInitialServiceFormAnswers,
   cloneServiceFormAnswer,
   cloneServiceFormAnswers,
+  resolvePhaseOneServiceFormAnswers,
   resolveServiceFormValueToShow,
 } from './domain/values';
 export {

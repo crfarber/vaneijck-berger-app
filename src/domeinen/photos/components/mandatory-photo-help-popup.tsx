@@ -57,7 +57,7 @@ export function MandatoryPhotoHelpPopup({ position, onContinue }: MandatoryPhoto
                   key={index}
                   style={[styles.cell, vehicle && styles.vehicleCell, active && styles.activeCell]}
                 >
-                  {vehicle ? <CarSVG size={40} color={colors.brandDarker} /> : null}
+                  {vehicle ? <CarSVG size={40} color={colors.brandDark} /> : null}
                   {active ? (
                     <View style={styles.target}>
                       <PersonIcon size={28} color={colors.text} />

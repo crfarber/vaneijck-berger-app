@@ -39,6 +39,7 @@ export function SignatureInputField({
   const requiresTerms = useServiceFormStore((state) => state.termsAcceptanceRequired);
 
   const hidden = Boolean(hideSignature[field.key]);
+  const available = !hidden;
   const noEmail = Boolean(noEmailConfirmation[field.key]);
   const hasInk = hasSignatureInk(answer?.value);
   const capturedLabel = t('serviceForm.signature.captured');
@@ -46,7 +47,6 @@ export function SignatureInputField({
   const nameInvalid = error?.code === 'signature-name-required';
   const emailInvalid = error?.code === 'signature-email-required';
   const inkInvalid = error?.code === 'required';
-  const termsInvalid = error?.code === 'terms-required';
 
   const patch = (partial: Partial<ServiceFormAnswer>): void => {
     onChange(field.key, {
@@ -62,16 +62,14 @@ export function SignatureInputField({
     <FieldFrame label={field.label} optional={field.optional}>
       <View style={styles.stack}>
         <Toggle
-          label={
-            hidden ? t('serviceForm.signature.notAvailable') : t('serviceForm.signature.available')
-          }
-          value={hidden}
+          label={t('serviceForm.signature.available')}
+          value={available}
           onValueChange={(next) => {
             onFocus?.(field);
-            if ((next === true) !== hidden) {
+            if (next !== available) {
               toggleHideSignature(field.key);
             }
-            if (next === true) {
+            if (!next) {
               patch({ value: '', displayValue: '' });
             }
             onBlur(field);
@@ -89,9 +87,7 @@ export function SignatureInputField({
               error={nameInvalid ? '' : null}
             />
             <Toggle
-              label={
-                noEmail ? t('serviceForm.signature.noEmail') : t('serviceForm.signature.withEmail')
-              }
+              label={t('serviceForm.signature.noEmailConfirmation')}
               value={noEmail}
               onValueChange={(next) => {
                 onFocus?.(field);
@@ -141,13 +137,8 @@ export function SignatureInputField({
         ) : null}
         {requiresTerms ? (
           <Toggle
-            label={
-              acceptedTerms
-                ? t('serviceForm.signature.termsAccepted')
-                : t('serviceForm.signature.termsRejected')
-            }
+            label={t('serviceForm.signature.acceptTerms')}
             value={acceptedTerms}
-            invalid={termsInvalid}
             onValueChange={(next) => {
               onFocus?.(field);
               setAcceptedTerms(next);

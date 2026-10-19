@@ -1,10 +1,12 @@
 import { authorize, refresh } from 'react-native-app-auth';
 import { fetch as expoFetch } from 'expo/fetch';
+import * as Device from 'expo-device';
 import { router } from 'expo-router';
 import type { InternalAuth } from '@/domeinen/auth';
 import { createInternalAuth } from '@/domeinen/auth/ui';
 import { createExpoLocationReader } from '@/domeinen/location/ui';
 import { createFirebasePushGateway } from '@/domeinen/notifications/ui';
+import { createPhotoLocationReader } from '@/domeinen/photos';
 import { createExpoPhotoFiles } from '@/domeinen/photos/ui';
 import { createExpoDevicePermissions } from '@/domeinen/settings/ui';
 import { createRnLogShare } from '@/domeinen/support/ui';
@@ -36,13 +38,15 @@ function buildInternalAuth(config: RuntimeConfig): InternalAuth | null {
 export function createNativeContainer(): Container {
   const config = readRuntimeConfig();
   const secretStore = createDeviceSecretStore();
+  const locationReader = createExpoLocationReader();
   return createContainer({
     config,
     secretStore,
     keyValueStore: createDeviceKeyValueStore(),
     language: detectLanguage(),
     internalAuth: buildInternalAuth(config),
-    locationReader: createExpoLocationReader(),
+    locationReader,
+    photoLocationReader: createPhotoLocationReader(locationReader, __DEV__ && !Device.isDevice),
     devicePermissions: createExpoDevicePermissions(),
     logShare: createRnLogShare(),
     photoFiles: createExpoPhotoFiles(secretStore),

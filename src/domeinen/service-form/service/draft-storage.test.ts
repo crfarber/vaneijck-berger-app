@@ -63,6 +63,25 @@ describe('createServiceFormDraftStore', () => {
     expect(await store.load('alloc-1', 'svc-2')).toBeNull();
   });
 
+  it('keeps the finished phase-one snapshot separate from an editable draft', async () => {
+    const store = createServiceFormDraftStore(createInMemoryStore(), createFakeClock());
+    await store.savePhaseOneSnapshot('alloc-1', 'svc-1', draft.answers);
+
+    expect(await store.loadPhaseOneSnapshot('alloc-1', 'svc-1')).toEqual(draft.answers);
+    expect(await store.load('alloc-1', 'svc-1')).toBeNull();
+  });
+
+  it('clears the phase-one snapshot for one service only', async () => {
+    const store = createServiceFormDraftStore(createInMemoryStore(), createFakeClock());
+    await store.savePhaseOneSnapshot('alloc-1', 'svc-1', draft.answers);
+    await store.savePhaseOneSnapshot('alloc-1', 'svc-2', draft.answers);
+
+    await store.clearPhaseOneSnapshot('alloc-1', 'svc-1');
+
+    expect(await store.loadPhaseOneSnapshot('alloc-1', 'svc-1')).toBeNull();
+    expect(await store.loadPhaseOneSnapshot('alloc-1', 'svc-2')).toEqual(draft.answers);
+  });
+
   it('clears a draft', async () => {
     const store = createServiceFormDraftStore(createInMemoryStore(), createFakeClock());
     await store.save('alloc-1', 'svc-1', draft);
@@ -77,12 +96,16 @@ describe('createServiceFormDraftStore', () => {
     await store.save('alloc-1', 'svc-1', draft);
     await store.save('alloc-1', 'svc-2', draft);
     await store.save('alloc-2', 'svc-3', draft);
+    await store.savePhaseOneSnapshot('alloc-1', 'svc-1', draft.answers);
+    await store.savePhaseOneSnapshot('alloc-2', 'svc-3', draft.answers);
 
     await store.clearForAllocation('alloc-1');
 
     expect(await store.load('alloc-1', 'svc-1')).toBeNull();
     expect(await store.load('alloc-1', 'svc-2')).toBeNull();
     expect(await store.load('alloc-2', 'svc-3')).not.toBeNull();
+    expect(await store.loadPhaseOneSnapshot('alloc-1', 'svc-1')).toBeNull();
+    expect(await store.loadPhaseOneSnapshot('alloc-2', 'svc-3')).toEqual(draft.answers);
   });
 
   it('clearAll drops every draft (sign-out)', async () => {
@@ -90,12 +113,14 @@ describe('createServiceFormDraftStore', () => {
     const store = createServiceFormDraftStore(kv, createFakeClock());
     await store.save('alloc-1', 'svc-1', draft);
     await store.save('alloc-2', 'svc-2', draft);
+    await store.savePhaseOneSnapshot('alloc-1', 'svc-1', draft.answers);
 
     await store.clearAll();
 
     expect(await store.load('alloc-1', 'svc-1')).toBeNull();
     expect(await store.load('alloc-2', 'svc-2')).toBeNull();
     expect(await kv.getItem(SERVICE_FORM_DRAFTS_KEY)).toBeNull();
+    expect(await store.loadPhaseOneSnapshot('alloc-1', 'svc-1')).toBeNull();
   });
 
   it('returns null for anything that is not a valid draft', () => {

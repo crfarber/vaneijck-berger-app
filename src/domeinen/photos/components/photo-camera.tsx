@@ -317,7 +317,7 @@ export function PhotoCamera({ onCapture, overlay }: PhotoCameraProps) {
             style={[styles.captureButton, Platform.OS === 'android' && styles.captureButtonAndroid]}
           >
             {capturing ? (
-              <ActivityIndicator color={colors.brandDarker} />
+              <ActivityIndicator color={colors.brandDark} />
             ) : (
               <View
                 style={[

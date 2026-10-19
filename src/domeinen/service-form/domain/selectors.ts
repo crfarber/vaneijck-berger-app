@@ -73,16 +73,7 @@ export type ServiceFormValidationContext = {
   requiredFieldOverrides?: ServiceFormRequiredOverrides;
   hideSignature?: Record<string, true>;
   noEmailConfirmation?: Record<string, true>;
-  termsAcceptanceRequired?: boolean;
-  acceptedTermsAndConditions?: boolean;
 };
-
-function termsOptions(context: ServiceFormValidationContext) {
-  return {
-    termsAcceptanceRequired: context.termsAcceptanceRequired,
-    acceptedTermsAndConditions: context.acceptedTermsAndConditions,
-  };
-}
 
 export function selectServiceFormProgress(
   fields: ServiceFormField[],
@@ -91,7 +82,6 @@ export function selectServiceFormProgress(
   context: ServiceFormValidationContext = {},
 ): ServiceFormProgress {
   const { requiredFieldOverrides = {}, hideSignature = {}, noEmailConfirmation = {} } = context;
-  const terms = termsOptions(context);
   const requiredFields = selectRequiredServiceFormFields(
     fields,
     visibleFieldIds,
@@ -106,7 +96,6 @@ export function selectServiceFormProgress(
         requiredFieldOverrides,
         hideSignature,
         noEmailConfirmation,
-        terms,
       ) === null,
   ).length;
   return {
@@ -123,7 +112,6 @@ export function selectNextIncompleteServiceFormField(
   context: ServiceFormValidationContext = {},
 ): ServiceFormField | null {
   const { requiredFieldOverrides = {}, hideSignature = {}, noEmailConfirmation = {} } = context;
-  const terms = termsOptions(context);
   return (
     selectRequiredServiceFormFields(fields, visibleFieldIds, answers, requiredFieldOverrides).find(
       (field) =>
@@ -133,7 +121,6 @@ export function selectNextIncompleteServiceFormField(
           requiredFieldOverrides,
           hideSignature,
           noEmailConfirmation,
-          terms,
         ) !== null,
     ) ?? null
   );
@@ -205,7 +192,6 @@ export function selectQuickViewFields(
     initialAnswers,
     focusedFieldId = null,
   } = context;
-  const terms = termsOptions(context);
 
   return fields.filter((field) => {
     if (!visibleFieldIds.has(field.id)) {
@@ -223,7 +209,6 @@ export function selectQuickViewFields(
       requiredFieldOverrides,
       hideSignature,
       noEmailConfirmation,
-      terms,
     );
     if (!isFilled) {
       return true;
@@ -240,7 +225,6 @@ export function selectQuickViewFields(
       requiredFieldOverrides,
       hideSignature,
       noEmailConfirmation,
-      terms,
     );
   });
 }

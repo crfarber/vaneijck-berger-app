@@ -12,7 +12,7 @@ const ServiceFormStoreContext = createContext<ServiceFormStore | null>(null);
 
 type ServiceFormStoreProviderProps = PropsWithChildren<{
   initialAnswers: ServiceFormAnswers;
-  initialExpandedSectionId?: string;
+  initialExpandedSectionIds?: readonly string[];
   requiresTermsAcceptance?: boolean;
   persistedDraft?: ServiceFormDraft | null;
 }>;
@@ -24,7 +24,7 @@ type ServiceFormStoreProviderProps = PropsWithChildren<{
 export function ServiceFormStoreProvider({
   children,
   initialAnswers,
-  initialExpandedSectionId,
+  initialExpandedSectionIds,
   requiresTermsAcceptance,
   persistedDraft = null,
 }: ServiceFormStoreProviderProps) {
@@ -34,7 +34,7 @@ export function ServiceFormStoreProvider({
       .getState()
       .initialize(
         initialAnswers,
-        initialExpandedSectionId,
+        initialExpandedSectionIds,
         requiresTermsAcceptance,
         persistedDraft,
       );

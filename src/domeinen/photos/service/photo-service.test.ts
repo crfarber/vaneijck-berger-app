@@ -13,6 +13,7 @@ import { createPhotosApi, type PhotosApi } from '../api/photos-api';
 import { PHOTO_STATUS } from '../domain/types';
 import { createInMemoryPhotoFiles } from './photo-files';
 import { openPhoto, sealPhoto } from './photo-encryption';
+import { createPhotoLocationReader } from './photo-location-reader';
 import { createPhotoRepository } from './photo-repository';
 import { createPhotoService, migrateLegacyPhotos } from './photo-service';
 
@@ -22,6 +23,44 @@ function locationReader(valid = true): LocationReader {
       valid ? { isValid: true, latitude: 52.1, longitude: 5.1 } : { isValid: false },
   };
 }
+
+describe('photo location reader', () => {
+  it('uses the simulator test location when no usable fix is available', async () => {
+    const reader = createPhotoLocationReader(locationReader(false), true);
+
+    await expect(reader.getCurrent()).resolves.toEqual({
+      isValid: true,
+      latitude: 52.0803,
+      longitude: 4.3244,
+    });
+  });
+
+  it('preserves a usable device location', async () => {
+    const current = { isValid: true, latitude: 52.1, longitude: 5.1 } as const;
+    const reader = createPhotoLocationReader({ getCurrent: async () => current }, true);
+
+    await expect(reader.getCurrent()).resolves.toEqual(current);
+  });
+
+  it('does not use the simulator test location when the fallback is disabled', async () => {
+    const reader = createPhotoLocationReader(locationReader(false), false);
+
+    await expect(reader.getCurrent()).resolves.toEqual({ isValid: false });
+  });
+
+  it('replaces the invalid zero coordinate with the simulator test location', async () => {
+    const reader = createPhotoLocationReader(
+      { getCurrent: async () => ({ isValid: true, latitude: 0, longitude: 0 }) },
+      true,
+    );
+
+    await expect(reader.getCurrent()).resolves.toEqual({
+      isValid: true,
+      latitude: 52.0803,
+      longitude: 4.3244,
+    });
+  });
+});
 
 function setup(
   options: {
@@ -64,6 +103,164 @@ function setup(
   service.start();
   return { service, upload, list, download, files, store, scheduler, clock, repository };
 }
+
+describe('local-first server photos', () => {
+  const input = {
+    allocationId: 'alloc-1',
+    incidentId: 'inc-1',
+    serviceId: 'svc-1',
+    phase: 'load' as const,
+  };
+  const position = { category: 'DASHBOARD' as const };
+  const remote = {
+    url: 'https://api.test/api/binary/photo/1',
+    phase: 'load' as const,
+    position,
+    isExtra: false,
+  };
+
+  it('does not contact the server when a required photo is already captured locally', async () => {
+    const { service, list, download } = setup();
+    await service.capture({ ...input, position, sourceUri: 'file:///camera/shot.jpg' });
+
+    await expect(service.listServerPhotos(input, [position])).resolves.toEqual([]);
+
+    expect(list).not.toHaveBeenCalled();
+    expect(download).not.toHaveBeenCalled();
+  });
+
+  it('stores missing server photos and reuses them on the next visit', async () => {
+    const { service, list, download, files } = setup({ list: async () => [remote] });
+
+    await expect(service.listServerPhotos(input, [position])).resolves.toEqual([remote]);
+    await expect(service.listServerPhotos(input, [position])).resolves.toEqual([remote]);
+
+    expect(list).toHaveBeenCalledTimes(1);
+    expect(download).toHaveBeenCalledTimes(1);
+    expect(await files.remoteDisplayUri(input.allocationId, remote.url)).not.toBeNull();
+  });
+
+  it('looks for server photos on an empty device even without mandatory positions', async () => {
+    const { service, list, download } = setup({ list: async () => [remote] });
+
+    await expect(service.listServerPhotos(input, [])).resolves.toEqual([remote]);
+    await expect(service.listServerPhotos(input, [])).resolves.toEqual([remote]);
+
+    expect(list).toHaveBeenCalledTimes(1);
+    expect(download).toHaveBeenCalledTimes(1);
+  });
+
+  it('reuses durable metadata and files after recreating the service', async () => {
+    const { service, list, download, upload, files, store, clock, scheduler } = setup({
+      list: async () => [remote],
+    });
+    await service.listServerPhotos(input, [position]);
+    service.stop();
+    const reopened = createPhotoService({
+      api: { list, download, upload },
+      files,
+      repository: createPhotoRepository(store),
+      clock,
+      scheduler,
+      locationReader: locationReader(),
+    });
+
+    await expect(reopened.listServerPhotos(input, [position])).resolves.toEqual([remote]);
+
+    expect(list).toHaveBeenCalledTimes(1);
+    expect(download).toHaveBeenCalledTimes(1);
+  });
+
+  it('downloads a missing file again rather than trusting metadata alone', async () => {
+    const { service, files, list, download } = setup({ list: async () => [remote] });
+    await service.listServerPhotos(input, [position]);
+    const stored = await files.remoteDisplayUri(input.allocationId, remote.url);
+    expect(stored).not.toBeNull();
+    if (stored !== null) await files.remove(stored);
+
+    await service.listServerPhotos(input, [position]);
+
+    expect(list).toHaveBeenCalledTimes(2);
+    expect(download).toHaveBeenCalledTimes(2);
+  });
+
+  it('downloads only server photos without a matching sent local copy', async () => {
+    const second = {
+      ...remote,
+      url: `${remote.url}/second`,
+      position: { category: 'ROOF' as const },
+    };
+    const { service, repository, list, download } = setup({ list: async () => [remote, second] });
+    const local = await service.capture({
+      ...input,
+      position,
+      sourceUri: 'file:///camera/shot.jpg',
+    });
+    await repository.save([{ ...local, status: PHOTO_STATUS.sent }]);
+
+    await expect(service.listServerPhotos(input, [position, second.position])).resolves.toEqual([
+      remote,
+      second,
+    ]);
+    await service.listServerPhotos(input, [position, second.position]);
+
+    expect(list).toHaveBeenCalledTimes(1);
+    expect(download).toHaveBeenCalledExactlyOnceWith(second.url);
+  });
+
+  it('does not count a sent local copy and its server metadata twice', async () => {
+    const { service, repository, list } = setup({ list: async () => [remote] });
+    const local = await service.capture({
+      ...input,
+      position,
+      sourceUri: 'file:///camera/shot.jpg',
+    });
+    await repository.save([{ ...local, status: PHOTO_STATUS.sent }]);
+    await repository.saveServer(input, [remote]);
+
+    await service.listServerPhotos(input, [position, position]);
+
+    expect(list).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not count failed local photos as available', async () => {
+    const { service, repository, list } = setup({ list: async () => [remote] });
+    const local = await service.capture({
+      ...input,
+      position,
+      sourceUri: 'file:///camera/shot.jpg',
+    });
+    await repository.save([{ ...local, status: PHOTO_STATUS.failed }]);
+
+    await expect(service.listServerPhotos(input, [position])).resolves.toEqual([remote]);
+
+    expect(list).toHaveBeenCalledTimes(1);
+  });
+
+  it('preserves downloaded extras without fetching new images when requirements are covered', async () => {
+    const extra = { ...remote, url: `${remote.url}/extra`, isExtra: true };
+    const { service, list, download } = setup({ list: async () => [remote, extra] });
+
+    await service.listServerPhotos(input, [position]);
+    await expect(service.listServerPhotos(input, [position])).resolves.toEqual([remote, extra]);
+
+    expect(list).toHaveBeenCalledTimes(1);
+    expect(download).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not restore server metadata or files after the allocation is cleared during lookup', async () => {
+    const response = deferred<(typeof remote)[]>();
+    const { service, repository, download, list } = setup({ list: () => response.promise });
+    const loading = service.listServerPhotos(input, [position]);
+    await vi.waitFor(() => expect(list).toHaveBeenCalledTimes(1));
+    await service.clearForAllocation(input.allocationId);
+    response.resolve([remote]);
+    await loading;
+
+    expect(await repository.loadServer(input)).toBeNull();
+    expect(download).not.toHaveBeenCalled();
+  });
+});
 
 describe('server photos without a local copy', () => {
   const url = 'https://api.test/api/binary/photo/1';

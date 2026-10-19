@@ -64,6 +64,7 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     borderRadius: radius.md,
     overflow: 'hidden',
+    marginBottom: spacing.md,
   },
   rowError: { borderColor: colors.danger },
   segment: {

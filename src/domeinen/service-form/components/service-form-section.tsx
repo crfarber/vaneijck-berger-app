@@ -1,4 +1,3 @@
-import { BlurView } from 'expo-blur';
 import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
 import CheckIcon from '@/shared/ui/icons/check';
@@ -20,6 +19,7 @@ export function ServiceFormSectionHeader({
   errorCount,
   onToggle,
   onLayout,
+  isSticky = false,
 }: {
   title: string;
   expanded: boolean;
@@ -28,11 +28,13 @@ export function ServiceFormSectionHeader({
   errorCount: number;
   onToggle: () => void;
   onLayout?: (event: LayoutChangeEvent) => void;
+  isSticky?: boolean;
 }) {
   const complete = total === 0 || completed >= total;
 
   return (
     <View onLayout={onLayout} style={[styles.occluder, !expanded && styles.occluderCollapsed]}>
+      <View style={[styles.topBar, !isSticky && styles.topBarHidden]} />
       <Pressable
         accessibilityRole="button"
         accessibilityState={{ expanded }}
@@ -40,12 +42,6 @@ export function ServiceFormSectionHeader({
         hitSlop={spacing.sm}
         style={({ pressed }) => [styles.header, pressed && styles.pressed]}
       >
-        <BlurView
-          pointerEvents="none"
-          intensity={15}
-          tint="light"
-          style={StyleSheet.absoluteFill}
-        />
         <View style={styles.content}>
           <View style={styles.countContainer}>
             {complete ? (
@@ -79,6 +75,10 @@ export function ServiceFormSectionBody({ children }: { children: ReactNode }) {
 const styles = StyleSheet.create({
   occluder: {
     paddingHorizontal: spacing.md,
+    paddingTop: spacing.sm,
+    backgroundColor: colors.background,
+    zIndex: 2,
+    elevation: 4,
   },
   occluderCollapsed: {
     marginBottom: spacing.md,
@@ -92,10 +92,19 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     borderRadius: radius.xxl,
     overflow: 'hidden',
-    backgroundColor: colors.brandDarker,
+    backgroundColor: colors.brandDark,
     borderWidth: 1,
     borderColor: 'rgba(0, 0, 0, 0.025)',
   },
+  topBar: {
+    width: 32,
+    height: 4,
+    alignSelf: 'center',
+    marginBottom: spacing.xs,
+    borderRadius: radius.xxl,
+    backgroundColor: colors.brandDark,
+  },
+  topBarHidden: { opacity: 0 },
   content: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -139,7 +148,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderRadius: radius.xl,
     padding: spacing.md,
-    gap: spacing.md,
     zIndex: 0,
     elevation: 0,
   },

@@ -116,6 +116,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         {
           ios: {
             enableSceneSupport: true,
+            usePrecompiledModules: false,
+            forceStaticLinking: ['RNFBApp', 'RNFBMessaging'],
             // Required by React Native Firebase / FirebaseCoreInternal (Swift pods).
             useFrameworks: 'static',
           },

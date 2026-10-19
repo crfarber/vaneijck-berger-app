@@ -33,12 +33,20 @@ export type ServiceFormDraftStore = {
   load(allocationId: string, serviceId: string): Promise<ServiceFormDraft | null>;
   save(allocationId: string, serviceId: string, draft: ServiceFormDraftData): Promise<void>;
   clear(allocationId: string, serviceId: string): Promise<void>;
+  loadPhaseOneSnapshot(allocationId: string, serviceId: string): Promise<ServiceFormAnswers | null>;
+  savePhaseOneSnapshot(
+    allocationId: string,
+    serviceId: string,
+    answers: ServiceFormAnswers,
+  ): Promise<void>;
+  clearPhaseOneSnapshot(allocationId: string, serviceId: string): Promise<void>;
   clearForAllocation(allocationId: string): Promise<void>;
   /** Drops every draft. Called on sign-out so the next user never sees the previous one's answers. */
   clearAll(): Promise<void>;
 };
 
 export const SERVICE_FORM_DRAFTS_KEY = 'serviceForm.drafts';
+export const SERVICE_FORM_PHASE_ONE_SNAPSHOTS_KEY = 'serviceForm.phaseOneSnapshots';
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -109,6 +117,41 @@ async function writeAll(
   await store.setItem(SERVICE_FORM_DRAFTS_KEY, JSON.stringify(drafts));
 }
 
+async function loadAllPhaseOneSnapshots(
+  store: KeyValueStore,
+): Promise<Record<string, ServiceFormAnswers>> {
+  const raw = await store.getItem(SERVICE_FORM_PHASE_ONE_SNAPSHOTS_KEY);
+  if (!raw) {
+    return {};
+  }
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (!isRecord(parsed)) {
+      return {};
+    }
+    const snapshots: Record<string, ServiceFormAnswers> = {};
+    for (const [key, value] of Object.entries(parsed)) {
+      if (isRecord(value)) {
+        snapshots[key] = value as ServiceFormAnswers;
+      }
+    }
+    return snapshots;
+  } catch {
+    return {};
+  }
+}
+
+async function writeAllPhaseOneSnapshots(
+  store: KeyValueStore,
+  snapshots: Record<string, ServiceFormAnswers>,
+): Promise<void> {
+  if (Object.keys(snapshots).length === 0) {
+    await store.removeItem(SERVICE_FORM_PHASE_ONE_SNAPSHOTS_KEY);
+    return;
+  }
+  await store.setItem(SERVICE_FORM_PHASE_ONE_SNAPSHOTS_KEY, JSON.stringify(snapshots));
+}
+
 /** Whether a draft actually holds anything worth resuming (an untouched, freshly opened form
  * still produces a draft-shaped object once saved, but with nothing in it). */
 export function hasServiceFormDraftProgress(draft: ServiceFormDraft | null | undefined): boolean {
@@ -149,6 +192,23 @@ export function createServiceFormDraftStore(
       await writeAll(store, drafts);
     },
 
+    async loadPhaseOneSnapshot(allocationId, serviceId) {
+      const snapshots = await loadAllPhaseOneSnapshots(store);
+      return snapshots[draftEntryKey(allocationId, serviceId)] ?? null;
+    },
+
+    async savePhaseOneSnapshot(allocationId, serviceId, answers) {
+      const snapshots = await loadAllPhaseOneSnapshots(store);
+      snapshots[draftEntryKey(allocationId, serviceId)] = cloneServiceFormAnswers(answers);
+      await writeAllPhaseOneSnapshots(store, snapshots);
+    },
+
+    async clearPhaseOneSnapshot(allocationId, serviceId) {
+      const snapshots = await loadAllPhaseOneSnapshots(store);
+      delete snapshots[draftEntryKey(allocationId, serviceId)];
+      await writeAllPhaseOneSnapshots(store, snapshots);
+    },
+
     async clearForAllocation(allocationId) {
       const drafts = await loadAll(store);
       for (const key of Object.keys(drafts)) {
@@ -157,10 +217,18 @@ export function createServiceFormDraftStore(
         }
       }
       await writeAll(store, drafts);
+      const snapshots = await loadAllPhaseOneSnapshots(store);
+      for (const key of Object.keys(snapshots)) {
+        if (key.startsWith(`${allocationId}.`)) {
+          delete snapshots[key];
+        }
+      }
+      await writeAllPhaseOneSnapshots(store, snapshots);
     },
 
     async clearAll() {
       await store.removeItem(SERVICE_FORM_DRAFTS_KEY);
+      await store.removeItem(SERVICE_FORM_PHASE_ONE_SNAPSHOTS_KEY);
     },
   };
 }

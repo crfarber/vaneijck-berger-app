@@ -1,6 +1,6 @@
 # Diensten
 
-> Gecontroleerd op: `4cf3132b` (2026-10-13; werkboom, DIENST-09 stale-query)
+> Gecontroleerd op: `c0127855` (2026-10-16; finishmodus)
 > Bronnen: `src/domeinen/allocations/`, `src/domeinen/services/`, `src/domeinen/location/`, `src/domeinen/outbox/`, `src/app/(app)/allocations/`, `src/bootstrap/container.ts`
 > Zie ook: [ADR 0016](../decisions/0016-diensten-en-locatie.md), [ADR 0018](../decisions/0018-verwerken-naad-en-overdragen.md), [ADR 0024](../decisions/0024-feedback-en-dialogen.md), [flows](../functioneel/flows.md#3-een-opdracht-uitvoeren-regels-klaar-schermen-volgen), [statussen](../functioneel/statussen.md#dienststatussen)
 
@@ -24,7 +24,7 @@ flowchart TD
   F -->|tijdelijke fout| H[Outbox]
   A --> I[useOpenService]
   I --> D
-  I --> J[ServiceFormScreen of ServiceFinishScreen]
+  I --> J[ServiceFormScreen: verwerken of finishmodus]
   J --> K[useProcessingExit]
   K --> L[opdrachtenlijst of diensten van incident]
 ```
@@ -58,6 +58,9 @@ verzorgen bevestiging, feedback en navigatie.
 | DIENST-19 | Een dienstkaart toont “wacht op verbinding” zolang voor die dienst een queued outbox-item bestaat.                                                                                                                                                                                                                                                                                | `src/domeinen/allocations/components/service-row.tsx`, `src/domeinen/outbox/domain/pending.ts`                                                              | —                                                                                                                             |
 | DIENST-20 | De acceptatiehook toont de gevraagde nabijheidsbevestiging en verstuurt pas nadat de berger doorgaan kiest.                                                                                                                                                                                                                                                                       | `src/domeinen/allocations/hooks/use-accept-service.ts`                                                                                                      | —                                                                                                                             |
 | DIENST-21 | Na een queued dienstweigering vervolgt de hook de exit-flow; na een harde fout blijft de bevestigingsstap open.                                                                                                                                                                                                                                                                   | `src/domeinen/allocations/hooks/use-decline-service.ts`, `src/domeinen/allocations/domain/service-decline.ts`                                               | —                                                                                                                             |
+
+| DIENST-22 | Een afgeronde dienst toont Start en Afleveren op één scherm; Start staat eerst geselecteerd en elke keuze toont alleen de eigen fase read-only. Start gebruikt de volledige fase-1-snapshot als die bestaat en anders actuele dienstdata; Afleveren gebruikt altijd actuele dienstdata. | `src/domeinen/service-form/screens/service-form-screen.tsx`, `src/domeinen/service-form/domain/values.ts` | `src/domeinen/service-form/screens/service-form-screen.test.ts`, `src/domeinen/service-form/domain/values.test.ts` |
+| DIENST-23 | Finish verwijdert de fase-1-snapshot en voert de bestaande finish-exit uit zonder extra CRM-update. | `src/domeinen/service-form/screens/service-form-screen.tsx`, `src/domeinen/service-form/service/draft-storage.ts` | `src/domeinen/service-form/screens/service-form-screen.test.ts`, `src/domeinen/service-form/service/draft-storage.test.ts`, `src/domeinen/services/domain/exit-target.test.ts` |
 
 ## Randgevallen en bewuste keuzes
 

@@ -1,4 +1,5 @@
-import { type ReactNode } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { useEffect, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
@@ -20,6 +21,7 @@ import {
 } from '@/domeinen/services';
 import { Button } from '@/shared/ui/button';
 import { ScreenFooter } from '@/shared/ui/screen-footer';
+import { useStatusOverlay } from '@/shared/ui/status-overlay-host';
 import { colors, spacing, type } from '@/shared/ui/theme';
 import { IncidentCard } from '../components/incident-card';
 import { PltrPhaseCard } from '../components/pltr-phase-card';
@@ -27,7 +29,7 @@ import { resolveIncidentCardModel } from '../domain/incident-card';
 import { useAcceptService } from '../hooks/use-accept-service';
 import { useAllocations } from '../hooks/use-allocations';
 import { useOpenService } from '../hooks/use-open-service';
-import { useServices } from '../hooks/use-services';
+import { showServicesRefresh, useServices } from '../hooks/use-services';
 
 /**
  * One planned transport: the load and the delivery, and a single next step. Ported from
@@ -45,6 +47,9 @@ export function PltrScreen({
   toolbar?: ReactNode;
 }) {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
+  const statusOverlay = useStatusOverlay();
+  const [manualRefreshing, setManualRefreshing] = useState(false);
   const { sections, isPending: allocationsPending } = useAllocations();
   const [active, pending] = sections;
   const allocation = [...active.data, ...pending.data].find(
@@ -53,6 +58,34 @@ export function PltrScreen({
 
   const incidentId = allocation?.incident.dn_incidentid ?? '';
   const servicesQuery = useServices(incidentId, allocation?.services ?? null);
+  useEffect(() => {
+    if (allocation && servicesQuery.isFetching && !manualRefreshing) {
+      void showServicesRefresh(
+        queryClient,
+        incidentId,
+        statusOverlay,
+        t('feedback.processing.openService'),
+      );
+    }
+  }, [
+    allocation,
+    servicesQuery.isFetching,
+    manualRefreshing,
+    queryClient,
+    incidentId,
+    statusOverlay,
+    t,
+  ]);
+
+  const refreshManually = async () => {
+    setManualRefreshing(true);
+    try {
+      await servicesQuery.refetch();
+    } finally {
+      setManualRefreshing(false);
+    }
+  };
+
   const { accept, busyServiceId } = useAcceptService(incidentId);
   const services = servicesQuery.data ?? allocation?.services ?? [];
   const { open: openService, openPreview } = useOpenService({
@@ -136,8 +169,8 @@ export function PltrScreen({
             contentContainerStyle={styles.list}
             refreshControl={
               <RefreshControl
-                refreshing={servicesQuery.isRefetching}
-                onRefresh={() => void servicesQuery.refetch()}
+                refreshing={manualRefreshing}
+                onRefresh={() => void refreshManually()}
               />
             }
           >

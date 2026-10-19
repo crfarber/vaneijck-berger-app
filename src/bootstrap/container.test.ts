@@ -5,6 +5,7 @@ import {
   createAllocationSections,
   hasActiveAllocations,
 } from '@/domeinen/allocations';
+import type { LocationReader } from '@/domeinen/location';
 import type { NotificationSource, PushGateway, RemoteMessage } from '@/domeinen/notifications';
 import { decideOnboarding } from '@/domeinen/onboarding';
 import { createInMemoryPhotoFiles, type PhotoFiles } from '@/domeinen/photos';
@@ -140,6 +141,8 @@ function setup(
     pushGateway?: PushGateway;
     keyValueStore?: ReturnType<typeof createInMemoryStore>;
     photoFiles?: PhotoFiles;
+    locationReader?: LocationReader;
+    photoLocationReader?: LocationReader;
     multipartUploadFiles?: MultipartUploadFiles;
   } = {},
 ) {
@@ -165,7 +168,10 @@ function setup(
     keyValueStore,
     language: 'nl',
     internalAuth: null,
-    locationReader: { getCurrent: async () => ({ isValid: true, latitude: 52, longitude: 5 }) },
+    locationReader: options.locationReader ?? {
+      getCurrent: async () => ({ isValid: true, latitude: 52, longitude: 5 }),
+    },
+    photoLocationReader: options.photoLocationReader,
     devicePermissions: deniedPermissions(),
     logShare: { share: async () => undefined },
     multipartUploadFiles: options.multipartUploadFiles ?? {
@@ -357,6 +363,7 @@ describe('reference data', () => {
 
   it('syncs homebaselocations and sends the chosen one when an internal berger registers', async () => {
     const { container, backend } = setup({ stored: storedSession({ userType: 'internal' }) });
+    backend.on('GET', '/api/allocations', () => jsonResponse([]));
     backend.on('GET', '/api/client-sync/schema/1043', () => jsonResponse(['homebaselocations']));
     backend.on('GET', '/api/client-sync/homebaselocations/1043', () =>
       jsonResponse([
@@ -389,6 +396,24 @@ describe('reference data', () => {
       vehicleId: 'truck-1',
       homebaseLocationId: 'loc-1',
     });
+  });
+
+  it('blocks registration with active allocations even when the cached list is empty', async () => {
+    const { container, backend } = setup({ stored: storedSession() });
+    backend.on('GET', '/api/allocation-units', () => jsonResponse(null));
+    await container.start();
+    container.queryClient.setQueryData(allocationKeys.list(), []);
+
+    const result = await container.allocationUnitService.registerExternal({
+      plateNumber: 'AB-12-CD',
+      endDate: new Date(NOW + 8 * 60 * MINUTE),
+      availability: DEFAULT_AVAILABILITY,
+    });
+
+    expect(result).toEqual({ ok: false, error: 'active-incident' });
+    expect(backend.callsTo('GET', '/api/allocations').length).toBeGreaterThan(0);
+    expect(backend.callsTo('POST', '/api/allocation-units/externalworker')).toHaveLength(0);
+    expect(backend.callsTo('PATCH', '/api/allocation-units')).toHaveLength(0);
   });
 });
 
@@ -697,6 +722,48 @@ describe('push notifications', () => {
 });
 
 describe('photo upload queue', () => {
+  it('uses a photo-specific location reader without changing the shared location reader', async () => {
+    let sharedReads = 0;
+    let photoReads = 0;
+    const sharedLocationReader: LocationReader = {
+      getCurrent: async () => {
+        sharedReads += 1;
+        return { isValid: true, latitude: 52, longitude: 5 };
+      },
+    };
+    const photoLocationReader: LocationReader = {
+      getCurrent: async () => {
+        photoReads += 1;
+        return { isValid: true, latitude: 52.0803, longitude: 4.3244 };
+      },
+    };
+    const { container, backend } = setup({
+      stored: storedSession(),
+      locationReader: sharedLocationReader,
+      photoLocationReader,
+    });
+    backend.on('POST', '/api/binary/upload', () => new Response(null, { status: 201 }));
+    await container.start();
+    await flushPromises();
+
+    await container.photoService.capture({
+      serviceId: 'svc-1',
+      incidentId: 'inc-1',
+      allocationId: 'alloc-1',
+      phase: 'delivery',
+      position: { category: 'DASHBOARD' },
+      sourceUri: 'file:///camera/shot.jpg',
+    });
+    await container.photoService.submitBatch('svc-1', 'delivery');
+    await container.locationReader.getCurrent();
+    const [photo] = await container.photoService.listByService('svc-1');
+
+    expect(photo?.coordinate).toEqual({ latitude: 52.0803, longitude: 4.3244 });
+    expect(photo?.status).toBe('sent');
+    expect(photoReads).toBe(1);
+    expect(sharedReads).toBe(1);
+  });
+
   it('waits for an unfinished photo migration before clearing data on sign-out', async () => {
     const entered = deferred<void>();
     const release = deferred<void>();

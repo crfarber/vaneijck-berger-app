@@ -81,6 +81,7 @@ export type AllocationUnitServiceDeps = {
   api: AllocationUnitApi;
   referenceDataService: ReferenceDataService;
   clock: Clock;
+  hasActiveWork: () => Promise<boolean>;
   logger?: Logger;
 };
 
@@ -119,6 +120,9 @@ export function createAllocationUnitService(
       try {
         const existing = await api.getCurrent();
         const input = { plateNumber, validUntil: endDate.toISOString(), availability };
+        if (await deps.hasActiveWork()) {
+          return err('active-incident');
+        }
         if (existing === null) {
           await api.registerExternal(input);
         } else {
@@ -141,6 +145,9 @@ export function createAllocationUnitService(
           availability,
           homebaseLocationId,
         };
+        if (await deps.hasActiveWork()) {
+          return err('active-incident');
+        }
         if (existing === null) {
           await api.registerInternal(input);
         } else {

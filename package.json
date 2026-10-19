@@ -13,6 +13,7 @@
     "android": "expo run:android --port 1818",
     "ios": "expo run:ios --port 1818",
     "prebuild": "expo prebuild --clean",
+    "clean": "rm -rf node_modules && rm -rf .expo && rm -rf .turbo && rm -rf dist",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
     "format": "prettier --write .",
