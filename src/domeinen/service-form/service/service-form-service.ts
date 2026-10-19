@@ -90,7 +90,7 @@ export type ServiceFormServiceDeps = {
   /**
    * When set, form definitions come from this catalog instead of synced reference data.
    * Select tables still come from reference data. The native container sets this in `__DEV__`
-   * from `docs/diensten/experiment`.
+   * and in the internal build from `docs/diensten/experiment`.
    */
   bundledDefinitions?: readonly unknown[];
   /** Re-reads the bundled catalog. Only set in `__DEV__`, against the Metro dev server. */

@@ -16,8 +16,9 @@ import wegsleepverordening from '../../../docs/diensten/experiment/Wegsleepveror
 import zwareBerging from '../../../docs/diensten/experiment/Zware_berging.json';
 
 /**
- * Service-form definitions from `docs/diensten/experiment`. Loaded only while Metro is running
- * (`__DEV__`); a release bundle never requires this module. A new JSON file in that folder must be
+ * Service-form definitions from `docs/diensten/experiment`. Loaded while Metro is running
+ * (`__DEV__`) and in the internal release build; acceptance and production bundles never require
+ * this module. A new JSON file in that folder must be
  * imported here — `experiment-service-definitions.test.ts` fails when the folder and this list differ.
  */
 export const experimentServiceDefinitions: readonly unknown[] = [

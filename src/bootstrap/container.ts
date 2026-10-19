@@ -229,12 +229,17 @@ export type Container = {
 };
 
 /**
- * Experiment form definitions from `docs/diensten/experiment`. Metro inlines `__DEV__` and drops
- * the require from release bundles, so those JSON files stay out of the store build. Vitest leaves
- * `__DEV__` unset, so the container tests keep using synced reference data.
+ * Experiment form definitions from `docs/diensten/experiment`, in `__DEV__` and in the internal
+ * release build (a test build for users who need these definitions). Both conditions must stay
+ * literal (`__DEV__`, `process.env.EXPO_PUBLIC_ENVIRONMENT`): Metro inlines them and drops the
+ * require from acceptance and production bundles, so those JSON files stay out of the store build.
+ * Vitest sets neither, so the container tests keep using synced reference data.
  */
-function devBundledServiceDefinitions(): readonly unknown[] | undefined {
-  if (typeof __DEV__ === 'boolean' && __DEV__) {
+function bundledServiceDefinitions(): readonly unknown[] | undefined {
+  if (
+    (typeof __DEV__ === 'boolean' && __DEV__) ||
+    process.env.EXPO_PUBLIC_ENVIRONMENT === 'internal'
+  ) {
     const loaded = require('./dev/experiment-service-definitions') as {
       experimentServiceDefinitions?: readonly unknown[];
       default?: { experimentServiceDefinitions?: readonly unknown[] };
@@ -680,7 +685,7 @@ export function createContainer(input: ContainerInput): Container {
       referenceData: referenceDataService,
       locationReader: input.locationReader,
       logger,
-      bundledDefinitions: devBundledServiceDefinitions(),
+      bundledDefinitions: bundledServiceDefinitions(),
       bundledDefinitionLoader: devBundledDefinitionLoader(),
     }),
     serviceFormDrafts,
