@@ -1,11 +1,16 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, StyleSheet, Text, View, type TextInput } from 'react-native';
+import { Alert, Linking, Pressable, StyleSheet, Text, View, type TextInput } from 'react-native';
 import { hasSignatureInk } from '@/domeinen/signatures';
 import { TextField } from '@/shared/ui/text-field';
 import { Toggle } from '@/shared/ui/toggle';
 import { colors, spacing } from '@/shared/ui/theme';
+import {
+  hasTransportConditions,
+  resolveTransportConditionsUrl,
+} from '../domain/transport-conditions';
 import type { ServiceFormAnswer, ServiceFormError, ServiceFormField } from '../domain/types';
+import { isSignatureSkippable } from '../domain/validation';
 import { useServiceFormStore } from '../store/service-form-store-provider';
 import { FieldFrame } from './field-frame';
 import { SignatureCaptureSheet } from './signature-capture-sheet';
@@ -30,6 +35,7 @@ export function SignatureInputField({
 }) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
+  const answers = useServiceFormStore((state) => state.answers);
   const hideSignature = useServiceFormStore((state) => state.hideSignature);
   const noEmailConfirmation = useServiceFormStore((state) => state.noEmailConfirmation);
   const toggleHideSignature = useServiceFormStore((state) => state.toggleHideSignature);
@@ -38,11 +44,21 @@ export function SignatureInputField({
   const setAcceptedTerms = useServiceFormStore((state) => state.setAcceptedTermsAndConditions);
   const requiresTerms = useServiceFormStore((state) => state.termsAcceptanceRequired);
 
-  const hidden = Boolean(hideSignature[field.key]);
+  const skippable = isSignatureSkippable(field, answers);
+  const markedHidden = Boolean(hideSignature[field.key]);
+  const hidden = skippable && markedHidden;
   const available = !hidden;
   const noEmail = Boolean(noEmailConfirmation[field.key]);
   const hasInk = hasSignatureInk(answer?.value);
   const capturedLabel = t('serviceForm.signature.captured');
+  const showTermsAcceptance = requiresTerms && hasTransportConditions(field);
+  const termsUrl = resolveTransportConditionsUrl(field);
+
+  useEffect(() => {
+    if (!skippable && markedHidden) {
+      toggleHideSignature(field.key);
+    }
+  }, [skippable, markedHidden, field.key, toggleHideSignature]);
 
   const nameInvalid = error?.code === 'signature-name-required';
   const emailInvalid = error?.code === 'signature-email-required';
@@ -61,20 +77,22 @@ export function SignatureInputField({
   return (
     <FieldFrame label={field.label} optional={field.optional}>
       <View style={styles.stack}>
-        <Toggle
-          label={t('serviceForm.signature.available')}
-          value={available}
-          onValueChange={(next) => {
-            onFocus?.(field);
-            if (next !== available) {
-              toggleHideSignature(field.key);
-            }
-            if (!next) {
-              patch({ value: '', displayValue: '' });
-            }
-            onBlur(field);
-          }}
-        />
+        {skippable ? (
+          <Toggle
+            label={t('serviceForm.signature.available')}
+            value={available}
+            onValueChange={(next) => {
+              onFocus?.(field);
+              if (next !== available) {
+                toggleHideSignature(field.key);
+              }
+              if (!next) {
+                patch({ value: '', displayValue: '' });
+              }
+              onBlur(field);
+            }}
+          />
+        ) : null}
         {!hidden ? (
           <>
             <TextField
@@ -111,40 +129,54 @@ export function SignatureInputField({
                 error={emailInvalid ? '' : null}
               />
             ) : null}
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => {
-                onFocus?.(field);
-                setOpen(true);
-              }}
-              style={({ pressed }) => [
-                styles.capture,
-                inkInvalid && styles.captureError,
-                pressed && styles.pressed,
-              ]}
-            >
-              <Text style={[styles.captureText, inkInvalid && styles.captureTextError]}>
-                {hasInk ? t('serviceForm.signature.replace') : t('serviceForm.signature.capture')}
+            <View style={styles.signatureBlock}>
+              <Text style={[styles.signatureLabel, inkInvalid && styles.signatureLabelError]}>
+                {t('serviceForm.signature.capture')}
               </Text>
-            </Pressable>
-            {hasInk ? (
-              <>
-                <SignatureThumbnail uri={answer?.value} />
-                <Text style={styles.captured}>{capturedLabel}</Text>
-              </>
-            ) : null}
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={
+                  hasInk ? t('serviceForm.signature.replace') : t('serviceForm.signature.capture')
+                }
+                onPress={() => {
+                  onFocus?.(field);
+                  setOpen(true);
+                }}
+                style={({ pressed }) => [pressed && styles.pressed]}
+              >
+                <SignatureThumbnail uri={answer?.value} invalid={inkInvalid} />
+              </Pressable>
+            </View>
           </>
         ) : null}
-        {requiresTerms ? (
-          <Toggle
-            label={t('serviceForm.signature.acceptTerms')}
-            value={acceptedTerms}
-            onValueChange={(next) => {
-              onFocus?.(field);
-              setAcceptedTerms(next);
-              onBlur(field);
-            }}
-          />
+        {showTermsAcceptance ? (
+          <View style={styles.terms}>
+            <Toggle
+              label={t('serviceForm.signature.acceptTerms')}
+              labelAction={
+                termsUrl ? (
+                  <Pressable
+                    accessibilityRole="link"
+                    accessibilityLabel={t('serviceForm.signature.viewTerms')}
+                    onPress={() =>
+                      void Linking.openURL(termsUrl).catch(() =>
+                        Alert.alert(t('common.somethingWrong')),
+                      )
+                    }
+                    style={({ pressed }) => [styles.viewTerms, pressed && styles.pressed]}
+                  >
+                    <Text style={styles.viewTermsText}>{t('serviceForm.signature.viewTerms')}</Text>
+                  </Pressable>
+                ) : null
+              }
+              value={acceptedTerms}
+              onValueChange={(next) => {
+                onFocus?.(field);
+                setAcceptedTerms(next);
+                onBlur(field);
+              }}
+            />
+          </View>
         ) : null}
       </View>
       <SignatureCaptureSheet
@@ -162,21 +194,16 @@ export function SignatureInputField({
 
 const styles = StyleSheet.create({
   stack: { gap: spacing.sm },
-  capture: {
-    backgroundColor: colors.brand,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
-    borderRadius: 10,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.brand,
+  signatureBlock: { gap: spacing.xs },
+  signatureLabel: { color: colors.text, fontSize: 14, fontWeight: '600' },
+  signatureLabelError: { color: colors.danger },
+  terms: { gap: spacing.xs },
+  viewTerms: { alignSelf: 'flex-start', paddingVertical: spacing.xs },
+  viewTermsText: {
+    marginTop: -spacing.xs,
+    color: colors.brandAction,
+    textDecorationLine: 'underline',
+    fontSize: 14,
   },
-  captureError: {
-    borderColor: colors.danger,
-    backgroundColor: colors.background,
-  },
-  captureText: { color: colors.brandText, fontWeight: '700', fontSize: 16 },
-  captureTextError: { color: colors.danger },
-  captured: { color: colors.success, fontSize: 14 },
   pressed: { opacity: 0.7 },
 });

@@ -138,6 +138,32 @@ describe('resolveIncidentCardModel', () => {
     });
   });
 
+  it('falls back to the PLTR load address when the incident has no street fields', () => {
+    const model = resolveIncidentCardModel(
+      allocation({
+        type: 1012,
+        incident: {
+          dn_incidentid: 'incident-1',
+          statuscode: 1,
+          dn_name: 'Planbaar transport',
+          createdon: '2026-01-01T10:00:00.000Z',
+        },
+        services: [
+          {
+            statuscode: 1,
+            statecode: 0,
+            dn_servicetypecode: 1012,
+            dn_total_servicestartlocation: 'Havenweg 12, 1234 AB, Rotterdam',
+          },
+        ],
+      }),
+    );
+    expect(model).toMatchObject({
+      kind: 'pltr',
+      location: ['Havenweg 12', '1234 AB, Rotterdam'],
+    });
+  });
+
   it.each([SERVICE_STATUS.IN_UITVOERING, SERVICE_STATUS.HULPVERLENING_AKKOORD])(
     'offers the PLTR customer and incident address regardless of service phase (%s)',
     (status) => {

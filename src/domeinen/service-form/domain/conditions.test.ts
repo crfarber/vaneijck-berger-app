@@ -105,6 +105,37 @@ describe('evaluateServiceFormVisibility', () => {
     expect(result.visibleFieldIds.has(booleanDependent.id)).toBe(true);
   });
 
+  it('treats true/1 and false/0 as the same yes/no flag for dn_truefalse', () => {
+    const gate = field('gate', 'dn_deliveryaddressavailablecode');
+    gate.table = 'dn_truefalse';
+    const withBoolean = field('country', '_dn_deliverycountryid_value', {
+      property: 'dn_deliveryaddressavailablecode',
+      value: true,
+    });
+    const withOne = field('postal', 'dn_deliverypostalcode', {
+      property: 'dn_deliveryaddressavailablecode',
+      value: 1,
+    });
+    const withZero = field('optionalName', 'dn_deliveryname', {
+      property: 'dn_deliveryaddressavailablecode',
+      value: 0,
+    });
+
+    const whenYes = evaluateServiceFormVisibility(form([gate, withBoolean, withOne, withZero]), {
+      dn_deliveryaddressavailablecode: answer(true, 'dn_truefalse'),
+    });
+    expect(whenYes.visibleFieldIds.has(withBoolean.id)).toBe(true);
+    expect(whenYes.visibleFieldIds.has(withOne.id)).toBe(true);
+    expect(whenYes.visibleFieldIds.has(withZero.id)).toBe(false);
+
+    const whenNo = evaluateServiceFormVisibility(form([gate, withBoolean, withOne, withZero]), {
+      dn_deliveryaddressavailablecode: answer(false, 'dn_truefalse'),
+    });
+    expect(whenNo.visibleFieldIds.has(withBoolean.id)).toBe(false);
+    expect(whenNo.visibleFieldIds.has(withOne.id)).toBe(false);
+    expect(whenNo.visibleFieldIds.has(withZero.id)).toBe(true);
+  });
+
   it('reports missing controllers and cycles instead of throwing', () => {
     const missing = field('missing', 'dn_missing', { property: 'dn_unknown', value: 1 });
     const first = field('first', 'dn_first', { property: 'dn_second', value: 1 });

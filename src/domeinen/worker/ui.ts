@@ -1,4 +1,5 @@
 /** The React Native side of the worker domain. Only routes and bootstrap import this file. */
+export { PreviewModePill } from './components/preview-mode-pill';
 export { WorkerStatusPill } from './components/worker-status-pill';
 export {
   WorkerApiProvider,

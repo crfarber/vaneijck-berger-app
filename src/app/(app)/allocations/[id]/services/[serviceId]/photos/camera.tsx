@@ -16,6 +16,7 @@ export default function PhotoCameraRoute() {
     overrideExisting,
     isExtraOverride,
     replacePhotoId,
+    locationId,
   } = useLocalSearchParams<{
     id: string;
     serviceId: string;
@@ -29,6 +30,7 @@ export default function PhotoCameraRoute() {
     overrideExisting?: string;
     isExtraOverride?: string;
     replacePhotoId?: string;
+    locationId?: string;
   }>();
 
   return (
@@ -38,6 +40,7 @@ export default function PhotoCameraRoute() {
       incidentId={incidentId}
       serviceStatuscode={Number(statuscode) || 0}
       phaseNumbers={parsePhaseNumbersParam(phaseNumbers)}
+      locationId={locationId}
       category={category}
       mode={mode}
       position={typeof position === 'string' ? position : undefined}

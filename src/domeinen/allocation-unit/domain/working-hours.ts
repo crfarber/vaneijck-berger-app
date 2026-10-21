@@ -7,7 +7,8 @@
 
 const HOUR_MS = 60 * 60 * 1000;
 export const MAX_SHIFT_HOURS = 24;
-export const DEFAULT_SHIFT_HOURS = 8;
+/** Eight-hour shift plus one hour break; used as the default end-of-shift proposal. */
+export const DEFAULT_SHIFT_HOURS = 9;
 
 export type ParsedTime = { hours: number; minutes: number };
 

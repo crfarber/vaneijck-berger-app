@@ -1,6 +1,6 @@
 # 0015. Opdrachtenlijst: accepteren, afwijzen en voertuigafgifte
 
-**Status:** gebouwd; "Preview" en het openen van een voertuigafgifte ontbreken bewust (zie "Gevolgen").
+**Status:** gebouwd; "Preview" ontbreekt bewust (zie "Gevolgen"). Voertuigafgifte openen is aangesloten.
 
 ## Context
 
@@ -62,9 +62,10 @@ Bewust niet zwaarder opgelost (geen prop door drie lagen heen) voor dit zeldzame
 
 - **"Preview"** (het read-only bekijken van diensten/PLTR vanuit de lijst) is niet gebouwd: het
   doelscherm bestaat pas in slice 5/7.
-- **Een voertuigafgifte openen** navigeert in de oude app naar de verwerkingsflow
-  (`ProcessingService`) — dat herbouwt het team zelf (`docs/legacy.md`). Dit scherm toont de lijst
-  en de gegevens per locatie, maar een kaart is nog niet aantikbaar.
+- **Een voertuigafgifte openen** navigeert direct naar het Afgifte-formulier
+  (`/vehicle-releases/[locationId]/services/[serviceId]/form`) met `isReleaseItem` — zelfde
+  gedrag als legacy `ReleaseCard` → `ProcessingService`. Submit zet `dn_vehicle_taken_code`,
+  `dn_pickedupdate` en status `875920007`; exit is terminal en ververst de afgiftelijst.
 - De kaart toont alleen de incidentinfo; Accepteren/Afwijzen/Afronden (en Doorsturen) zitten onder
   de kaart en komen tevoorschijn bij een swipe naar links. Zelfde acties als voorheen, opnieuw
   gebouwd op `ReanimatedSwipeable` en de app-`Button` — geen overname van de oude swipe-UI.

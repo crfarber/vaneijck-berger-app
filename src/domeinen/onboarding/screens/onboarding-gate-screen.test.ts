@@ -100,15 +100,19 @@ describe('registration prompt safety', () => {
     expect(fakes.showPrompt).not.toHaveBeenCalled();
   });
 
-  it('ignores confirmation of a prompt invalidated by active work', async () => {
+  it('still opens registration when JA is tapped after the notice effect re-ran', async () => {
+    fakes.refetch.mockResolvedValue([{ isSuccess: true, data: [] }]);
     const cleanup = runNoticeEffect();
     await Promise.resolve();
     expect(fakes.showPrompt).toHaveBeenCalledOnce();
+    // Effect cleanup used to set cancelled=true and make JA a no-op.
     cleanup?.();
+    fakes.notice = 'none';
     const confirm: () => void = fakes.showPrompt.mock.calls[0]?.[1];
     confirm();
-    expect(fakes.refetch).not.toHaveBeenCalled();
-    expect(fakes.push).not.toHaveBeenCalled();
+    await Promise.resolve();
+    expect(fakes.refetch).toHaveBeenCalledOnce();
+    expect(fakes.push).toHaveBeenCalledWith('/unit?mode=onboarding');
   });
 
   it.each(['active', 'failed', 'empty'] as const)(

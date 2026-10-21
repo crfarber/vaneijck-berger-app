@@ -60,8 +60,7 @@ is een dienst-acceptatie-regel (slice 5), niet iets bij het accepteren van een h
 scherm-focus, geen `AppState`).
 
 **Bewust niet gebouwd:** "Preview" (leest diensten/PLTR read-only; die schermen bestaan pas in
-slice 5/7), en het openen van een voertuigafgifte (leidt in de oude app naar de verwerkingsflow die
-het team zelf herbouwt).
+slice 5/7). Voertuigafgifte openen (direct naar Afgifte-formulier) is later aangesloten.
 
 **Nog niet gecontroleerd op een toestel:** geen opdrachten of voertuigafgiftes beschikbaar op het
 testaccount om de knoppen en de lijst mee te vullen; alleen de lege staat en de vloot/beschikbaarheid-achtige
@@ -286,8 +285,8 @@ ongebruikt in `legacy/`, ter referentie. In `src/` staat die melding nergens mee
 
 De vier ontbrekende knoppen uit de oude `NavigationBar` staan weer boven de opdrachtenlijst (GPS,
 meldkamer bellen, wagen wisselen, meldingenbel); het tandwiel blijft in de header. GPS toont status
-en coordinaten; meldkamer belt het vaste nummer (zonder de oude `+0`-fout) en biedt interne
-bergers support; wagen wisselen gebruikt `decideReregister`/`decideChangeVehicle` en opent
+en coordinaten; meldkamer belt in één tik het vaste nummer (zonder de oude `+0`-fout);
+app-probleem melden zit onder Instellingen → support; wagen wisselen gebruikt `decideReregister`/`decideChangeVehicle` en opent
 `/unit` (huidige-eenheid-overzicht; of `/unit?mode=extend` bij alleen een verlopen eindtijd);
 de bel bewaart pushberichten in een historie (max 100) en opent `/notifications`.
 

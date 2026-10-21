@@ -1,3 +1,5 @@
+import { SERVICE_TYPE } from './service-types';
+
 /**
  * CRM status codes (`statuscode`) of a service, and the rules that hang on them.
  * The names follow docs/functioneel/statussen.md; the numbers are the CRM option-set values.
@@ -53,9 +55,38 @@ const SUBMIT_ALLOWED: ReadonlySet<number> = new Set([
   SERVICE_STATUS.LAATSTE_BERICHT,
 ]);
 
+/** UI "In uitvoering" used on active services; not a named `SERVICE_STATUS` entry. */
+const IN_UITVOERING_UI = 875920001;
+
+/**
+ * Extra statuses from which Afgifte / locatie-afgifte may still submit (legacy
+ * `isSubmitAllowedForStatus` with `isReleaseItem` / typecode 9000).
+ */
+const AFGIFTE_EXTRA_SUBMIT: ReadonlySet<number> = new Set([
+  SERVICE_STATUS.OPSLAG,
+  IN_UITVOERING_UI,
+]);
+
+export type SubmitStatusContext = {
+  /** Location release: vehicle in storage may still be handed over. */
+  isReleaseItem?: boolean;
+  /** Assigned Afgifte service typecode (9000). */
+  serviceTypeCode?: number | null;
+};
+
 /** Whether a submit for a service in this status is allowed. Unknown or missing: no. */
-export function isSubmitAllowed(statuscode: number | undefined): boolean {
-  return statuscode !== undefined && SUBMIT_ALLOWED.has(statuscode);
+export function isSubmitAllowed(
+  statuscode: number | undefined,
+  ctx?: SubmitStatusContext,
+): boolean {
+  if (statuscode === undefined) {
+    return false;
+  }
+  const afgifteFlow = ctx?.isReleaseItem === true || ctx?.serviceTypeCode === SERVICE_TYPE.AFGIFTE;
+  if (afgifteFlow && AFGIFTE_EXTRA_SUBMIT.has(statuscode)) {
+    return true;
+  }
+  return SUBMIT_ALLOWED.has(statuscode);
 }
 
 export type ServiceBucket = 'active' | 'pending' | 'completed';

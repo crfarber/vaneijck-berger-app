@@ -18,13 +18,20 @@ bevestiging.
 - Overige rollen in de metadata (`phone1`, `phone2`, `email`, `company`, `gate`, `addressGroupId`,
   `copyFrom`) mogen in de definitie staan; de app v1 consumeert die **niet** in de persoonskaart.
   Die velden blijven gewone losse velden tot een latere slice.
-- Snelle naaminvoer: één vrij tekstveld → knop **Verdelen** → lokale NL-parser →
-  bevestigingsdialoog → batch `updateAnswers` op de gemapte naamrollen. Aanhef wordt alleen gezet
-  als de geparsede alias een optie in `dn_salutation` (of de tabel van het veld) matcht. Na
-  accepteren blijft de ingetikte tekst in het vrije veld staan; dezelfde knop wordt **Opnieuw** en
-  wist alleen de afgeleide naamrollen (de vrije tekst blijft).
-- Compacte handmatige velden blijven altijd beschikbaar. Afwijzen van de bevestiging schrijft niets
-  weg. Wijzigen van het vrije veld wist afgeleide naamrollen opnieuw.
+- Snelle naaminvoer: optionele **aanhef**-dropdown boven het vrije tekstveld (handmatig te
+  kiezen, niet uit free text afgeleid) → knop **Verdelen** → lokale NL-parser →
+  bevestigingsdialoog → batch `updateAnswers` op voorletters, voornaam, tussenvoegsel en
+  achternaam. Bekende aanhef-prefixen (`Dhr.`, `Mevr.`, …) worden nog steeds van de vrije tekst
+  gestreept zodat de rest netjes splitst, maar niet als aanhef-antwoord weggeschreven of in
+  preview/samenvatting getoond. De overige naamrollen blijven standaard verborgen achter
+  **Naam handmatig invullen** (zelfde patroon als adresgroep). Na accepteren (of bij al gevulde
+  naamrollen uit CRM/concept) verdwijnen het vrije veld en die rolvelden; de app toont één
+  groene samenvattingsregel (aanhef blijft zichtbaar erboven). **Naam handmatig invullen** opent
+  de velden opnieuw; **Opnieuw** wist de afgeleide naamrollen (niet de aanhef) en toont opnieuw
+  de snelle invoer. Tijdens handmatige modus: **Gebruik snelle invoer** / **Terug naar
+  samenvatting**.
+- Afwijzen van de bevestiging schrijft niets weg en opent de handmatige velden. Wijzigen van het
+  vrije veld (terwijl dat zichtbaar is) wist afgeleide naamrollen opnieuw.
 - Zonder `person_group` of bij incomplete mapping (geen `lastName`-veld aanwezig) rendert de app de
   velden los.
 - Of het CRM `person_group` ongemoeid laat staat in

@@ -10,6 +10,11 @@ export {
   useAllocationUnitManagement,
   useSignOutGuard,
 } from './hooks/settings-context';
+export {
+  DevUiToolsProvider,
+  useDevUiToolsEnabled,
+  useDevUiToolsPreference,
+} from './hooks/dev-ui-tools-context';
 export { usePermissionDisclosureGate } from './hooks/use-permission-disclosure-gate';
 export { LanguageScreen } from './screens/language-screen';
 export { PermissionDisclosureScreen } from './screens/permission-disclosure-screen';

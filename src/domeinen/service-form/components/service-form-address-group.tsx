@@ -78,10 +78,14 @@ export function ServiceFormAddressGroup({
   registerInputRef,
   onFieldLayout,
 }: ServiceFormAddressGroupProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const logger = useServiceFormLogger();
   const service = useServiceFormService();
   const lookupPostalAddress = useLookupPostalAddress();
+  const title =
+    (i18n.language.toLowerCase().startsWith('en')
+      ? group.config.label?.en
+      : group.config.label?.nl) ?? t('serviceForm.address.title');
   const [manualEntryActive, setManualEntryActive] = useState(false);
   const [foreignLocationActive, setForeignLocationActive] = useState(false);
   const [requestedLookupKey, setRequestedLookupKey] = useState<string | null>(null);
@@ -250,6 +254,7 @@ export function ServiceFormAddressGroup({
   if (readOnly) {
     return (
       <View style={styles.container}>
+        <Text style={styles.title}>{title}</Text>
         <ReadonlyFieldSummary fields={[group.anchor, ...group.orderedFields]} answers={answers} />
         {debugButton}
       </View>
@@ -301,6 +306,7 @@ export function ServiceFormAddressGroup({
   if (foreignLocationActive) {
     return (
       <View style={styles.container}>
+        <Text style={styles.title}>{title}</Text>
         {compactVisibleFields.map((field) => renderField(field))}
         <View style={styles.modeLink}>
           <Button
@@ -324,6 +330,7 @@ export function ServiceFormAddressGroup({
 
   return (
     <View style={styles.container}>
+      <Text style={styles.title}>{title}</Text>
       {group.isCompactAddressGroup ? (
         <View style={styles.lookupRow}>
           {compactVisibleFields.map((field) => (
@@ -412,6 +419,8 @@ export function ServiceFormAddressGroup({
 
 const styles = StyleSheet.create({
   container: { gap: spacing.sm },
+  /** Field-label size — not a section header (header token is too large here). */
+  title: { ...typography.label, color: colors.text },
   lookupRow: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm },
   lookupField: { flex: 1, minWidth: 0 },
   status: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },

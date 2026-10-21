@@ -5,6 +5,8 @@ export const colors = {
   brandDarker: '#202020',
   brandLight: '#f1f1f1',
   brandAction: '#1A76FF',
+  /** Purple map pin for PLTR (planbaar transport) vs default service pins. */
+  mapPltrPin: '#7B2D8E',
   brandText: '#1B1B1B',
   background: '#FFFFFF',
   buttonLight: '#F9F9F9',

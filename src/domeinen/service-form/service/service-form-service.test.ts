@@ -352,6 +352,22 @@ describe('submit', () => {
     expect(api.updateService).not.toHaveBeenCalled();
   });
 
+  it('allows OPSLAG submit for locatie-afgifte', async () => {
+    const { service, api } = setup({});
+
+    const result = await service.submit({
+      serviceId: 'svc-1',
+      statuscode: SERVICE_STATUS.OPSLAG,
+      body: { statuscode: SERVICE_STATUS.NACONTROLE },
+      isReleaseItem: true,
+    });
+
+    expect(result).toEqual({ kind: 'submitted' });
+    expect(api.updateService).toHaveBeenCalledWith('svc-1', {
+      statuscode: SERVICE_STATUS.NACONTROLE,
+    });
+  });
+
   it('logs a failed submit without logging the form body and lets the screen offer a retry', async () => {
     const { service, api, logger } = setup({});
     vi.mocked(api.updateService).mockRejectedValueOnce(new HttpError(503, null));

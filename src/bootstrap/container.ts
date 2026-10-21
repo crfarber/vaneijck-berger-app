@@ -36,11 +36,13 @@ import { createGooglePlacesClient, type PlacesClient } from '@/domeinen/places';
 import { createRdwApi, type RdwApi } from '@/domeinen/rdw';
 import {
   createAllocationUnitManagement,
+  createDevUiToolsPreference,
   createLanguageSettings,
   createPermissionDisclosurePreference,
   createSignOutGuard,
   type AllocationUnitManagement,
   type DevicePermissions,
+  type DevUiToolsPreference,
   type LanguageSettings,
   type PermissionDisclosurePreference,
   type SignOutGuard,
@@ -215,6 +217,8 @@ export type Container = {
   languageSettings: LanguageSettings;
   /** Which post-login permission disclosures the berger already dismissed. */
   permissionDisclosurePreference: PermissionDisclosurePreference;
+  /** Metro-only form/debug helpers; off until toggled on the debug screen. */
+  devUiToolsPreference: DevUiToolsPreference;
   /**
    * Push listen/register. Permission is requested from the disclosure / settings screens; call
    * `start` again after notifications are granted.
@@ -382,6 +386,10 @@ export function createContainer(input: ContainerInput): Container {
   const homebasePreference = createHomebasePreference(input.keyValueStore);
   const lastUnitPreference = createLastUnitPreference(input.keyValueStore);
   const permissionDisclosurePreference = createPermissionDisclosurePreference({
+    store: input.keyValueStore,
+    logger,
+  });
+  const devUiToolsPreference = createDevUiToolsPreference({
     store: input.keyValueStore,
     logger,
   });
@@ -720,6 +728,7 @@ export function createContainer(input: ContainerInput): Container {
     haptics,
     languageSettings,
     permissionDisclosurePreference,
+    devUiToolsPreference,
     pushRuntime,
     signOutGuard,
     allocationUnitManagement,

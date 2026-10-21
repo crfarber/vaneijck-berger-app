@@ -27,6 +27,7 @@ import { IncidentCard } from '../components/incident-card';
 import { NavigateMapsSheet } from '../components/navigate-maps-sheet';
 import { PltrPhaseCard } from '../components/pltr-phase-card';
 import { resolveIncidentCardModel } from '../domain/incident-card';
+import { shouldBlockServicesRefresh } from '../domain/preview-service';
 import { useAcceptService } from '../hooks/use-accept-service';
 import { useAllocations } from '../hooks/use-allocations';
 import { useOpenService } from '../hooks/use-open-service';
@@ -61,7 +62,11 @@ export function PltrScreen({
   const incidentId = allocation?.incident.dn_incidentid ?? '';
   const servicesQuery = useServices(incidentId, allocation?.services ?? null);
   useEffect(() => {
-    if (allocation && servicesQuery.isFetching && !manualRefreshing) {
+    if (
+      allocation &&
+      servicesQuery.isFetching &&
+      shouldBlockServicesRefresh(preview, manualRefreshing)
+    ) {
       void showServicesRefresh(
         queryClient,
         incidentId,
@@ -72,6 +77,7 @@ export function PltrScreen({
   }, [
     allocation,
     servicesQuery.isFetching,
+    preview,
     manualRefreshing,
     queryClient,
     incidentId,
@@ -112,9 +118,7 @@ export function PltrScreen({
   const cards = buildPltrCards({ service, incident: allocation.incident });
   const action = service ? pltrPrimaryAction(service.statuscode) : null;
   /** Preview (list swipe) keeps a footer to open the form read-only; work actions stay hidden. */
-  const showFooter = preview
-    ? Boolean(service?.dn_serviceid)
-    : action !== null || Boolean(service?.dn_serviceid);
+  const showFooter = preview ? Boolean(service) : action !== null || Boolean(service?.dn_serviceid);
 
   const openMaps = (card: PltrCard): void => {
     if (!card.coordinate) {
@@ -188,11 +192,11 @@ export function PltrScreen({
           </ScrollView>
           {showFooter ? (
             <ScreenFooter>
-              {preview && service?.dn_serviceid ? (
+              {preview && service ? (
                 <Button
                   label={t('pltr.viewServicePreview')}
                   variant="action"
-                  onPress={() => openPreview(service)}
+                  onPress={() => void openPreview(service)}
                 />
               ) : action ? (
                 <Button

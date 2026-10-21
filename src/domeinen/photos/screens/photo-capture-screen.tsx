@@ -18,7 +18,7 @@ import { MandatoryPhotoHelpPopup } from '../components/mandatory-photo-help-popu
 import { PhotoCamera } from '../components/photo-camera';
 import { usePhotoService } from '../hooks/photos-context';
 import { useReturnToPhotoOverview } from '../hooks/use-return-to-photo-overview';
-import type { PhotoCaptureMode, PhotoFlowContext } from './photo-flow';
+import { photoRouteParams, type PhotoCaptureMode, type PhotoFlowContext } from './photo-flow';
 
 export function PhotoCaptureScreen({
   allocationId,
@@ -26,6 +26,7 @@ export function PhotoCaptureScreen({
   incidentId,
   serviceStatuscode,
   phaseNumbers,
+  locationId,
   mode: modeParam,
   category: categoryParam,
   position: positionParam,
@@ -51,15 +52,14 @@ export function PhotoCaptureScreen({
   const position = routedPosition ?? (mode === 'mandatory' ? simplePhotoPosition(category) : null);
   const highlightedIndex = position ? standGridIndex(position) : null;
   const [helpVisible, setHelpVisible] = useState(helpParam === '1');
-  const routeParams = {
-    id: allocationId,
+  const routeParams = photoRouteParams({
+    allocationId,
     serviceId,
     incidentId,
-    statuscode: String(serviceStatuscode),
-    ...(phaseNumbers !== undefined && phaseNumbers.length > 0
-      ? { phaseNumbers: phaseNumbers.join(',') }
-      : {}),
-  };
+    serviceStatuscode,
+    phaseNumbers,
+    locationId,
+  });
   const returnToOverview = useReturnToPhotoOverview(routeParams);
   const isReplacing = Boolean(replacePhotoId) || overrideExisting;
   const positionLabel =

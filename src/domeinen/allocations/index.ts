@@ -28,6 +28,15 @@ export {
   resolveIncidentCardModel,
 } from './domain/incident-card';
 export type { IncidentCardModel } from './domain/incident-card';
+export { markerSequenceLabel, toAllocationMapMarkers } from './domain/map-markers';
+export type { AllocationMapMarker } from './domain/map-markers';
+export { resolvePreviewService, shouldBlockServicesRefresh } from './domain/preview-service';
+export { resolveProcessingService } from './domain/processing-service';
+export type {
+  ResolveProcessingServiceInput,
+  ResolvedProcessingService,
+} from './domain/processing-service';
+export { findReleaseAssignment, releaseScopeId, toReleaseService } from './domain/release-service';
 export { resolveServiceCardModel } from './domain/service-card';
 export type { ServiceCardModel } from './domain/service-card';
 export type {

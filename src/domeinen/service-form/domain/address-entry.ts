@@ -7,6 +7,8 @@ import type { ServiceFormAddressGroup, ServiceFormAnswers, ServiceFormField } fr
 
 export type AddressEntryConfig = {
   version: 1;
+  /** Group heading above the fields (from `address_group.label`); optional. */
+  label?: { nl?: string; en?: string };
   postcodeHouseNumberLookup: boolean;
   addressSearch: boolean;
   manualEntry: boolean;
@@ -56,6 +58,23 @@ const readBoolean = (value: unknown): boolean | null =>
 const readString = (value: unknown): string | null =>
   typeof value === 'string' && value.trim() !== '' ? value : null;
 
+const pickLocalizedLabel = (label: unknown, languageCode: number): string | undefined => {
+  if (!Array.isArray(label)) {
+    return undefined;
+  }
+  for (const entry of label) {
+    if (entry === null || typeof entry !== 'object') {
+      continue;
+    }
+    const row = entry as { 'language-code'?: unknown; value?: unknown };
+    if (row['language-code'] === languageCode && typeof row.value === 'string') {
+      const trimmed = row.value.trim();
+      return trimmed !== '' ? trimmed : undefined;
+    }
+  }
+  return undefined;
+};
+
 const readAddressGroupMetadata = (raw: Record<string, unknown>): ServiceFormAddressGroup | null => {
   const addressGroup = asRecord(raw.address_group);
   const fields = asRecord(addressGroup?.fields);
@@ -70,9 +89,12 @@ const readAddressGroupMetadata = (raw: Record<string, unknown>): ServiceFormAddr
   const street = readString(fields.street) ?? undefined;
   const city = readString(fields.city) ?? undefined;
   const country = readString(fields.country) ?? undefined;
+  const name = readString(fields.name) ?? undefined;
   const confirmAddress = readBoolean(addressGroup.confirmAddress);
   const allowManual = readBoolean(addressGroup.allowManual);
   const allowForeignManual = readBoolean(addressGroup.allowForeignManual);
+  const labelNl = pickLocalizedLabel(addressGroup.label, 1043);
+  const labelEn = pickLocalizedLabel(addressGroup.label, 1044);
 
   if (
     !id ||
@@ -87,7 +109,9 @@ const readAddressGroupMetadata = (raw: Record<string, unknown>): ServiceFormAddr
 
   return {
     id,
-    fields: { postalCode, houseNumber, addition, street, city, country },
+    ...(labelNl !== undefined ? { labelNl } : {}),
+    ...(labelEn !== undefined ? { labelEn } : {}),
+    fields: { postalCode, houseNumber, addition, street, city, country, ...(name ? { name } : {}) },
     confirmAddress,
     allowManual,
     allowForeignManual,
@@ -102,9 +126,15 @@ const readAddressGroupConfig = (
     return null;
   }
 
+  const label =
+    metadata.labelNl !== undefined || metadata.labelEn !== undefined
+      ? { nl: metadata.labelNl, en: metadata.labelEn }
+      : undefined;
+
   return {
     config: {
       version: 1,
+      ...(label !== undefined ? { label } : {}),
       postcodeHouseNumberLookup: true,
       addressSearch: false,
       manualEntry: metadata.allowManual,
@@ -119,6 +149,7 @@ const readAddressGroupConfig = (
       street: metadata.fields.street,
       city: metadata.fields.city,
       country: metadata.fields.country,
+      name: metadata.fields.name,
     },
   };
 };

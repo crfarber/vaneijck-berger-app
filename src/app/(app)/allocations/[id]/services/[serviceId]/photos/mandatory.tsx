@@ -2,14 +2,16 @@ import { Redirect, useLocalSearchParams } from 'expo-router';
 
 /** Old deep links to /mandatory land on the camera with the help popup. */
 export default function MandatoryPhotoRoute() {
-  const { id, serviceId, incidentId, statuscode, position, category } = useLocalSearchParams<{
-    id: string;
-    serviceId: string;
-    incidentId: string;
-    statuscode: string;
-    position?: string;
-    category?: string;
-  }>();
+  const { id, serviceId, incidentId, statuscode, position, category, locationId } =
+    useLocalSearchParams<{
+      id: string;
+      serviceId: string;
+      incidentId: string;
+      statuscode: string;
+      position?: string;
+      category?: string;
+      locationId?: string;
+    }>();
 
   const resolvedPosition =
     typeof position === 'string'
@@ -30,6 +32,7 @@ export default function MandatoryPhotoRoute() {
           mode: 'mandatory',
           position: resolvedPosition,
           help: '1',
+          ...(typeof locationId === 'string' && locationId !== '' ? { locationId } : {}),
         },
       }}
     />

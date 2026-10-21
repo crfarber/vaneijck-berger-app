@@ -27,6 +27,8 @@ type TextFieldProps = Pick<
   | 'autoCapitalize'
 > & {
   label?: string;
+  /** When true, appends a red asterisk to the visible label. */
+  required?: boolean;
   error?: string | null;
   containerStyle?: StyleProp<ViewStyle>;
   inputRef?: Ref<TextInput>;
@@ -34,6 +36,7 @@ type TextFieldProps = Pick<
 
 export function TextField({
   label,
+  required = false,
   error,
   containerStyle,
   accessibilityLabel,
@@ -45,7 +48,12 @@ export function TextField({
   const errorMessage = invalid && error.length > 0 ? error : null;
   return (
     <View style={[styles.container, containerStyle]}>
-      {label ? <Text style={[styles.label, invalid && styles.labelError]}>{label}</Text> : null}
+      {label ? (
+        <Text style={[styles.label, invalid && styles.labelError]}>
+          {label}
+          {required ? <Text style={styles.requiredMark}> *</Text> : null}
+        </Text>
+      ) : null}
       <TextInput
         ref={inputRef}
         accessibilityLabel={accessibilityLabel ?? label}
@@ -68,6 +76,7 @@ const styles = StyleSheet.create({
   container: { gap: spacing.xs },
   label: { color: colors.text, fontSize: 14, fontWeight: '600' },
   labelError: { color: colors.danger },
+  requiredMark: { color: colors.danger, fontWeight: '700' },
   input: {
     minHeight: 48,
     borderWidth: 1,

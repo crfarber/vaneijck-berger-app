@@ -71,6 +71,14 @@ export default function AppLayout() {
           headerRight: () => null,
         }}
       />
+      <Stack.Screen
+        name="allocations-map"
+        options={{
+          title: t('allocations.map.title'),
+          headerTitle: undefined,
+          headerRight: () => null,
+        }}
+      />
       <Stack.Screen name="allocations/[id]/index" />
       <Stack.Screen
         name="allocations/[id]/services/[serviceId]"
@@ -87,6 +95,13 @@ export default function AppLayout() {
       />
       <Stack.Screen
         name="allocations/[id]/services/[serviceId]/form"
+        options={{
+          headerTitle: () => <WorkerStatusPill />,
+          headerRight: () => null,
+        }}
+      />
+      <Stack.Screen
+        name="vehicle-releases/[locationId]/services/[serviceId]/form"
         options={{
           headerTitle: () => <WorkerStatusPill />,
           headerRight: () => null,

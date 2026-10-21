@@ -9,7 +9,39 @@ import {
 import { getDeviceTimeZone } from '@/shared/utils/time';
 import { classifyAllocation } from './status';
 import { getAllocationTypeKey, type AllocationTypeKey } from './type';
-import type { Allocation } from './types';
+import type { Allocation, Service } from './types';
+
+function textField(value: unknown): string | undefined {
+  if (typeof value !== 'string') {
+    return undefined;
+  }
+  const trimmed = value.trim();
+  return trimmed === '' ? undefined : trimmed;
+}
+
+/**
+ * PLTR list/map cards prefer the incident address; when that is empty (common for planbaar
+ * transport) fall back to the load location on the first service — same source as the PLTR
+ * phase cards (`dn_total_servicestartlocation` / structured load fields).
+ */
+function pltrCardLocation(allocation: Allocation): string[] {
+  const fromIncident = addressLines(allocation.incident);
+  if (fromIncident.length > 0) {
+    return fromIncident;
+  }
+  const service: Service | undefined = allocation.services?.[0];
+  if (service === undefined) {
+    return [];
+  }
+  return addressLines({
+    dn_concatlocation:
+      textField(service.dn_total_servicestartlocation) ?? textField(service.dn_concatlocation),
+    dn_street: service.dn_loadinglocationstreet,
+    dn_housenumber: service.dn_loadinglocationhouseno,
+    dn_postalcodeid: service.dn_loadinglocationpostalcode,
+    dn_city: service.dn_loadinglocationcity,
+  });
+}
 
 export type IncidentCardModel =
   | {
@@ -66,7 +98,7 @@ export function resolveIncidentCardModel(allocation: Allocation): IncidentCardMo
       title: allocation.incident.dn_name,
       typeKey,
       party: getServiceParty(service),
-      location: addressLines(allocation.incident),
+      location: pltrCardLocation(allocation),
       vehicle: getServiceVehicle(service),
       createdOn,
       ...(phone ? { phone } : {}),

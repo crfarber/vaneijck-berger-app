@@ -46,7 +46,7 @@ import { useServicePhotos } from '../hooks/use-service-photos';
 import { PhotoZoomViewer } from '../components/photo-zoom-viewer';
 import { useServerPhotoUris } from '../hooks/use-server-photo-uris';
 import { usePhotoService } from '../hooks/photos-context';
-import type { PhotoFlowContext } from './photo-flow';
+import { photoRouteParams, type PhotoFlowContext } from './photo-flow';
 import { goBackOrReplace } from '@/shared/ui/navigation';
 import { Screen } from '@/shared/ui/screen';
 import { useStatusOverlay } from '@/shared/ui/status-overlay-host';
@@ -79,6 +79,7 @@ export function PhotoOverviewScreen({
   incidentId,
   serviceStatuscode,
   phaseNumbers,
+  locationId,
   mandatoryNames,
   loadMandatoryNames,
 }: PhotoFlowContext & {
@@ -269,15 +270,14 @@ export function PhotoOverviewScreen({
     !loadFailed &&
     missingRequired === 0 &&
     currentPhotos.every((photo) => photo.status !== PHOTO_STATUS.failed);
-  const routeParams = {
-    id: allocationId,
+  const routeParams = photoRouteParams({
+    allocationId,
     serviceId,
     incidentId,
-    statuscode: String(serviceStatuscode),
-    ...(phaseNumbers !== undefined && phaseNumbers.length > 0
-      ? { phaseNumbers: phaseNumbers.join(',') }
-      : {}),
-  };
+    serviceStatuscode,
+    phaseNumbers,
+    locationId,
+  });
 
   const openMandatoryPhoto = (position: PhotoPosition, photo: OverviewPhoto | null): void => {
     const asServerOverride = photo?.status === PHOTO_STATUS.sent;
@@ -369,6 +369,16 @@ export function PhotoOverviewScreen({
   // The overview is the root of the photo stack, so going back leaves the whole stack and lands
   // on the form underneath. Only without a form below (deep link) does it replace to the form.
   const leaveToServiceForm = (): void => {
+    if (locationId !== undefined && locationId !== '') {
+      goBackOrReplace(router, {
+        pathname: '/vehicle-releases/[locationId]/services/[serviceId]/form',
+        params: {
+          locationId,
+          serviceId,
+        },
+      });
+      return;
+    }
     goBackOrReplace(router, {
       pathname: '/allocations/[id]/services/[serviceId]/form',
       params: {

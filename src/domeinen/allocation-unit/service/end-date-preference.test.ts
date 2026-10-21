@@ -6,11 +6,11 @@ const NOW = new Date(2026, 8, 21, 12, 0, 0, 0);
 const plusHours = (hours: number) => new Date(NOW.getTime() + hours * 3_600_000);
 
 describe('createEndDatePreference', () => {
-  it('proposes now plus 8 hours when nothing is remembered', async () => {
+  it('proposes now plus 9 hours when nothing is remembered', async () => {
     const preference = createEndDatePreference(createInMemoryStore());
 
     expect(await preference.getProposedEndDate({ isOnboarding: false, now: NOW })).toEqual(
-      plusHours(8),
+      plusHours(9),
     );
   });
 
@@ -29,7 +29,7 @@ describe('createEndDatePreference', () => {
     await preference.remember(plusHours(5));
 
     expect(await preference.getProposedEndDate({ isOnboarding: true, now: NOW })).toEqual(
-      plusHours(8),
+      plusHours(9),
     );
   });
 
@@ -44,7 +44,7 @@ describe('createEndDatePreference', () => {
     );
 
     expect(await preference.getProposedEndDate({ isOnboarding: false, now: NOW })).toEqual(
-      plusHours(8),
+      plusHours(9),
     );
   });
 
@@ -72,7 +72,7 @@ describe('createEndDatePreference', () => {
 
     expect(store.dump()[REMEMBERED_END_DATE_KEY]).toBeUndefined();
     expect(await preference.getProposedEndDate({ isOnboarding: false, now: NOW })).toEqual(
-      plusHours(8),
+      plusHours(9),
     );
   });
 });

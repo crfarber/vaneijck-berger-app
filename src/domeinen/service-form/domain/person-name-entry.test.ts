@@ -6,6 +6,9 @@ import {
   buildPersonNameGroup,
   buildPersonNameRenderItems,
   buildPersonNameSummary,
+  resolvePersonNameSummaryDisplay,
+  shouldOfferPersonNameManualEntry,
+  shouldShowPersonNameDetailFields,
   findPersonNameGroupInFields,
   hasAppliedPersonNameAnswers,
   partitionFieldsAroundPersonNameGroups,
@@ -127,8 +130,8 @@ describe('buildPersonNameGroup / render items', () => {
       new Map([salutation, lastName, initials, middle, phone].map((item) => [item.key, item])),
     );
     expect(group?.config.id).toBe('driver');
+    expect(group?.salutationField?.key).toBe('dn_driversalutationcode');
     expect(group?.orderedFields.map((item) => item.key)).toEqual([
-      'dn_driversalutationcode',
       'dn_driverinitials',
       'dn_drivermiddlename',
       'dn_driverlastname',
@@ -175,14 +178,9 @@ describe('buildPersonNameGroup / render items', () => {
 
 describe('buildPersonNameAnswers / clear / summary', () => {
   const mapping = toPersonNameFieldMapping(validGroupRaw.person_group.fields);
-  const options = [
-    { label: 'De heer', value: 1 },
-    { label: 'Mevrouw', value: 2 },
-  ];
 
-  it('clears all mapped name roles', () => {
+  it('clears visible name roles and leaves salutation untouched', () => {
     expect(buildClearedPersonNameAnswers(mapping, 'Kies…')).toEqual({
-      dn_driversalutationcode: { value: '', displayValue: 'Kies…' },
       dn_driverinitials: { value: '', displayValue: '' },
       dn_driverfirstname: { value: '', displayValue: '' },
       dn_drivermiddlename: { value: '', displayValue: '' },
@@ -190,16 +188,14 @@ describe('buildPersonNameAnswers / clear / summary', () => {
     });
   });
 
-  it('applies a parsed free-text name onto CRM answers', () => {
-    const { parsed } = previewPersonNameParse('Dhr. Jan de Vries', options);
+  it('applies a parsed free-text name without writing salutation', () => {
+    const { parsed, preview } = previewPersonNameParse('Dhr. Jan de Vries');
+    expect(preview).toBe('J. · Jan · de · Vries');
     expect(
       buildPersonNameAnswers(mapping, parsed, {
-        salutationOptions: options,
-        salutationTable: 'dn_salutation',
         pleaseSelectLabel: 'Kies…',
       }),
     ).toEqual({
-      dn_driversalutationcode: { value: 1, displayValue: 'De heer', table: 'dn_salutation' },
       dn_driverinitials: { value: 'J.', displayValue: 'J.' },
       dn_driverfirstname: { value: 'Jan', displayValue: 'Jan' },
       dn_drivermiddlename: { value: 'de', displayValue: 'de' },
@@ -207,12 +203,37 @@ describe('buildPersonNameAnswers / clear / summary', () => {
     });
   });
 
-  it('detects applied last name and builds a summary', () => {
+  it('detects applied last name and builds a summary without salutation', () => {
     const answers = {
       dn_driversalutationcode: { value: 1, displayValue: 'De heer', table: 'dn_salutation' },
+      dn_driverinitials: { value: 'J.', displayValue: 'J.' },
       dn_driverlastname: { value: 'Vries', displayValue: 'Vries' },
     };
     expect(hasAppliedPersonNameAnswers(mapping, answers, 'Kies…')).toBe(true);
-    expect(buildPersonNameSummary(mapping, answers, 'Kies…')).toBe('De heer · Vries');
+    expect(buildPersonNameSummary(mapping, answers, 'Kies…')).toBe('J. · Vries');
+  });
+
+  it('keeps detail fields behind manual entry and shows the summary after apply', () => {
+    const answers = {
+      dn_driverinitials: { value: 'J.', displayValue: 'J.' },
+      dn_driverlastname: { value: 'Vries', displayValue: 'Vries' },
+    };
+    expect(shouldShowPersonNameDetailFields({ manualEntryActive: false })).toBe(false);
+    expect(shouldShowPersonNameDetailFields({ manualEntryActive: true })).toBe(true);
+    expect(
+      shouldOfferPersonNameManualEntry({ hasAppliedAnswers: false, manualEntryActive: false }),
+    ).toBe(true);
+    expect(
+      shouldOfferPersonNameManualEntry({ hasAppliedAnswers: false, manualEntryActive: true }),
+    ).toBe(false);
+    expect(
+      shouldOfferPersonNameManualEntry({ hasAppliedAnswers: true, manualEntryActive: false }),
+    ).toBe(false);
+    expect(
+      resolvePersonNameSummaryDisplay(mapping, answers, 'Kies…', { manualEntryActive: false }),
+    ).toBe('J. · Vries');
+    expect(
+      resolvePersonNameSummaryDisplay(mapping, answers, 'Kies…', { manualEntryActive: true }),
+    ).toBeNull();
   });
 });

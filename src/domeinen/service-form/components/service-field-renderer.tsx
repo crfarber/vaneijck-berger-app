@@ -79,7 +79,9 @@ function TextInputField({
       <TextField
         inputRef={(node) => registerInputRef?.(field.id, node)}
         containerStyle={styles.grow}
-        label={formatServiceFormFieldLabel(field.label, field.optional)}
+        label={field.label}
+        required={!field.optional}
+        accessibilityLabel={formatServiceFormFieldLabel(field.label, field.optional)}
         value={value}
         placeholder={kind === 'decimal' ? '0.00' : undefined}
         keyboardType={KEYBOARD[kind] ?? 'default'}
@@ -316,7 +318,9 @@ function AddressInputField({
       <TextField
         inputRef={(node) => registerInputRef?.(field.id, node)}
         containerStyle={styles.grow}
-        label={formatServiceFormFieldLabel(field.label, field.optional)}
+        label={field.label}
+        required={!field.optional}
+        accessibilityLabel={formatServiceFormFieldLabel(field.label, field.optional)}
         value={shown}
         onChangeText={(next) =>
           onChange(field.key, {

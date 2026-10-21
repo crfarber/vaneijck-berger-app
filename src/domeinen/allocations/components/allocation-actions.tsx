@@ -1,6 +1,7 @@
+import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
-import { colors } from '@/shared/ui/theme';
+import { colors, spacing } from '@/shared/ui/theme';
 import { useAllocationActions } from '../hooks/use-allocation-actions';
 import type { AllocationListBucket } from '../domain/status';
 import type { Allocation } from '../domain/types';
@@ -81,10 +82,27 @@ export function AllocationActions({
   );
 }
 
+/** Swipe panel left of the card: opens the overview map zoomed in on this assignment. */
+export function AllocationMapActions({ onShowOnMap }: { onShowOnMap: () => void }) {
+  const { t } = useTranslation();
+  return (
+    <View style={styles.row}>
+      <SwipePanel
+        label={t('allocations.actions.showOnMap')}
+        backgroundColor={colors.brandAction}
+        icon={<Ionicons name="map-outline" size={32} color={colors.background} />}
+        onPress={onShowOnMap}
+        style={styles.leftPanel}
+      />
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'stretch',
     height: '100%',
   },
+  leftPanel: { marginLeft: 0, marginRight: spacing.sm },
 });

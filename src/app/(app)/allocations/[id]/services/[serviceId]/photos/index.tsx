@@ -1,38 +1,39 @@
 import { useLocalSearchParams } from 'expo-router';
-import { useAllocations, useServices } from '@/domeinen/allocations/ui';
+import { useProcessingService } from '@/domeinen/allocations/ui';
 import { phaseNumbersFromDefinition, serviceFormPhaseForStatus } from '@/domeinen/service-form';
 import { PhotoOverviewScreen } from '@/domeinen/photos/ui';
 import { useServiceDefinition } from '@/domeinen/service-form/ui';
 
 export default function ServicePhotosOverviewRoute() {
-  const { id, serviceId, incidentId, statuscode } = useLocalSearchParams<{
+  const { id, serviceId, incidentId, statuscode, locationId } = useLocalSearchParams<{
     id: string;
     serviceId: string;
     incidentId: string;
     statuscode: string;
+    locationId?: string;
   }>();
-  const { sections } = useAllocations();
-  const [active, pending] = sections;
-  const allocation = [...active.data, ...pending.data].find((item) => item.dn_allocationid === id);
-  const resolvedIncidentId = allocation?.incident.dn_incidentid ?? incidentId;
-  const services = useServices(resolvedIncidentId, allocation?.services ?? null);
-  const service = (services.data ?? allocation?.services ?? []).find(
-    (item) => item.dn_serviceid === serviceId,
-  );
-  const { state } = useServiceDefinition(service?.dn_servicetypecode ?? undefined);
+  const processing = useProcessingService({
+    allocationId: id,
+    serviceId,
+    locationId,
+  });
+  const resolvedIncidentId =
+    processing.incidentId !== '' ? processing.incidentId : (incidentId ?? '');
+  const { state } = useServiceDefinition(processing.service?.dn_servicetypecode ?? undefined);
   const definition = state.status === 'ready' ? state.definition.definition : undefined;
   const phaseNumbers = phaseNumbersFromDefinition(definition);
-  const serviceStatuscode = service?.statuscode ?? (Number(statuscode) || 0);
+  const serviceStatuscode = processing.service?.statuscode ?? (Number(statuscode) || 0);
   const formPhase = serviceFormPhaseForStatus(serviceStatuscode, phaseNumbers);
   const firstPhase = phaseNumbers[0];
 
   return (
     <PhotoOverviewScreen
-      allocationId={id}
+      allocationId={processing.scopeId}
       serviceId={serviceId}
       incidentId={resolvedIncidentId}
       serviceStatuscode={serviceStatuscode}
       phaseNumbers={phaseNumbers}
+      locationId={locationId}
       mandatoryNames={
         definition?.find((entry) => entry.phase === formPhase)?.photosMandatory ?? null
       }

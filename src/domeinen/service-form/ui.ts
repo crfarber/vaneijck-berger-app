@@ -3,11 +3,13 @@ export {
   ServiceFormProvider,
   useFetchRdwInfo,
   useLookupPostalAddress,
+  useServiceFormClock,
   useServiceFormDrafts,
   useServiceFormService,
 } from './hooks/service-form-context';
 export { useServiceDefinition } from './hooks/use-service-definition';
 export { useServiceForm } from './hooks/use-service-form';
+export { usePrefetchServiceFormSelectOptions } from './hooks/use-prefetch-service-form-select-options';
 export { useServiceFormSelectOption } from './hooks/use-service-form-select-option';
 export { ServiceFormScreen } from './screens/service-form-screen';
 export { ServiceFinishScreen } from './screens/service-finish-screen';

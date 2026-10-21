@@ -3,9 +3,11 @@ import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import { Alert, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
+import { useDevUiToolsPreference } from '@/domeinen/settings/ui';
 import { Button } from '@/shared/ui/button';
 import { Screen } from '@/shared/ui/screen';
 import { TextField } from '@/shared/ui/text-field';
+import { Toggle } from '@/shared/ui/toggle';
 import { colors, radius, spacing } from '@/shared/ui/theme';
 import type { DebugSnapshot } from './collect-debug-snapshot';
 import { useDevTools, type FakeStandbyResult } from './dev-tools-context';
@@ -49,6 +51,7 @@ export function DebugScreen() {
     fakeStandbyLocationAdvice,
     clearStandbyLocationAdvice,
   } = useDevTools();
+  const { enabled: uiToolsEnabled, setEnabled: setUiToolsEnabled } = useDevUiToolsPreference();
   const [snapshot, setSnapshot] = useState<DebugSnapshot | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -146,6 +149,14 @@ export function DebugScreen() {
     <Screen>
       <Text style={styles.heading}>{t('debug.title')}</Text>
       <Text style={styles.hint}>{t('debug.hint')}</Text>
+      <View style={styles.uiTools}>
+        <Toggle
+          label={t('debug.uiTools')}
+          value={uiToolsEnabled}
+          onValueChange={setUiToolsEnabled}
+        />
+        <Text style={styles.uiToolsHint}>{t('debug.uiToolsHint')}</Text>
+      </View>
       <Button label={t('debug.refresh')} onPress={() => void refresh()} loading={loading} />
       <Button
         label={t('debug.copyAccessToken')}
@@ -203,6 +214,8 @@ export function DebugScreen() {
 const styles = StyleSheet.create({
   heading: { fontSize: 20, fontWeight: '700', color: colors.text },
   hint: { fontSize: 14, color: colors.textMuted },
+  uiTools: { gap: spacing.xs },
+  uiToolsHint: { fontSize: 13, color: colors.textMuted },
   error: { color: colors.danger, fontSize: 14 },
   standbyFields: { gap: spacing.sm },
   standbyHint: { fontSize: 13, color: colors.textMuted },

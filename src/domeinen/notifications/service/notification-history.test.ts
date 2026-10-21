@@ -37,10 +37,10 @@ describe('createNotificationHistory', () => {
     const clock = createFakeClock(1_000);
     const history = createNotificationHistory({ store, clock });
     history.add(message());
-    history.markRead('msg-1');
+    history.markRead('NewIncident:a:alloc-1');
     expect(history.unreadCount()).toBe(0);
 
-    history.add(message({ id: 'msg-2' }));
+    history.add(message({ id: 'msg-2', allocationId: 'alloc-2' }));
     history.markAllRead();
     expect(history.unreadCount()).toBe(0);
 
@@ -49,12 +49,23 @@ describe('createNotificationHistory', () => {
     expect(await store.getItem(NOTIFICATION_HISTORY_KEY)).toBeNull();
   });
 
-  it('skips a message without an id', () => {
+  it('dedupes two FCM message ids for the same allocation into one history row', () => {
+    const history = createNotificationHistory({
+      store: createInMemoryStore(),
+      clock: createFakeClock(1_000),
+    });
+    history.add(message({ id: 'msg-1' }));
+    history.add(message({ id: 'msg-2' }));
+    expect(history.getState().notifications).toHaveLength(1);
+    expect(history.getState().notifications[0]?.id).toBe('NewIncident:a:alloc-1');
+  });
+
+  it('skips a message without a durable id', () => {
     const history = createNotificationHistory({
       store: createInMemoryStore(),
       clock: createFakeClock(),
     });
-    history.add(message({ id: null }));
+    history.add(message({ id: null, allocationId: undefined, incidentId: undefined }));
     expect(history.getState().notifications).toEqual([]);
   });
 });

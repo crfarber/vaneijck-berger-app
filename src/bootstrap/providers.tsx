@@ -12,7 +12,7 @@ import { StandbyLocationProvider } from '@/domeinen/standby-location/ui';
 import { PhotosProvider } from '@/domeinen/photos/ui';
 import { PlacesProvider } from '@/domeinen/places/ui';
 import { ServiceFormProvider } from '@/domeinen/service-form/ui';
-import { SettingsProvider } from '@/domeinen/settings/ui';
+import { DevUiToolsProvider, SettingsProvider } from '@/domeinen/settings/ui';
 import { SupportProvider } from '@/domeinen/support/ui';
 import { WorkerApiProvider } from '@/domeinen/worker/ui';
 import { OutboxProvider } from '@/domeinen/outbox/ui';
@@ -183,6 +183,7 @@ export function AppProviders({
                                   service: container.serviceFormService,
                                   drafts: container.serviceFormDrafts,
                                   logger: container.logger,
+                                  clock: container.clock,
                                   fetchRdwInfo: (registrationNumber) =>
                                     container.rdwApi.lookupByRegistrationNumber(registrationNumber),
                                   lookupPostalAddress: createPostalAddressLookup(
@@ -196,29 +197,31 @@ export function AppProviders({
                                 }}
                               >
                                 <SettingsProvider value={settings}>
-                                  <LocationProvider value={location}>
-                                    <NotificationHistoryProvider
-                                      value={container.notificationHistory}
-                                    >
-                                      <StandbyLocationProvider value={container.standbyLocation}>
-                                        <SupportProvider value={container.supportLog}>
-                                          <AllocationUnitProvider
-                                            value={{
-                                              service: container.allocationUnitService,
-                                              clock: container.clock,
-                                              endDatePreference: container.endDatePreference,
-                                              recentTruckPreference:
-                                                container.recentTruckPreference,
-                                              homebasePreference: container.homebasePreference,
-                                              lastUnitPreference: container.lastUnitPreference,
-                                            }}
-                                          >
-                                            {children}
-                                          </AllocationUnitProvider>
-                                        </SupportProvider>
-                                      </StandbyLocationProvider>
-                                    </NotificationHistoryProvider>
-                                  </LocationProvider>
+                                  <DevUiToolsProvider preference={container.devUiToolsPreference}>
+                                    <LocationProvider value={location}>
+                                      <NotificationHistoryProvider
+                                        value={container.notificationHistory}
+                                      >
+                                        <StandbyLocationProvider value={container.standbyLocation}>
+                                          <SupportProvider value={container.supportLog}>
+                                            <AllocationUnitProvider
+                                              value={{
+                                                service: container.allocationUnitService,
+                                                clock: container.clock,
+                                                endDatePreference: container.endDatePreference,
+                                                recentTruckPreference:
+                                                  container.recentTruckPreference,
+                                                homebasePreference: container.homebasePreference,
+                                                lastUnitPreference: container.lastUnitPreference,
+                                              }}
+                                            >
+                                              {children}
+                                            </AllocationUnitProvider>
+                                          </SupportProvider>
+                                        </StandbyLocationProvider>
+                                      </NotificationHistoryProvider>
+                                    </LocationProvider>
+                                  </DevUiToolsProvider>
                                 </SettingsProvider>
                               </ServiceFormProvider>
                             </PlacesProvider>

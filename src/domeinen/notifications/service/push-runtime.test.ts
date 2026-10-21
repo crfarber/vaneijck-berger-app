@@ -185,6 +185,17 @@ describe('createPushRuntime', () => {
     expect(navigation.openAllocations).toHaveBeenCalledOnce();
   });
 
+  it('ignores a second NewIncident FCM message for the same allocation', async () => {
+    const { runtime, handler, banners, emit } = setup();
+    await runtime.start();
+
+    emit(message({ messageId: 'msg-1' }), 'foreground');
+    emit(message({ messageId: 'msg-2' }), 'foreground');
+
+    await vi.waitFor(() => expect(handler.handle).toHaveBeenCalledOnce());
+    expect(banners).toHaveLength(1);
+  });
+
   it('still opens the overview when the tapped message was already handled', async () => {
     const { runtime, handler, navigation, emit } = setup();
     await runtime.start();

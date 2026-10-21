@@ -49,6 +49,7 @@ export function useRegisterInternalUnit(
 
   const [loading, setLoading] = useState(true);
   const [fleet, setFleet] = useState<FleetVehicle[]>([]);
+  const [fleetEmpty, setFleetEmpty] = useState(false);
   const [recentTruckIds, setRecentTruckIds] = useState<readonly string[]>([]);
   const [truck, setTruck] = useState<FleetVehicle | null>(null);
   const [trailer, setTrailer] = useState<FleetVehicle | null>(null);
@@ -58,6 +59,7 @@ export function useRegisterInternalUnit(
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  const [fleetReloadToken, setFleetReloadToken] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -70,6 +72,7 @@ export function useRegisterInternalUnit(
         return;
       }
       setFleet(loadedFleet);
+      setFleetEmpty(loadedFleet.length === 0);
       setRecentTruckIds(loadedRecentTruckIds);
       setEndDate(proposedEndDate);
       if (!appliedReuse.current && reuse?.kind === 'internal') {
@@ -93,7 +96,13 @@ export function useRegisterInternalUnit(
     return () => {
       cancelled = true;
     };
-  }, [service, endDatePreference, recentTruckPreference, isOnboarding, reuse]);
+  }, [service, endDatePreference, recentTruckPreference, isOnboarding, reuse, fleetReloadToken]);
+
+  const reloadFleet = (): void => {
+    setLoading(true);
+    setFleetEmpty(false);
+    setFleetReloadToken((token) => token + 1);
+  };
 
   const selectTruck = (vehicle: FleetVehicle): void => {
     setTruck(vehicle);
@@ -201,6 +210,8 @@ export function useRegisterInternalUnit(
 
   return {
     loading,
+    fleetEmpty,
+    reloadFleet,
     trucks: filterFleetByType(fleet, VEHICLE_TYPE_CODE_TRUCK),
     recentTrucks: recentTruckIds
       .map((id) => fleet.find((vehicle) => vehicle.id === id))

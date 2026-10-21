@@ -84,8 +84,8 @@ describe('relative dates', () => {
     expect(getRelativeEndDate(2, NOW)).toEqual(local(21, 14));
   });
 
-  it('proposes an eight hour shift by default', () => {
-    expect(getDefaultEndDate(NOW)).toEqual(local(21, 20));
+  it('proposes a nine hour shift by default (8h work + 1h break)', () => {
+    expect(getDefaultEndDate(NOW)).toEqual(local(21, 21));
   });
 });
 

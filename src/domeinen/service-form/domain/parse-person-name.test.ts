@@ -159,18 +159,15 @@ describe('matchSalutationOption', () => {
 });
 
 describe('formatPersonNamePreview', () => {
-  it('joins non-empty parts with a middle dot', () => {
+  it('joins non-empty name parts with a middle dot and omits salutation', () => {
     expect(
-      formatPersonNamePreview(
-        {
-          salutationKey: PERSON_SALUTATION_KEY.deHeer,
-          initials: 'J.',
-          firstName: null,
-          middleName: 'de',
-          lastName: 'Vries',
-        },
-        'De heer',
-      ),
-    ).toBe('De heer · J. · de · Vries');
+      formatPersonNamePreview({
+        salutationKey: PERSON_SALUTATION_KEY.deHeer,
+        initials: 'J.',
+        firstName: null,
+        middleName: 'de',
+        lastName: 'Vries',
+      }),
+    ).toBe('J. · de · Vries');
   });
 });

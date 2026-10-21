@@ -1,201 +1,35 @@
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Linking, StyleSheet, Text, View } from 'react-native';
-import { useFocusEffect } from 'expo-router';
-import { PERMISSION_KIND, type PermissionSnapshot } from '@/domeinen/settings';
-import { useDevicePermissions } from '@/domeinen/settings/ui';
-import { BottomSheet } from '@/shared/ui/bottom-sheet';
-import { Button } from '@/shared/ui/button';
+import { colors } from '@/shared/ui/theme';
 import { ToolbarButton } from '@/shared/ui/toolbar-button';
-import { colors, spacing } from '@/shared/ui/theme';
-import { formatInstantTime } from '@/shared/utils/time';
-import {
-  GPS_STATUS,
-  gpsButtonVariant,
-  resolveGpsStatus,
-  type GpsStatus,
-} from '../domain/gps-status';
-import { googleMapsSearchUrl } from '../domain/maps-url';
-import { resolveCurrentPosition, type CurrentLocation } from '../domain/proximity';
-import { useLocationClock, useLocationReader } from '../hooks/location-context';
 import LocationIcon from '@/shared/ui/icons/location';
-
-const EMPTY_PERMISSION: PermissionSnapshot = {
-  status: 'undetermined',
-  canAskAgain: true,
-};
+import { gpsButtonVariant } from '../domain/gps-status';
+import { useGpsStatus } from '../hooks/use-gps-status';
+import { GpsStatusSheet } from './gps-status-sheet';
 
 /**
- * GPS status tile for the allocations toolbar. Green when location permission is granted (even
- * without a fix yet); red otherwise. Opens a sheet with coordinates and refresh / maps / settings.
+ * GPS status tile for toolbars. Green when location permission is granted (even without a fix
+ * yet); red otherwise. Opens a sheet with coordinates and refresh / maps / settings.
+ * The allocations list no longer shows this — GPS lives on the map banner instead.
  */
 export function LocationStatusButton() {
-  const { t, i18n } = useTranslation();
-  const reader = useLocationReader();
-  const clock = useLocationClock();
-  const permissions = useDevicePermissions();
-  const locale = i18n.resolvedLanguage ?? i18n.language;
+  const { t } = useTranslation();
+  const gps = useGpsStatus();
   const [visible, setVisible] = useState(false);
-  const [permission, setPermission] = useState<PermissionSnapshot>(EMPTY_PERMISSION);
-  const [position, setPosition] = useState<CurrentLocation>(null);
-  const [lastUpdatedAt, setLastUpdatedAt] = useState<number | null>(null);
-  const [busy, setBusy] = useState(false);
-
-  const refresh = useCallback(
-    async (options?: { showBusy?: boolean }): Promise<void> => {
-      const showBusy = options?.showBusy === true;
-      if (showBusy) {
-        setBusy(true);
-      }
-      try {
-        const nextPermission = await permissions.read(PERMISSION_KIND.location);
-        setPermission(nextPermission);
-        const nextPosition = await reader.getCurrent();
-        setPosition(nextPosition);
-        if (resolveCurrentPosition(nextPosition) !== null) {
-          setLastUpdatedAt(clock.now());
-        }
-      } finally {
-        if (showBusy) {
-          setBusy(false);
-        }
-      }
-    },
-    [permissions, reader, clock],
-  );
-
-  useFocusEffect(
-    useCallback(() => {
-      let cancelled = false;
-      void permissions.read(PERMISSION_KIND.location).then(async (nextPermission) => {
-        if (cancelled) {
-          return;
-        }
-        setPermission(nextPermission);
-        const nextPosition = await reader.getCurrent();
-        if (cancelled) {
-          return;
-        }
-        setPosition(nextPosition);
-        if (resolveCurrentPosition(nextPosition) !== null) {
-          setLastUpdatedAt(clock.now());
-        }
-      });
-      return () => {
-        cancelled = true;
-      };
-    }, [permissions, reader, clock]),
-  );
-
-  const status: GpsStatus = resolveGpsStatus(permission, position);
-  const coordinate = resolveCurrentPosition(position);
-
-  const askOrOpenSettings = async (): Promise<void> => {
-    if (status === GPS_STATUS.ask) {
-      const next = await permissions.request(PERMISSION_KIND.location);
-      setPermission(next);
-      await refresh();
-      return;
-    }
-    if (status === GPS_STATUS.openSettings) {
-      await permissions.openSystemSettings();
-    }
-  };
 
   return (
     <>
       <ToolbarButton
         accessibilityLabel={t('toolbar.gps')}
-        variant={gpsButtonVariant(status)}
+        variant={gpsButtonVariant(gps.status)}
         onPress={() => {
           setVisible(true);
-          void refresh({ showBusy: true });
+          void gps.refresh({ showBusy: true });
         }}
       >
         <LocationIcon size={24} color={colors.background} />
       </ToolbarButton>
-      <BottomSheet
-        visible={visible}
-        title={t('location.sheetTitle')}
-        closeLabel={t('common.cancel')}
-        onClose={() => setVisible(false)}
-        footer={
-          <View style={styles.footer}>
-            {status === GPS_STATUS.ask ? (
-              <Button
-                label={t('location.allowAccess')}
-                onPress={() => void askOrOpenSettings()}
-                loading={busy}
-              />
-            ) : null}
-            {status === GPS_STATUS.openSettings ? (
-              <Button label={t('location.openSettings')} onPress={() => void askOrOpenSettings()} />
-            ) : null}
-            {status === GPS_STATUS.active || status === GPS_STATUS.noFix ? (
-              <Button
-                label={t('location.reload')}
-                onPress={() => void refresh({ showBusy: true })}
-                loading={busy}
-                variant="secondary"
-              />
-            ) : null}
-            {coordinate !== null ? (
-              <Button
-                label={t('location.openMaps')}
-                onPress={() => void Linking.openURL(googleMapsSearchUrl(coordinate))}
-              />
-            ) : null}
-          </View>
-        }
-      >
-        <View style={styles.body}>
-          <Text style={styles.status}>
-            {status === GPS_STATUS.active ? t('location.active') : t('location.inactive')}
-          </Text>
-          {coordinate !== null ? (
-            <View style={styles.coordinateContainer}>
-              <Text style={styles.coordinate}>
-                {t('location.latitude')}: {coordinate.latitude.toFixed(6)}
-              </Text>
-              <Text style={styles.coordinate}>
-                {t('location.longitude')}: {coordinate.longitude.toFixed(6)}
-              </Text>
-            </View>
-          ) : null}
-          {lastUpdatedAt !== null ? (
-            <Text style={styles.meta}>
-              {t('location.lastUpdate', {
-                time: formatInstantTime(lastUpdatedAt, locale),
-              })}
-            </Text>
-          ) : null}
-        </View>
-      </BottomSheet>
+      <GpsStatusSheet visible={visible} onClose={() => setVisible(false)} gps={gps} />
     </>
   );
 }
-
-const styles = StyleSheet.create({
-  body: {
-    gap: spacing.md,
-    paddingVertical: spacing.sm,
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-  },
-  status: { fontSize: 18, fontWeight: '700', color: colors.text, textAlign: 'center' },
-  coordinateContainer: {
-    alignItems: 'flex-start',
-    justifyContent: 'flex-start',
-    gap: spacing.sm,
-    flexDirection: 'row',
-  },
-  coordinate: {
-    fontSize: 15,
-    color: colors.text,
-    textAlign: 'center',
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  meta: { fontSize: 12, color: colors.textMuted, textAlign: 'center' },
-  footer: { gap: spacing.sm },
-});

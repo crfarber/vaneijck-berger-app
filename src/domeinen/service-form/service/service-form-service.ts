@@ -25,6 +25,9 @@ export type SubmitServiceFormInput = {
   /** The service's status when the form was submitted. */
   statuscode: number | undefined;
   body: Record<string, unknown>;
+  /** Locatie-afgifte may submit from OPSLAG (legacy release flow). */
+  isReleaseItem?: boolean;
+  serviceTypeCode?: number | null;
 };
 
 export type SubmitServiceFormResult =
@@ -237,8 +240,8 @@ export function createServiceFormService(deps: ServiceFormServiceDeps): ServiceF
       return buildSelectOptions(rows, { ...request, currentPosition });
     },
 
-    async submit({ serviceId, statuscode, body }) {
-      if (!isSubmitAllowed(statuscode)) {
+    async submit({ serviceId, statuscode, body, isReleaseItem, serviceTypeCode }) {
+      if (!isSubmitAllowed(statuscode, { isReleaseItem, serviceTypeCode })) {
         logger?.warn('serviceForm', 'Form not sent: the service no longer takes a submit', {
           statuscode,
         });

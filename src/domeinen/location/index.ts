@@ -1,5 +1,11 @@
 export { distanceInMeters, toCoordinate, type Coordinate } from './domain/geo';
 export {
+  cameraForFocus,
+  cameraForPoints,
+  NETHERLANDS_CENTER,
+  type MapCameraPosition,
+} from './domain/map-camera';
+export {
   addressLines,
   parseConcatenatedAddress,
   type AddressSource,
@@ -29,8 +35,14 @@ export {
 } from './domain/gps-status';
 export { googleMapsSearchUrl } from './domain/maps-url';
 export {
+  DEFAULT_SELF_TAP_THRESHOLD_METERS,
+  isSelfMapTap,
+  selfTapThresholdMeters,
+} from './domain/map-self-tap';
+export {
   LOCATION_ACCURACY,
   type GetCurrentLocationOptions,
   type LocationAccuracy,
 } from './domain/location-accuracy';
+export { resolveCoarseWatchReuse } from './domain/coarse-watch-reuse';
 export type { LocationReader } from './service/location-reader';

@@ -136,6 +136,7 @@ export const nl = {
       finish: 'Afronden',
       forward: 'Overdragen aan collega',
       preview: 'Voorbeeld',
+      showOnMap: 'Bekijk op kaart',
       reregisterRequired:
         'Je eenheid moet opnieuw geregistreerd worden. Ga terug naar het overzicht.',
       registerToAcceptTitle: 'Geen geldige eenheid',
@@ -163,6 +164,19 @@ export const nl = {
       mode: 'Previewmodus',
       details: 'U kunt deze dienst pas wijzigen na accepteren van een incident.',
     },
+    map: {
+      open: 'Kaart',
+      title: 'Kaart',
+      locationUnavailable:
+        'Locatie is niet toegestaan. Zonder toestemming zie je jezelf niet op de kaart.',
+      openPermissions: 'Open toestemmingen',
+      noMarkers: 'Geen opdrachten met een bekende locatie.',
+      markerTitle: 'Opdracht',
+      openAssignment: 'Openen',
+      gpsBanner: 'GPS-status',
+      gpsNoFix: 'Nog geen GPS-fix',
+      centerOnMe: 'Centreer op mijn locatie',
+    },
   },
   allocationType: {
     unknown: 'Onbekend type',
@@ -188,6 +202,9 @@ export const nl = {
     open: 'Debug',
     title: 'Opslag en stores',
     hint: 'Alleen tijdens ontwikkeling. Tokens komen van SecureStore, niet via getAccessToken.',
+    uiTools: 'Dev-hulpmiddelen in formulier',
+    uiToolsHint:
+      'Toon “antwoorden (dev)”, scenario-export en herladen van formuliervelden. Standaard uit.',
     refresh: 'Verversen',
     copyAccessToken: 'Kopieer access token',
     copyAccessTokenTitle: 'JWT naar klembord kopiëren?',
@@ -280,6 +297,9 @@ export const nl = {
     selectTrailerTitle: 'Kies een aanhanger',
     searchVehiclePlaceholder: 'Zoek op naam of kenteken',
     noVehiclesFound: 'Geen voertuigen gevonden.',
+    fleetUnavailable:
+      'De voertuiglijst is nog niet beschikbaar. Probeer opnieuw, of wacht even tot de sync klaar is.',
+    fleetRetry: 'Opnieuw laden',
     homebase: {
       sectionTitle: 'Ik werk deze dienst vanaf:',
       placeholder: 'Kies uitvoerlocatie',
@@ -308,18 +328,13 @@ export const nl = {
     datePlaceholder: '00 / 00 / 0000',
     timePlaceholder: '00:00',
     changeEndDate: 'Wijzig eindtijd',
-    quickSetPlus8: 'Nu + 8 uur',
+    quickSetPlus9: 'Nu + 9 uur',
     submit: 'Registreren',
     noUnitDispatch: {
       title: 'Opdracht zonder eenheid',
       message:
         'Je hebt al een opdracht, maar nog geen eenheid. Bel dispatch op {{phone}} om dit te laten herstellen.',
       call: 'Dispatch bellen',
-    },
-    callDispatch: {
-      title: 'Meldkamer',
-      call: 'Bel meldkamer',
-      reportIssue: 'App-probleem melden',
     },
     changeVehicle: {
       confirmTitle: 'Opnieuw registreren',
@@ -456,6 +471,7 @@ export const nl = {
       useQuickSearch: 'Gebruik snel zoeken',
     },
     address: {
+      title: 'Adres',
       lookupLoading: 'Adres ophalen…',
       lookupAction: 'Adres zoeken',
       lookupFailed: 'Adres niet gevonden. Vul het adres handmatig in.',
@@ -469,13 +485,16 @@ export const nl = {
     personName: {
       title: 'Naam',
       freeTextLabel: 'Volledige naam',
-      freeTextPlaceholder: 'Bijv. Dhr. Jan de Vries',
+      freeTextPlaceholder: 'Bijv. Jan de Vries',
       apply: 'Verdelen',
       confirmTitle: 'Klopt deze verdeling?',
       confirmApply: 'Ja, zo',
       confirmReject: 'Nee, handmatig',
       reset: 'Opnieuw',
-      manualHint: 'Of vul de velden hieronder handmatig in.',
+      notCorrect: 'Niet correct?',
+      manualEntry: 'Naam handmatig invullen',
+      useQuickEntry: 'Gebruik snelle invoer',
+      useSummary: 'Terug naar samenvatting',
     },
     signature: {
       captureTitle: 'Handtekening',
@@ -492,6 +511,7 @@ export const nl = {
       available: 'Beschikbaar',
       noEmailConfirmation: 'Geen e-mailbevestiging',
       acceptTerms: 'Voorwaarden accepteren',
+      viewTerms: 'Lees terms',
       termsAccepted: 'Voorwaarden accepteren',
     },
     actions: {
@@ -567,7 +587,7 @@ export const nl = {
   places: {
     search: 'Zoeken',
     searchTitle: 'Adres zoeken',
-    searchPlaceholder: 'Straat of plaats',
+    searchPlaceholder: 'Zoek op adres of postcode/huisnr',
     searchFailed: 'Adres zoeken is mislukt. Probeer het opnieuw.',
     noResults: 'Geen adressen gevonden.',
   },
@@ -1016,6 +1036,7 @@ export const en: Translations = {
       finish: 'Finish',
       forward: 'Forward to colleague',
       preview: 'Preview',
+      showOnMap: 'Show on map',
       reregisterRequired: 'Your unit needs to be re-registered. Go back to the overview.',
       registerToAcceptTitle: 'No valid unit',
       registerToAcceptMessage:
@@ -1042,6 +1063,19 @@ export const en: Translations = {
       mode: 'Preview mode',
       details: 'You can only make changes after you accept this incident.',
     },
+    map: {
+      open: 'Map',
+      title: 'Map',
+      locationUnavailable:
+        'Location access is not allowed. Without permission you will not see yourself on the map.',
+      openPermissions: 'Open permissions',
+      noMarkers: 'No assignments with a known location.',
+      markerTitle: 'Assignment',
+      openAssignment: 'Open',
+      gpsBanner: 'GPS status',
+      gpsNoFix: 'No GPS fix yet',
+      centerOnMe: 'Center on my location',
+    },
   },
   allocationType: {
     unknown: 'Unknown type',
@@ -1067,6 +1101,9 @@ export const en: Translations = {
     open: 'Debug',
     title: 'Storage and stores',
     hint: 'Development only. Tokens come from SecureStore, not via getAccessToken.',
+    uiTools: 'Form developer tools',
+    uiToolsHint:
+      'Show “answers (dev)”, scenario export and form definition reload. Off by default.',
     refresh: 'Refresh',
     copyAccessToken: 'Copy access token',
     copyAccessTokenTitle: 'Copy JWT to clipboard?',
@@ -1158,6 +1195,9 @@ export const en: Translations = {
     selectTrailerTitle: 'Choose a trailer',
     searchVehiclePlaceholder: 'Search by name or licence plate',
     noVehiclesFound: 'No vehicles found.',
+    fleetUnavailable:
+      'The vehicle list is not available yet. Try again, or wait until sync has finished.',
+    fleetRetry: 'Reload',
     homebase: {
       sectionTitle: 'I work this shift at:',
       placeholder: 'Choose home base',
@@ -1186,18 +1226,13 @@ export const en: Translations = {
     datePlaceholder: '00 / 00 / 0000',
     timePlaceholder: '00:00',
     changeEndDate: 'Change end time',
-    quickSetPlus8: 'Now + 8 hours',
+    quickSetPlus9: 'Now + 9 hours',
     submit: 'Register',
     noUnitDispatch: {
       title: 'Assignment without a unit',
       message:
         'You already have an assignment, but no unit yet. Call dispatch on {{phone}} to have this fixed.',
       call: 'Call dispatch',
-    },
-    callDispatch: {
-      title: 'Dispatch',
-      call: 'Call dispatch',
-      reportIssue: 'Report an app issue',
     },
     changeVehicle: {
       confirmTitle: 'Register again',
@@ -1333,6 +1368,7 @@ export const en: Translations = {
       useQuickSearch: 'Use quick search',
     },
     address: {
+      title: 'Address',
       lookupLoading: 'Looking up address…',
       lookupAction: 'Find address',
       lookupFailed: 'Address not found. Enter the address manually.',
@@ -1346,13 +1382,16 @@ export const en: Translations = {
     personName: {
       title: 'Name',
       freeTextLabel: 'Full name',
-      freeTextPlaceholder: 'E.g. Mr Jan de Vries',
+      freeTextPlaceholder: 'E.g. Jan de Vries',
       apply: 'Split name',
       confirmTitle: 'Is this split correct?',
       confirmApply: 'Yes, use this',
       confirmReject: 'No, enter manually',
       reset: 'Start over',
-      manualHint: 'Or fill in the fields below manually.',
+      notCorrect: 'Not correct?',
+      manualEntry: 'Enter name manually',
+      useQuickEntry: 'Use quick entry',
+      useSummary: 'Back to summary',
     },
     signature: {
       captureTitle: 'Signature',
@@ -1369,6 +1408,7 @@ export const en: Translations = {
       available: 'Available',
       noEmailConfirmation: 'No email confirmation',
       acceptTerms: 'Accept terms',
+      viewTerms: 'View terms',
       termsAccepted: 'Accept terms',
     },
     actions: {
@@ -1444,7 +1484,7 @@ export const en: Translations = {
   places: {
     search: 'Search',
     searchTitle: 'Search address',
-    searchPlaceholder: 'Street or city',
+    searchPlaceholder: 'Search by address or postcode/house no.',
     searchFailed: 'Address search failed. Please try again.',
     noResults: 'No addresses found.',
   },

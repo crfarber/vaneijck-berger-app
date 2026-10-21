@@ -1,8 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Pressable, SectionList, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
+import { router, useNavigation } from 'expo-router';
 import { systemClock } from '@/shared/platform/ports';
 import { colors, radius, spacing } from '@/shared/ui/theme';
 import { Toolbar, ToolbarSlot } from '@/shared/ui/toolbar';
@@ -15,6 +15,7 @@ import {
   NOTIFICATION_FILTER_TAB,
   type NotificationFilterTab,
   type StoredNotification,
+  unreadCount,
 } from '../domain/history';
 import {
   useNotificationHistory,
@@ -28,6 +29,21 @@ const TABS = [
   NOTIFICATION_FILTER_TAB.status,
 ] as const;
 
+function MarkAllReadHeaderButton({ onPress }: { onPress: () => void }) {
+  const { t } = useTranslation();
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={t('notifications.markAllRead')}
+      onPress={onPress}
+      style={({ pressed }) => [styles.headerButton, pressed && styles.headerButtonPressed]}
+      hitSlop={spacing.sm}
+    >
+      <Text style={styles.headerButtonLabel}>{t('notifications.markAllRead')}</Text>
+    </Pressable>
+  );
+}
+
 /**
  * In-app list of received push messages. Incident types open the allocation; others only mark read.
  */
@@ -37,6 +53,16 @@ export function NotificationsScreen() {
   const notifications = useNotificationHistory((state) => state.notifications);
   const [tab, setTab] = useState<NotificationFilterTab>(NOTIFICATION_FILTER_TAB.all);
   const locale = i18n.resolvedLanguage ?? i18n.language;
+  const navigation = useNavigation();
+  const hasUnread = unreadCount(notifications) > 0;
+
+  useEffect(() => {
+    navigation.setOptions({
+      headerRight: hasUnread
+        ? () => <MarkAllReadHeaderButton onPress={() => history.markAllRead()} />
+        : () => null,
+    });
+  }, [hasUnread, history, navigation]);
 
   const sections = useMemo(() => {
     const filtered = filterByTab(notifications, tab);
@@ -125,6 +151,9 @@ export function NotificationsScreen() {
 }
 
 const styles = StyleSheet.create({
+  headerButton: { paddingHorizontal: spacing.sm, paddingVertical: spacing.xs },
+  headerButtonPressed: { opacity: 0.6 },
+  headerButtonLabel: { fontSize: 16, fontWeight: '600', color: colors.brandText },
   safeArea: { flex: 1, backgroundColor: 'transparent' },
   toolbar: {
     paddingHorizontal: spacing.md,

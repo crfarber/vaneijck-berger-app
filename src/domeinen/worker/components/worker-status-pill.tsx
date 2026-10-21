@@ -10,10 +10,12 @@ import {
 import { resolveAvailabilityLabel } from '../domain/availability-label';
 import { useAvailabilityOptions } from '../hooks/use-availability-options';
 import { useWorker } from '../hooks/use-worker';
+import { PreviewModePill } from './preview-mode-pill';
 
 /**
  * Compact availability badge for the stack header. Tapping opens the change screen unless the
  * berger is busy with assignments (display-only). Rebuilt for this app — not a port of TopBar.
+ * Route preview (`mode=readonly`) swaps in {@link PreviewModePill}.
  */
 export function WorkerStatusPill() {
   const { t } = useTranslation();
@@ -25,33 +27,27 @@ export function WorkerStatusPill() {
   const editable = isAvailabilityEditable(code);
   const tone = availabilityTone(code);
   const resolved = resolveAvailabilityLabel(code, options);
-  const preview = mode === 'readonly';
 
-  const label = preview
-    ? t('allocations.preview.mode')
-    : resolved.kind === 'text'
+  if (mode === 'readonly') {
+    return <PreviewModePill />;
+  }
+
+  const label =
+    resolved.kind === 'text'
       ? resolved.text
       : resolved.kind === 'fallback'
         ? t(`worker.availability.codes.${resolved.key}`)
         : t('worker.availability.unknown');
 
   const content = (
-    <View
-      style={[styles.pill, preview ? styles.preview : toneStyles[tone]]}
-      accessibilityRole="text"
-    >
-      <Text
-        style={[
-          styles.label,
-          preview || tone !== 'warning' ? styles.labelOnDark : styles.labelOnLight,
-        ]}
-      >
+    <View style={[styles.pill, toneStyles[tone]]} accessibilityRole="text">
+      <Text style={[styles.label, tone !== 'warning' ? styles.labelOnDark : styles.labelOnLight]}>
         {label}
       </Text>
     </View>
   );
 
-  if (preview || !editable) {
+  if (!editable) {
     return content;
   }
 
@@ -85,6 +81,5 @@ const styles = StyleSheet.create({
   label: { fontSize: 13, fontWeight: '600' },
   labelOnDark: { color: colors.background },
   labelOnLight: { color: colors.text },
-  preview: { backgroundColor: colors.brandAction },
   pressed: { opacity: 0.7 },
 });

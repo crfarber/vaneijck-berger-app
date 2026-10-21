@@ -54,8 +54,15 @@ export function createServicesQueryOptions(
  * fetch's merge (services already known from the allocations list) so a thinner response cannot
  * wipe fields already in hand; missing vehicle brands are best-effort enriched through RDW.
  */
-export function useServices(incidentId: string, existing: readonly Service[] | null) {
+export function useServices(
+  incidentId: string,
+  existing: readonly Service[] | null,
+  options: { enabled?: boolean } = {},
+) {
   const api = useAllocationsApi();
   const rdwApi = useRdwApi();
-  return useQuery(createServicesQueryOptions(api, rdwApi, incidentId, existing));
+  return useQuery({
+    ...createServicesQueryOptions(api, rdwApi, incidentId, existing),
+    enabled: options.enabled !== false && incidentId !== '',
+  });
 }

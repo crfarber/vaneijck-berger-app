@@ -743,11 +743,11 @@
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Bestuurder aanwezig?"
+                    "value": "Aanwezig"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Driver at location?"
+                    "value": "Present"
                   }
                 ],
                 "type": "select",
@@ -764,11 +764,11 @@
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Bestuurder: Status"
+                    "value": "Status"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Driver: Status"
+                    "value": "Status"
                   }
                 ],
                 "type": "select",
@@ -785,11 +785,11 @@
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Bestuurder: Aanhef"
+                    "value": "Aanhef"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Driver: Salutation"
+                    "value": "Salutation"
                   }
                 ],
                 "type": "select",
@@ -826,7 +826,8 @@
                     "lastName": "dn_driverlastname",
                     "phone1": "dn_drivertelephonenumber1",
                     "phone2": "dn_drivertelephonenumber2",
-                    "email": "dn_driveremail"
+                    "email": "dn_driveremail",
+                    "firstName": "dn_driverfirstname"
                   },
                   "addressGroupId": "dn_driverpostalcode",
                   "copyFrom": null
@@ -837,11 +838,11 @@
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Bestuurder: Voorletter(s)"
+                    "value": "Voorletters"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Driver: Initial(s)"
+                    "value": "Initials"
                   }
                 ],
                 "type": "string",
@@ -860,11 +861,11 @@
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Bestuurder: Voornaam"
+                    "value": "Voornaam"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Driver: Firstname"
+                    "value": "First name"
                   }
                 ],
                 "type": "string",
@@ -883,11 +884,11 @@
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Bestuurder: Tussenvoegsel(s)"
+                    "value": "Tussenvoegsel"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Driver: Insertion(s)"
+                    "value": "Middle name"
                   }
                 ],
                 "type": "string",
@@ -906,11 +907,11 @@
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Bestuurder: Achternaam"
+                    "value": "Achternaam"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Driver: Lastname"
+                    "value": "Last name"
                   }
                 ],
                 "type": "string",
@@ -925,24 +926,68 @@
                 }
               },
               {
-                "name": "_dn_drivercountryid_value",
+                "name": "dn_drivertelephonenumber1",
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Bestuurder: Land"
+                    "value": "Tel. 1"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Driver: Country"
+                    "value": "Phone 1"
                   }
                 ],
-                "type": "select",
-                "table": "dn_country",
+                "type": "phonenumber",
                 "autoform": {
                   "readonly": false,
                   "optional": true,
-                  "autocomplete": true,
-                  "value": "_dn_drivercountryid_value"
+                  "value": "dn_drivertelephonenumber1"
+                },
+                "requiredvisibility": {
+                  "property": "dn_driverstatecode",
+                  "value": true
+                }
+              },
+              {
+                "name": "dn_drivertelephonenumber2",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Tel. 2"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Phone 2"
+                  }
+                ],
+                "type": "phonenumber",
+                "autoform": {
+                  "readonly": false,
+                  "optional": true,
+                  "value": "dn_drivertelephonenumber2"
+                },
+                "requiredvisibility": {
+                  "property": "dn_driverstatecode",
+                  "value": true
+                }
+              },
+              {
+                "name": "dn_driveremail",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "E-mail"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Email"
+                  }
+                ],
+                "type": "string",
+                "autoform": {
+                  "readonly": false,
+                  "optional": true,
+                  "value": "dn_driveremail"
                 },
                 "requiredvisibility": {
                   "property": "dn_driverstatecode",
@@ -954,11 +999,11 @@
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Bestuurder: Postcode"
+                    "value": "Postcode"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Driver: Postalcode"
+                    "value": "Postcode"
                   }
                 ],
                 "type": "string",
@@ -1002,11 +1047,11 @@
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Bestuurder: Huisnummer"
+                    "value": "Huisnr"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Driver: housenumber"
+                    "value": "House no."
                   }
                 ],
                 "type": "number",
@@ -1025,11 +1070,11 @@
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Bestuurder: Huisnummer toev."
+                    "value": "Toev."
                   },
                   {
                     "language-code": 1044,
-                    "value": "Driver: Housenumber addition"
+                    "value": "Add."
                   }
                 ],
                 "type": "string",
@@ -1048,11 +1093,11 @@
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Bestuurder: Straat"
+                    "value": "Straat"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Driver: Street"
+                    "value": "Street"
                   }
                 ],
                 "type": "string",
@@ -1072,11 +1117,11 @@
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Bestuurder: Plaats"
+                    "value": "Plaats"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Driver: City"
+                    "value": "City"
                   }
                 ],
                 "type": "string",
@@ -1091,68 +1136,24 @@
                 }
               },
               {
-                "name": "dn_drivertelephonenumber1",
+                "name": "_dn_drivercountryid_value",
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Bestuurder: telnr 1"
+                    "value": "Land"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Driver: phoneno 1"
+                    "value": "Country"
                   }
                 ],
-                "type": "phonenumber",
+                "type": "select",
+                "table": "dn_country",
                 "autoform": {
                   "readonly": false,
                   "optional": true,
-                  "value": "dn_drivertelephonenumber1"
-                },
-                "requiredvisibility": {
-                  "property": "dn_driverstatecode",
-                  "value": true
-                }
-              },
-              {
-                "name": "dn_drivertelephonenumber2",
-                "label": [
-                  {
-                    "language-code": 1043,
-                    "value": "Bestuurder: telnr 2"
-                  },
-                  {
-                    "language-code": 1044,
-                    "value": "Driver: phoneno 2"
-                  }
-                ],
-                "type": "phonenumber",
-                "autoform": {
-                  "readonly": false,
-                  "optional": true,
-                  "value": "dn_drivertelephonenumber2"
-                },
-                "requiredvisibility": {
-                  "property": "dn_driverstatecode",
-                  "value": true
-                }
-              },
-              {
-                "name": "dn_driveremail",
-                "label": [
-                  {
-                    "language-code": 1043,
-                    "value": "Bestuurder: Email"
-                  },
-                  {
-                    "language-code": 1044,
-                    "value": "Driver: Email"
-                  }
-                ],
-                "type": "string",
-                "autoform": {
-                  "readonly": false,
-                  "optional": true,
-                  "value": "dn_driveremail"
+                  "autocomplete": true,
+                  "value": "_dn_drivercountryid_value"
                 },
                 "requiredvisibility": {
                   "property": "dn_driverstatecode",
@@ -1229,11 +1230,11 @@
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Afleverlocatie"
+                    "value": "Naam"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Delivery location"
+                    "value": "Name"
                   }
                 ],
                 "type": "string",
@@ -1252,11 +1253,11 @@
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Afleverland"
+                    "value": "Land"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Delivery country"
+                    "value": "Country"
                   }
                 ],
                 "type": "string",
@@ -1275,11 +1276,11 @@
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Afleverpostcode"
+                    "value": "Postcode"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Delivery postalcode"
+                    "value": "Postcode"
                   }
                 ],
                 "type": "string",
@@ -1316,7 +1317,17 @@
                     "addition": "dn_deliveryhousenoaddition",
                     "street": "dn_deliverystreet",
                     "city": "dn_deliverycity",
-                    "name": "dn_deliveryname"
+                    "name": "dn_deliveryname",
+                    "label": [
+                      {
+                        "language-code": 1043,
+                        "value": "Naam"
+                      },
+                      {
+                        "language-code": 1044,
+                        "value": "Name"
+                      }
+                    ]
                   },
                   "flow": "nl_postal_lookup",
                   "confirmAddress": true,
@@ -1329,11 +1340,11 @@
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Afleverhuisnummer"
+                    "value": "Huisnr"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Delivery housenumber"
+                    "value": "House no."
                   }
                 ],
                 "type": "number",
@@ -1358,11 +1369,11 @@
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Afleverhuisnummer toev."
+                    "value": "Toev."
                   },
                   {
                     "language-code": 1044,
-                    "value": "Delivery housenumber addition"
+                    "value": "Add."
                   }
                 ],
                 "type": "string",
@@ -1381,11 +1392,11 @@
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Afleverstraat"
+                    "value": "Straat"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Delivery street"
+                    "value": "Street"
                   }
                 ],
                 "type": "string",
@@ -1404,11 +1415,11 @@
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Afleverplaats"
+                    "value": "Plaats"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Delivery city"
+                    "value": "City"
                   }
                 ],
                 "type": "string",
@@ -2415,11 +2426,11 @@
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Bestuurder aanwezig?"
+                    "value": "Aanwezig"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Driver at location?"
+                    "value": "Present"
                   }
                 ],
                 "type": "select",
@@ -2436,11 +2447,11 @@
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Bestuurder: Status"
+                    "value": "Status"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Driver: Status"
+                    "value": "Status"
                   }
                 ],
                 "type": "select",
@@ -2457,11 +2468,11 @@
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Bestuurder: Aanhef"
+                    "value": "Aanhef"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Driver: Salutation"
+                    "value": "Salutation"
                   }
                 ],
                 "type": "select",
@@ -2494,7 +2505,8 @@
                     "lastName": "dn_driverlastname",
                     "phone1": "dn_drivertelephonenumber1",
                     "phone2": "dn_drivertelephonenumber2",
-                    "email": "dn_driveremail"
+                    "email": "dn_driveremail",
+                    "firstName": "dn_driverfirstname"
                   },
                   "addressGroupId": "dn_driverpostalcode",
                   "copyFrom": null
@@ -2505,11 +2517,11 @@
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Bestuurder: Voorletter(s)"
+                    "value": "Voorletters"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Driver: Initial(s)"
+                    "value": "Initials"
                   }
                 ],
                 "type": "string",
@@ -2524,11 +2536,11 @@
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Bestuurder: Voornaam"
+                    "value": "Voornaam"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Driver: Firstname"
+                    "value": "First name"
                   }
                 ],
                 "type": "string",
@@ -2543,11 +2555,11 @@
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Bestuurder: Tussenvoegsel(s)"
+                    "value": "Tussenvoegsel"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Driver: Insertion(s)"
+                    "value": "Middle name"
                   }
                 ],
                 "type": "string",
@@ -2562,11 +2574,11 @@
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Bestuurder: Achternaam"
+                    "value": "Achternaam"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Driver: Lastname"
+                    "value": "Last name"
                   }
                 ],
                 "type": "string",
@@ -2577,24 +2589,60 @@
                 }
               },
               {
-                "name": "_dn_drivercountryid_value",
+                "name": "dn_drivertelephonenumber1",
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Bestuurder: Land"
+                    "value": "Tel. 1"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Driver: Country"
+                    "value": "Phone 1"
                   }
                 ],
-                "type": "select",
-                "table": "dn_country",
+                "type": "phonenumber",
                 "autoform": {
                   "readonly": false,
                   "optional": true,
-                  "autocomplete": true,
-                  "value": "_dn_drivercountryid_value"
+                  "value": "dn_drivertelephonenumber1"
+                }
+              },
+              {
+                "name": "dn_drivertelephonenumber2",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "Tel. 2"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Phone 2"
+                  }
+                ],
+                "type": "phonenumber",
+                "autoform": {
+                  "readonly": false,
+                  "optional": true,
+                  "value": "dn_drivertelephonenumber2"
+                }
+              },
+              {
+                "name": "dn_driveremail",
+                "label": [
+                  {
+                    "language-code": 1043,
+                    "value": "E-mail"
+                  },
+                  {
+                    "language-code": 1044,
+                    "value": "Email"
+                  }
+                ],
+                "type": "string",
+                "autoform": {
+                  "readonly": false,
+                  "optional": true,
+                  "value": "dn_driveremail"
                 }
               },
               {
@@ -2602,11 +2650,11 @@
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Bestuurder: Postcode"
+                    "value": "Postcode"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Driver: Postalcode"
+                    "value": "Postcode"
                   }
                 ],
                 "type": "string",
@@ -2646,11 +2694,11 @@
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Bestuurder: Huisnummer"
+                    "value": "Huisnr"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Driver: housenumber"
+                    "value": "House no."
                   }
                 ],
                 "type": "number",
@@ -2665,11 +2713,11 @@
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Bestuurder: Huisnummer toev."
+                    "value": "Toev."
                   },
                   {
                     "language-code": 1044,
-                    "value": "Driver: Housenumber addition"
+                    "value": "Add."
                   }
                 ],
                 "type": "string",
@@ -2684,11 +2732,11 @@
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Bestuurder: Straat"
+                    "value": "Straat"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Driver: Street"
+                    "value": "Street"
                   }
                 ],
                 "type": "string",
@@ -2705,11 +2753,11 @@
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Bestuurder: Plaats"
+                    "value": "Plaats"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Driver: City"
+                    "value": "City"
                   }
                 ],
                 "type": "string",
@@ -2720,60 +2768,24 @@
                 }
               },
               {
-                "name": "dn_drivertelephonenumber1",
+                "name": "_dn_drivercountryid_value",
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Bestuurder: telnr 1"
+                    "value": "Land"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Driver: phoneno 1"
+                    "value": "Country"
                   }
                 ],
-                "type": "phonenumber",
+                "type": "select",
+                "table": "dn_country",
                 "autoform": {
                   "readonly": false,
                   "optional": true,
-                  "value": "dn_drivertelephonenumber1"
-                }
-              },
-              {
-                "name": "dn_drivertelephonenumber2",
-                "label": [
-                  {
-                    "language-code": 1043,
-                    "value": "Bestuurder: telnr 2"
-                  },
-                  {
-                    "language-code": 1044,
-                    "value": "Driver: phoneno 2"
-                  }
-                ],
-                "type": "phonenumber",
-                "autoform": {
-                  "readonly": false,
-                  "optional": true,
-                  "value": "dn_drivertelephonenumber2"
-                }
-              },
-              {
-                "name": "dn_driveremail",
-                "label": [
-                  {
-                    "language-code": 1043,
-                    "value": "Bestuurder: Email"
-                  },
-                  {
-                    "language-code": 1044,
-                    "value": "Driver: Email"
-                  }
-                ],
-                "type": "string",
-                "autoform": {
-                  "readonly": false,
-                  "optional": true,
-                  "value": "dn_driveremail"
+                  "autocomplete": true,
+                  "value": "_dn_drivercountryid_value"
                 }
               }
             ]
@@ -2846,11 +2858,11 @@
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Afleverlocatie"
+                    "value": "Naam"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Delivery location"
+                    "value": "Name"
                   }
                 ],
                 "type": "string",
@@ -2869,11 +2881,11 @@
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Afleverland"
+                    "value": "Land"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Delivery country"
+                    "value": "Country"
                   }
                 ],
                 "type": "string",
@@ -2892,11 +2904,11 @@
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Afleverpostcode"
+                    "value": "Postcode"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Delivery postalcode"
+                    "value": "Postcode"
                   }
                 ],
                 "type": "string",
@@ -2933,7 +2945,17 @@
                     "addition": "dn_deliveryhousenoaddition",
                     "street": "dn_deliverystreet",
                     "city": "dn_deliverycity",
-                    "name": "dn_deliveryname"
+                    "name": "dn_deliveryname",
+                    "label": [
+                      {
+                        "language-code": 1043,
+                        "value": "Naam"
+                      },
+                      {
+                        "language-code": 1044,
+                        "value": "Name"
+                      }
+                    ]
                   },
                   "flow": "nl_postal_lookup",
                   "confirmAddress": true,
@@ -2946,11 +2968,11 @@
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Afleverhuisnummer"
+                    "value": "Huisnr"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Delivery housenumber"
+                    "value": "House no."
                   }
                 ],
                 "type": "number",
@@ -2975,11 +2997,11 @@
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Afleverhuisnummer toev."
+                    "value": "Toev."
                   },
                   {
                     "language-code": 1044,
-                    "value": "Delivery housenumber addition"
+                    "value": "Add."
                   }
                 ],
                 "type": "string",
@@ -2998,11 +3020,11 @@
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Afleverstraat"
+                    "value": "Straat"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Delivery street"
+                    "value": "Street"
                   }
                 ],
                 "type": "string",
@@ -3021,11 +3043,11 @@
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Afleverplaats"
+                    "value": "Plaats"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Delivery city"
+                    "value": "City"
                   }
                 ],
                 "type": "string",

@@ -18,14 +18,35 @@ const AZURE_AD_REDIRECT_URL = 'com.vaneijck.auth://login/';
 
 type Variant = 'internal' | 'acceptance' | 'production';
 
-const VARIANTS: Record<Variant, { name: string; id: string; scheme: string }> = {
-  internal: { name: 'Van Eijck Intern', id: 'com.vrscloud.internal', scheme: 'vaneijck-internal' },
+/**
+ * Per-variant branding (legacy AppIcon-Internal / -Acceptance / -Production):
+ * internal = red (DEV), acceptance = orange, production = yellow.
+ */
+const VARIANTS: Record<
+  Variant,
+  { name: string; id: string; scheme: string; icon: string; iconBackground: string }
+> = {
+  internal: {
+    name: 'Van Eijck Intern',
+    id: 'com.vrscloud.internal',
+    scheme: 'vaneijck-internal',
+    icon: './assets/icons/internal/1024.png',
+    iconBackground: '#EF3333',
+  },
   acceptance: {
     name: 'Van Eijck Acceptatie',
     id: 'com.vrscloud.acceptance',
     scheme: 'vaneijck-acceptance',
+    icon: './assets/icons/acceptance/1024.png',
+    iconBackground: '#F18A00',
   },
-  production: { name: 'Van Eijck', id: 'com.vrscloud', scheme: 'vaneijck' },
+  production: {
+    name: 'Van Eijck',
+    id: 'com.vrscloud',
+    scheme: 'vaneijck',
+    icon: './assets/icons/production/1024.png',
+    iconBackground: '#FEC900',
+  },
 };
 
 function resolveVariant(value: string | undefined): Variant {
@@ -34,7 +55,7 @@ function resolveVariant(value: string | undefined): Variant {
 
 export default ({ config }: ConfigContext): ExpoConfig => {
   const variant = resolveVariant(process.env.APP_VARIANT);
-  const { name, id, scheme } = VARIANTS[variant];
+  const { name, id, scheme, icon, iconBackground } = VARIANTS[variant];
 
   return {
     ...config,
@@ -42,9 +63,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     slug: 'vaneijck-berger-app',
     version: '2.0.0',
     orientation: 'portrait',
-    // One sharp source for every variant. A per-APP_VARIANT icon waits until there are
-    // square 1024 sources for internal (red) and acceptance (orange).
-    icon: './assets/ios/1024.png',
+    icon,
     scheme,
     userInterfaceStyle: 'automatic',
     // Fingerprint so a JS update only lands on a binary with matching native code.
@@ -71,8 +90,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       // Gitignored. EAS Build reads the file variable GOOGLE_SERVICES_JSON; local builds use the copy in the repo root.
       googleServicesFile: process.env.GOOGLE_SERVICES_JSON ?? './google-services.json',
       adaptiveIcon: {
-        backgroundColor: '#FEC900',
-        foregroundImage: './assets/ios/1024.png',
+        backgroundColor: iconBackground,
+        foregroundImage: icon,
       },
       predictiveBackGestureEnabled: false,
     },
@@ -109,6 +128,9 @@ export default ({ config }: ConfigContext): ExpoConfig => {
             'Van Eijck Berger gebruikt je locatie om te checken of je bij de dienst in de buurt bent.',
         },
       ],
+      // Overview map: Apple Maps on iOS (expo-maps). Android uses OSM via WebView.
+      'expo-maps',
+      'expo-image',
       // Registers the native URL scheme for the Azure AD sign-in redirect (docs/decisions/0012).
       ['react-native-app-auth', { redirectUrls: [AZURE_AD_REDIRECT_URL] }],
       // Xcode 27 builds crash on iOS 27 unless the app adopts the UIScene life cycle, which SDK 57
@@ -122,6 +144,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         'expo-build-properties',
         {
           ios: {
+            // expo-maps requires iOS 17+ (Apple Maps MapKit SwiftUI).
+            deploymentTarget: '17.0',
             enableSceneSupport: true,
             usePrecompiledModules: false,
             forceStaticLinking: ['RNFBApp', 'RNFBMessaging'],

@@ -9,7 +9,7 @@ import { PHOTO_STATUS, type PhotoStatus } from '../index';
 import { PhotoThumbnail } from '../components/photo-thumbnail';
 import { useReturnToPhotoOverview } from '../hooks/use-return-to-photo-overview';
 import { useServicePhotos } from '../hooks/use-service-photos';
-import type { PhotoFlowContext } from './photo-flow';
+import { photoRouteParams, type PhotoFlowContext } from './photo-flow';
 
 type PhotoSentConfirmationScreenProps = PhotoFlowContext & {
   photoId: string;
@@ -37,6 +37,7 @@ export function PhotoSentConfirmationScreen({
   incidentId,
   serviceStatuscode,
   phaseNumbers,
+  locationId,
   photoId,
 }: PhotoSentConfirmationScreenProps) {
   const { t } = useTranslation();
@@ -44,15 +45,14 @@ export function PhotoSentConfirmationScreen({
   const photo = photos.find((item) => item.id === photoId);
   const status = photo?.status ?? PHOTO_STATUS.queued;
   const copy = CONFIRMATION_COPY[status];
-  const routeParams = {
-    id: allocationId,
+  const routeParams = photoRouteParams({
+    allocationId,
     serviceId,
     incidentId,
-    statuscode: String(serviceStatuscode),
-    ...(phaseNumbers !== undefined && phaseNumbers.length > 0
-      ? { phaseNumbers: phaseNumbers.join(',') }
-      : {}),
-  };
+    serviceStatuscode,
+    phaseNumbers,
+    locationId,
+  });
   const returnToOverview = useReturnToPhotoOverview(routeParams);
 
   useEffect(() => {

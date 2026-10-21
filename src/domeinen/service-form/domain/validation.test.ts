@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { validateServiceFormField, validateVisibleServiceForm } from './validation';
+import {
+  isSignatureSkippable,
+  validateServiceFormField,
+  validateVisibleServiceForm,
+} from './validation';
 import type { ServiceFormField } from './types';
 
 const createField = (overrides: Partial<ServiceFormField> = {}): ServiceFormField => ({
@@ -126,5 +130,32 @@ describe('validateServiceFormField', () => {
         },
       }),
     ).toBeNull();
+  });
+
+  it('allows skipping a signature only while requiredwhen is not met', () => {
+    const field = createField({
+      id: 'sig',
+      key: 'signature_sender',
+      type: 'signature',
+      requiredWhen: { field: 'dn_driverstatecode', value: true },
+      raw: { subFields: { name: {}, email: {} } },
+    });
+    const driverPresent = {
+      dn_driverstatecode: { value: true, displayValue: 'Ja', table: 'dn_truefalse' },
+    };
+    const driverAbsent = {
+      dn_driverstatecode: { value: false, displayValue: 'Nee', table: 'dn_truefalse' },
+    };
+
+    expect(isSignatureSkippable(field, driverAbsent)).toBe(true);
+    expect(isSignatureSkippable(field, driverPresent)).toBe(false);
+    expect(isSignatureSkippable(field, {})).toBe(true);
+
+    expect(
+      validateServiceFormField(field, driverAbsent, {}, { signature_sender: true }),
+    ).toBeNull();
+    expect(
+      validateServiceFormField(field, driverPresent, {}, { signature_sender: true }),
+    ).toMatchObject({ code: 'required' });
   });
 });

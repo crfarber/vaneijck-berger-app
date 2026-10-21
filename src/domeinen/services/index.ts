@@ -12,6 +12,8 @@ export {
   PLTR_PHASE,
 } from './domain/pltr';
 export type { ExternalMapLinks, PltrAction, PltrCard, PltrPhase, PltrVehicle } from './domain/pltr';
+export { resolveOpenServiceRoute } from './domain/open-service';
+export type { OpenServiceRoute } from './domain/open-service';
 export { resolveProcessingExit } from './domain/processing-exit';
 export type {
   ProcessingExitInput,
@@ -35,6 +37,12 @@ export {
   isSubmitAllowed,
   SERVICE_STATUS,
 } from './domain/status';
-export type { HasStatus, ServiceBucket, ServicePhase, ServiceStatusName } from './domain/status';
+export type {
+  HasStatus,
+  ServiceBucket,
+  ServicePhase,
+  ServiceStatusName,
+  SubmitStatusContext,
+} from './domain/status';
 export { checkAcceptLocation, getTargetLocation } from './domain/target-location';
 export type { TargetKind, TargetLocation, TargetSource } from './domain/target-location';

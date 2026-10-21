@@ -31,7 +31,10 @@ const KIND_BY_TYPE: Readonly<Record<string, FieldKind>> = {
   signature: FIELD_KIND.signature,
 };
 
-/** Required fields show a short asterisk; optional fields keep the label only. */
+/**
+ * Plain-text label for accessibility (and tests). The on-screen mark is a red
+ * asterisk rendered by `FieldFrame` / `TextField`.
+ */
 export function formatServiceFormFieldLabel(label: string, optional: boolean): string {
   return optional ? label : `${label} *`;
 }

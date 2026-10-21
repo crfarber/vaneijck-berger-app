@@ -67,8 +67,11 @@ describe('photo overview screen', () => {
 
   it('goes back to the service form underneath instead of pushing it forward', () => {
     const formPath = '/allocations/[id]/services/[serviceId]/form';
+    const releaseFormPath = '/vehicle-releases/[locationId]/services/[serviceId]/form';
+    expect(source).toContain('photoRouteParams({');
     expect(source).toContain('goBackOrReplace(router, {');
     expect(source).toContain(`pathname: '${formPath}'`);
+    expect(source).toContain(`pathname: '${releaseFormPath}'`);
     expect(source).toContain('if (succeeded) {\n      leaveToServiceForm();');
     expect(source).toContain('onPress={leaveToServiceForm}');
     expect(source).not.toContain('router.navigate(');

@@ -6,7 +6,7 @@ export const REMEMBERED_END_DATE_KEY = 'allocationUnit.rememberedEndDate';
 export type EndDatePreference = {
   /**
    * The end date to propose. The remembered one is used when it is still valid; during
-   * onboarding, or when it is missing, malformed, past or too far away, it is now plus 8 hours.
+   * onboarding, or when it is missing, malformed, past or too far away, it is now plus 9 hours.
    */
   getProposedEndDate(options: { isOnboarding: boolean; now: Date }): Promise<Date>;
   /** Raw ISO string from storage, or null when missing. Used for standby shift-end checks. */

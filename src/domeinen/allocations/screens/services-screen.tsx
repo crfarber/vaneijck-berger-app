@@ -11,6 +11,7 @@ import { colors, spacing, type } from '@/shared/ui/theme';
 import { ServiceRow } from '../components/service-row';
 import { IncidentCard } from '../components/incident-card';
 import { resolveIncidentCardModel } from '../domain/incident-card';
+import { shouldBlockServicesRefresh } from '../domain/preview-service';
 import { useAcceptService } from '../hooks/use-accept-service';
 import { useAllocations } from '../hooks/use-allocations';
 import { useOpenService } from '../hooks/use-open-service';
@@ -48,7 +49,11 @@ export function ServicesScreen({
   const incidentId = allocation?.incident.dn_incidentid ?? '';
   const servicesQuery = useServices(incidentId, allocation?.services ?? null);
   useEffect(() => {
-    if (allocation && servicesQuery.isFetching && !manualRefreshing) {
+    if (
+      allocation &&
+      servicesQuery.isFetching &&
+      shouldBlockServicesRefresh(preview, manualRefreshing)
+    ) {
       void showServicesRefresh(
         queryClient,
         incidentId,
@@ -59,6 +64,7 @@ export function ServicesScreen({
   }, [
     allocation,
     servicesQuery.isFetching,
+    preview,
     manualRefreshing,
     queryClient,
     incidentId,
@@ -146,8 +152,10 @@ export function ServicesScreen({
               onAccept={(service) =>
                 void accept(service.dn_serviceid ?? '', { incident: allocation.incident, service })
               }
-              onOpen={preview ? (service) => openPreview(service) : (service) => void open(service)}
-              onPreview={(service) => openPreview(service)}
+              onOpen={
+                preview ? (service) => void openPreview(service) : (service) => void open(service)
+              }
+              onPreview={(service) => void openPreview(service)}
             />
           )}
           renderSectionHeader={({ section }) => (

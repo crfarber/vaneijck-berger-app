@@ -1,4 +1,11 @@
-import { ActivityIndicator, Pressable, StyleSheet, Text } from 'react-native';
+import {
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  Text,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
 import { colors, radius, spacing } from '@/shared/ui/theme';
 
 /** Full-height swipe action under a card (legacy `SwipeButton` layout). */
@@ -9,6 +16,7 @@ export function SwipePanel({
   onPress,
   loading = false,
   disabled = false,
+  style,
 }: {
   label: string;
   icon: React.ReactNode;
@@ -16,6 +24,7 @@ export function SwipePanel({
   onPress: () => void;
   loading?: boolean;
   disabled?: boolean;
+  style?: StyleProp<ViewStyle>;
 }) {
   const inactive = disabled || loading;
   return (
@@ -27,6 +36,7 @@ export function SwipePanel({
       style={({ pressed }) => [
         styles.panel,
         { backgroundColor },
+        style,
         (pressed || inactive) && styles.dimmed,
       ]}
     >

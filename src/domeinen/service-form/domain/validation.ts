@@ -38,7 +38,11 @@ export function isServiceFormFieldFilled(
     return true;
   }
 
-  if (field.type.toLowerCase() === 'signature' && hideSignature[field.key]) {
+  if (
+    field.type.toLowerCase() === 'signature' &&
+    hideSignature[field.key] &&
+    isSignatureSkippable(field, answers)
+  ) {
     return true;
   }
 
@@ -107,7 +111,11 @@ export function validateServiceFormField(
     return null;
   }
 
-  if (field.type.toLowerCase() === 'signature' && hideSignature[field.key]) {
+  if (
+    field.type.toLowerCase() === 'signature' &&
+    hideSignature[field.key] &&
+    isSignatureSkippable(field, answers)
+  ) {
     return null;
   }
 

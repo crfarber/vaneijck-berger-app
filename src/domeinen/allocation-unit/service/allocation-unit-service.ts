@@ -216,7 +216,18 @@ export function createAllocationUnitService(
     },
 
     async getFleet() {
-      const raw = await referenceDataService.getEntity(FLEET_ENTITY_NAME);
+      // Same race as homebase: after sign-out the store is empty while background sync still runs.
+      // Refresh once when missing so internal registration does not show an empty vehicle list.
+      let raw = await referenceDataService.getEntity(FLEET_ENTITY_NAME);
+      if (raw === null) {
+        try {
+          await referenceDataService.refreshEntity(FLEET_ENTITY_NAME);
+          raw = await referenceDataService.getEntity(FLEET_ENTITY_NAME);
+        } catch (error) {
+          logger?.warn('sync', 'Fleet refresh failed', { error });
+          return [];
+        }
+      }
       if (raw === null) {
         return [];
       }

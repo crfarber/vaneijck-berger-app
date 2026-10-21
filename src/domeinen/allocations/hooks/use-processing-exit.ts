@@ -6,7 +6,7 @@ import {
   type ProcessingExitInput,
 } from '@/domeinen/services';
 import type { Service } from '../domain/types';
-import { allocationKeys } from './use-allocations';
+import { allocationKeys, vehicleReleaseKeys } from './use-allocations';
 import { serviceKeys } from './use-services';
 
 export type ExitContext = {
@@ -20,6 +20,8 @@ export type ExitContext = {
   hadOtherOpenServicesBeforeExit?: boolean;
   isPreview?: boolean;
   fromProcessingFinish?: boolean;
+  isReleaseItem?: boolean;
+  locationId?: string;
 };
 
 export type ExitInput = ProcessingExitInput & ExitContext;
@@ -68,6 +70,9 @@ export function useProcessingExit() {
 
       void queryClient.invalidateQueries({ queryKey: allocationKeys.list() });
       void queryClient.invalidateQueries({ queryKey: serviceKeys.byIncident(input.incidentId) });
+      if (input.isReleaseItem === true) {
+        void queryClient.invalidateQueries({ queryKey: vehicleReleaseKeys.list() });
+      }
     },
   };
 }

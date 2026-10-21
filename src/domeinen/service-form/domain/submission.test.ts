@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { SERVICE_STATUS } from '@/domeinen/services';
 import {
+  applyReleaseSubmitFields,
   buildServicePostBody,
   buildSignaturePostData,
   coerceBooleanSelectSubmissionValue,
@@ -241,6 +243,23 @@ describe('buildServicePostBody', () => {
       hideSignature: { signature_sender: true },
     });
     expect(body).toMatchObject({ dn_absent_sender: 1, dn_absent_senderemailaddress: 1 });
+  });
+});
+
+describe('applyReleaseSubmitFields', () => {
+  it('marks the vehicle taken, sets pickup time, and posts NACONTROLE', () => {
+    expect(
+      applyReleaseSubmitFields(
+        { statuscode: SERVICE_STATUS.HULPVERLENING_AFGEROND, dn_note: 'ok' },
+        { pickedUpAtIso: '2026-10-21T08:00:00.000Z' },
+      ),
+    ).toEqual({
+      dn_note: 'ok',
+      dn_vehicle_taken_code: true,
+      dn_pickedupdate: '2026-10-21T08:00:00.000Z',
+      statecode: 0,
+      statuscode: SERVICE_STATUS.NACONTROLE,
+    });
   });
 });
 

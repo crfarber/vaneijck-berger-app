@@ -4,12 +4,28 @@ import {
   allocationKeys,
   createAllocationSections,
   hasActiveAllocations,
+  resolveProcessingService,
 } from '@/domeinen/allocations';
 import type { LocationReader } from '@/domeinen/location';
 import type { NotificationSource, PushGateway, RemoteMessage } from '@/domeinen/notifications';
 import { decideOnboarding } from '@/domeinen/onboarding';
 import { createInMemoryPhotoFiles, type PhotoFiles } from '@/domeinen/photos';
-import { pickQuickOptions } from '@/domeinen/service-form';
+import {
+  applyReleaseSubmitFields,
+  buildServicePostBody,
+  phaseNumbersFromDefinition,
+  pickQuickOptions,
+  serviceFormPhaseForStatus,
+} from '@/domeinen/service-form';
+import {
+  getExitTarget,
+  PLTR_ACTION,
+  pltrPrimaryAction,
+  resolveOpenServiceRoute,
+  resolveProcessingExit,
+  SERVICE_STATUS,
+  SERVICE_TYPE,
+} from '@/domeinen/services';
 import type { DevicePermissions } from '@/domeinen/settings';
 import { AuthExpiredError, TokenRefreshError } from '@/shared/api/errors';
 import type { RuntimeConfig } from '@/shared/config/runtime-config';
@@ -1559,5 +1575,572 @@ describe('status overlay', () => {
     expect(dismissTimer).toBeDefined();
     dismissTimer?.callback();
     expect(container.statusOverlay.store.getState().current).toBeNull();
+  });
+});
+
+function twoPhaseDefinition(serviceCode: number, serviceName: string) {
+  return {
+    servicecode: serviceCode,
+    servicename: [{ 'language-code': 1043, value: serviceName }],
+    definition: [
+      {
+        phase: 1,
+        'phase-name': [{ 'language-code': 1043, value: 'Laden' }],
+        photosMandatory: ['links-voor'],
+        tabs: [
+          {
+            header: [{ 'language-code': 1043, value: 'Algemeen' }],
+            fields: [
+              {
+                name: 'dn_remarks',
+                type: 'string',
+                label: [{ 'language-code': 1043, value: 'Opmerking' }],
+                autoform: { optional: true },
+              },
+            ],
+          },
+        ],
+      },
+      {
+        phase: 2,
+        'phase-name': [{ 'language-code': 1043, value: 'Afleveren' }],
+        photosMandatory: ['links-achter'],
+        tabs: [
+          {
+            header: [{ 'language-code': 1043, value: 'Afleveren' }],
+            fields: [
+              {
+                name: 'dn_remarks',
+                type: 'string',
+                label: [{ 'language-code': 1043, value: 'Opmerking' }],
+                autoform: { optional: true },
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  };
+}
+
+function allocationWithService(service: {
+  dn_serviceid: string;
+  statuscode: number;
+  dn_servicetypecode: number;
+}) {
+  return {
+    dn_allocationid: 'alloc-1',
+    statuscode: 875920000,
+    statecode: 0,
+    dn_IncidentId: {
+      dn_incidentid: 'inc-1',
+      statuscode: 875920001,
+      dn_name: 'A2 Utrecht',
+      dn_dn_incident_dn_service_IncidentId: [{ statecode: 0, ...service }],
+    },
+  };
+}
+
+function postBodyForPhase(phase: number, phaseNumbers: readonly number[]) {
+  return buildServicePostBody([], new Set(), {}, phase, {
+    pleaseSelectLabel: 'Selecteer',
+    hideSignature: {},
+    noEmailConfirmation: {},
+    phaseNumbers,
+  });
+}
+
+describe('processing a service', () => {
+  it('walks a Berging through load, delivery and the closing screen', async () => {
+    const { container, backend } = setup({ stored: storedSession() });
+    const definition = twoPhaseDefinition(SERVICE_TYPE.BERGING, 'Berging');
+    backend.on('GET', '/api/allocations', () =>
+      jsonResponse([
+        allocationWithService({
+          dn_serviceid: 'svc-1',
+          statuscode: SERVICE_STATUS.IN_UITVOERING,
+          dn_servicetypecode: SERVICE_TYPE.BERGING,
+        }),
+      ]),
+    );
+    backend.on('GET', '/api/services/by-incident-id/inc-1', () =>
+      jsonResponse([
+        {
+          dn_serviceid: 'svc-1',
+          statuscode: SERVICE_STATUS.IN_UITVOERING,
+          statecode: 0,
+          dn_servicetypecode: SERVICE_TYPE.BERGING,
+        },
+      ]),
+    );
+    backend.on('GET', '/api/client-sync/schema/1043', () =>
+      jsonResponse(['dn_servicedefinitions']),
+    );
+    backend.on('GET', '/api/client-sync/dn_servicedefinitions/1043', () =>
+      jsonResponse([{ dataDefinition: [definition] }]),
+    );
+    backend.on('POST', '/api/binary/upload', () => new Response(null, { status: 201 }));
+    backend.on('PUT', '/api/services/svc-1', () => new Response(null, { status: 204 }));
+
+    await container.start();
+    await flushPromises();
+
+    const allocations = await container.allocationsApi.list();
+    const services = await container.allocationsApi.getServicesByIncidentId('inc-1');
+    const resolved = resolveProcessingService({
+      allocations,
+      fetchedServices: services,
+      allocationId: 'alloc-1',
+      serviceId: 'svc-1',
+    });
+    expect(resolved.service?.dn_servicetypecode).toBe(SERVICE_TYPE.BERGING);
+    expect(resolveOpenServiceRoute(resolved.service?.statuscode)).toBe('form');
+
+    const found = await container.serviceFormService.findDefinition(SERVICE_TYPE.BERGING);
+    const phaseNumbers = phaseNumbersFromDefinition(found?.definition);
+    expect(phaseNumbers).toEqual([1, 2]);
+    expect(serviceFormPhaseForStatus(SERVICE_STATUS.IN_UITVOERING, phaseNumbers)).toBe(1);
+
+    await container.photoService.capture({
+      serviceId: 'svc-1',
+      incidentId: 'inc-1',
+      allocationId: 'alloc-1',
+      phase: 'load',
+      position: { category: 'DASHBOARD' },
+      sourceUri: 'file:///camera/shot.jpg',
+    });
+    await container.photoService.submitBatch('svc-1', 'load');
+    expect((await container.photoService.listByService('svc-1'))[0]?.status).toBe('sent');
+
+    const loadBody = postBodyForPhase(1, phaseNumbers);
+    expect(loadBody.statuscode).toBe(SERVICE_STATUS.HULPVERLENING_AKKOORD);
+    const loadSubmit = await container.serviceFormService.submit({
+      serviceId: 'svc-1',
+      statuscode: SERVICE_STATUS.IN_UITVOERING,
+      body: loadBody,
+    });
+    expect(loadSubmit).toEqual({ kind: 'submitted' });
+    const loadExit = resolveProcessingExit({
+      trigger: 'submit',
+      currentStatuscode: SERVICE_STATUS.IN_UITVOERING,
+      postedBody: loadBody,
+      serviceTypeCode: SERVICE_TYPE.BERGING,
+    });
+    expect(loadExit.exitKind).toBe('continueIncident');
+    expect(
+      getExitTarget({
+        exitKind: loadExit.exitKind,
+        allocationId: 'alloc-1',
+        serviceId: 'svc-1',
+        serviceTypeCode: SERVICE_TYPE.BERGING,
+        services: services,
+      }),
+    ).toEqual({ kind: 'incident', allocationId: 'alloc-1', variant: 'services' });
+
+    expect(serviceFormPhaseForStatus(SERVICE_STATUS.HULPVERLENING_AKKOORD, phaseNumbers)).toBe(2);
+    await container.photoService.capture({
+      serviceId: 'svc-1',
+      incidentId: 'inc-1',
+      allocationId: 'alloc-1',
+      phase: 'delivery',
+      position: { category: 'DASHBOARD' },
+      sourceUri: 'file:///camera/shot.jpg',
+    });
+    await container.photoService.submitBatch('svc-1', 'delivery');
+    expect(
+      (await container.photoService.listByService('svc-1')).filter(
+        (photo) => photo.phase === 'delivery',
+      )[0]?.status,
+    ).toBe('sent');
+
+    const deliveryBody = postBodyForPhase(2, phaseNumbers);
+    expect(deliveryBody.statuscode).toBe(SERVICE_STATUS.HULPVERLENING_AFGEROND);
+    const deliverySubmit = await container.serviceFormService.submit({
+      serviceId: 'svc-1',
+      statuscode: SERVICE_STATUS.HULPVERLENING_AKKOORD,
+      body: deliveryBody,
+    });
+    expect(deliverySubmit).toEqual({ kind: 'submitted' });
+    const deliveryExit = resolveProcessingExit({
+      trigger: 'submit',
+      currentStatuscode: SERVICE_STATUS.HULPVERLENING_AKKOORD,
+      postedBody: deliveryBody,
+      serviceTypeCode: SERVICE_TYPE.BERGING,
+    });
+    expect(deliveryExit.exitKind).toBe('processingFinish');
+    expect(
+      getExitTarget({
+        exitKind: deliveryExit.exitKind,
+        allocationId: 'alloc-1',
+        serviceId: 'svc-1',
+        serviceTypeCode: SERVICE_TYPE.BERGING,
+        services: [{ statuscode: SERVICE_STATUS.HULPVERLENING_AFGEROND, dn_serviceid: 'svc-1' }],
+      }),
+    ).toEqual({
+      kind: 'processing-finish',
+      allocationId: 'alloc-1',
+      serviceId: 'svc-1',
+      isPreview: false,
+    });
+
+    const finishExit = resolveProcessingExit({ trigger: 'finish' });
+    expect(finishExit.exitKind).toBe('terminal');
+    expect(
+      getExitTarget({
+        exitKind: finishExit.exitKind,
+        allocationId: 'alloc-1',
+        serviceId: 'svc-1',
+        serviceTypeCode: SERVICE_TYPE.BERGING,
+        services: [{ statuscode: SERVICE_STATUS.HULPVERLENING_AFGEROND, dn_serviceid: 'svc-1' }],
+        excludeServiceId: 'svc-1',
+        hadOtherOpenServicesBeforeExit: false,
+      }),
+    ).toEqual({ kind: 'allocation' });
+  });
+
+  it('ends Pechhulp early when the settlement does not continue to phase 2', async () => {
+    const { container, backend } = setup({ stored: storedSession() });
+    backend.on('GET', '/api/allocations', () =>
+      jsonResponse([
+        allocationWithService({
+          dn_serviceid: 'svc-p',
+          statuscode: SERVICE_STATUS.IN_UITVOERING,
+          dn_servicetypecode: SERVICE_TYPE.PECHHULP,
+        }),
+      ]),
+    );
+    backend.on('PUT', '/api/services/svc-p', () => new Response(null, { status: 204 }));
+
+    await container.start();
+    await flushPromises();
+
+    const body = {
+      statuscode: SERVICE_STATUS.HULPVERLENING_AFGEROND,
+      statecode: 0,
+      dn_breakdownsettlementcode: 1001,
+    };
+    const result = await container.serviceFormService.submit({
+      serviceId: 'svc-p',
+      statuscode: SERVICE_STATUS.IN_UITVOERING,
+      body,
+    });
+    expect(result).toEqual({ kind: 'submitted' });
+
+    const exit = resolveProcessingExit({
+      trigger: 'submit',
+      currentStatuscode: SERVICE_STATUS.IN_UITVOERING,
+      postedBody: body,
+      serviceTypeCode: SERVICE_TYPE.PECHHULP,
+    });
+    expect(exit).toEqual({ exitKind: 'terminal', isEarlyComplete: true, isLcmh: false });
+  });
+
+  it('keeps PLTR on the incident after load and returns to the list after finish', async () => {
+    const { container, backend } = setup({ stored: storedSession() });
+    backend.on('GET', '/api/allocations', () =>
+      jsonResponse([
+        allocationWithService({
+          dn_serviceid: 'svc-pltr',
+          statuscode: SERVICE_STATUS.IN_UITVOERING,
+          dn_servicetypecode: SERVICE_TYPE.PLANNED_TRANSPORT,
+        }),
+      ]),
+    );
+    backend.on('PUT', '/api/services/svc-pltr', () => new Response(null, { status: 204 }));
+
+    await container.start();
+    await flushPromises();
+
+    expect(pltrPrimaryAction(SERVICE_STATUS.IN_UITVOERING)).toBe(PLTR_ACTION.startLoad);
+    expect(pltrPrimaryAction(SERVICE_STATUS.HULPVERLENING_AKKOORD)).toBe(PLTR_ACTION.startDelivery);
+    expect(pltrPrimaryAction(SERVICE_STATUS.HULPVERLENING_AFGEROND)).toBe(PLTR_ACTION.finish);
+
+    const loadBody = {
+      statuscode: SERVICE_STATUS.HULPVERLENING_AKKOORD,
+      statecode: 0,
+    };
+    expect(
+      await container.serviceFormService.submit({
+        serviceId: 'svc-pltr',
+        statuscode: SERVICE_STATUS.IN_UITVOERING,
+        body: loadBody,
+      }),
+    ).toEqual({ kind: 'submitted' });
+
+    const loadExit = resolveProcessingExit({
+      trigger: 'submit',
+      currentStatuscode: SERVICE_STATUS.IN_UITVOERING,
+      postedBody: loadBody,
+      serviceTypeCode: SERVICE_TYPE.PLANNED_TRANSPORT,
+    });
+    expect(loadExit.exitKind).toBe('continueIncident');
+    expect(
+      getExitTarget({
+        exitKind: loadExit.exitKind,
+        allocationId: 'alloc-1',
+        serviceId: 'svc-pltr',
+        serviceTypeCode: SERVICE_TYPE.PLANNED_TRANSPORT,
+        allocationTypeCode: SERVICE_TYPE.PLANNED_TRANSPORT,
+        services: [
+          {
+            statuscode: SERVICE_STATUS.HULPVERLENING_AKKOORD,
+            dn_serviceid: 'svc-pltr',
+          },
+        ],
+      }),
+    ).toEqual({ kind: 'incident', allocationId: 'alloc-1', variant: 'pltr' });
+
+    const finishExit = resolveProcessingExit({ trigger: 'finish' });
+    expect(
+      getExitTarget({
+        exitKind: finishExit.exitKind,
+        allocationId: 'alloc-1',
+        serviceId: 'svc-pltr',
+        serviceTypeCode: SERVICE_TYPE.PLANNED_TRANSPORT,
+        allocationTypeCode: SERVICE_TYPE.PLANNED_TRANSPORT,
+        services: [
+          {
+            statuscode: SERVICE_STATUS.HULPVERLENING_AFGEROND,
+            dn_serviceid: 'svc-pltr',
+          },
+        ],
+        fromProcessingFinish: true,
+      }),
+    ).toEqual({ kind: 'allocation' });
+  });
+
+  it('blocks opening and submitting a service that no longer takes a form', async () => {
+    const { container, backend } = setup({ stored: storedSession() });
+    backend.on('GET', '/api/allocations', () =>
+      jsonResponse([
+        allocationWithService({
+          dn_serviceid: 'svc-done',
+          statuscode: SERVICE_STATUS.GEFACTUREERD,
+          dn_servicetypecode: SERVICE_TYPE.BERGING,
+        }),
+      ]),
+    );
+    backend.on('GET', '/api/services/by-incident-id/inc-1', () =>
+      jsonResponse([
+        {
+          dn_serviceid: 'svc-done',
+          statuscode: SERVICE_STATUS.GEFACTUREERD,
+          statecode: 1,
+          dn_servicetypecode: SERVICE_TYPE.BERGING,
+        },
+      ]),
+    );
+
+    await container.start();
+    await flushPromises();
+
+    const allocations = await container.allocationsApi.list();
+    const services = await container.allocationsApi.getServicesByIncidentId('inc-1');
+    const resolved = resolveProcessingService({
+      allocations,
+      fetchedServices: services,
+      allocationId: 'alloc-1',
+      serviceId: 'svc-done',
+    });
+    expect(resolveOpenServiceRoute(resolved.service?.statuscode)).toBe('blocked');
+
+    const result = await container.serviceFormService.submit({
+      serviceId: 'svc-done',
+      statuscode: SERVICE_STATUS.GEFACTUREERD,
+      body: { statuscode: SERVICE_STATUS.HULPVERLENING_AFGEROND },
+    });
+    expect(result).toEqual({ kind: 'blocked' });
+    expect(backend.callsTo('PUT', '/api/services/svc-done')).toHaveLength(0);
+
+    const exit = resolveProcessingExit({
+      trigger: 'submit',
+      currentStatuscode: SERVICE_STATUS.GEFACTUREERD,
+      postedBody: { statuscode: SERVICE_STATUS.HULPVERLENING_AFGEROND },
+    });
+    expect(exit.exitKind).toBe('blocked');
+    expect(
+      getExitTarget({
+        exitKind: exit.exitKind,
+        allocationId: 'alloc-1',
+        serviceId: 'svc-done',
+        services: services,
+      }),
+    ).toEqual({ kind: 'allocation' });
+  });
+
+  it('ends a vergeefse-rit decline as terminal', async () => {
+    const { container, backend, scheduler } = setup({ stored: storedSession() });
+    backend.on('PUT', '/api/services/svc-1/decline', () => new Response(null, { status: 204 }));
+
+    await container.start();
+    await flushPromises();
+
+    const exit = resolveProcessingExit({
+      trigger: 'decline',
+      declineStatusCode: SERVICE_STATUS.VERGEEFSE_RIT,
+    });
+    expect(exit.exitKind).toBe('terminal');
+
+    await container.outbox.enqueue({
+      kind: 'decline-service',
+      serviceId: 'svc-1',
+      statuscode: SERVICE_STATUS.VERGEEFSE_RIT,
+    });
+    await container.outbox.processNow();
+    for (
+      let step = 0;
+      step < 4 && backend.callsTo('PUT', '/api/services/svc-1/decline').length < 1;
+      step += 1
+    ) {
+      await scheduler.fireNext();
+      await container.outbox.processNow();
+    }
+    expect(backend.callsTo('PUT', '/api/services/svc-1/decline')).toHaveLength(1);
+    expect(backend.callsTo('PUT', '/api/services/svc-1/decline')[0]?.body).toBe(
+      String(SERVICE_STATUS.VERGEEFSE_RIT),
+    );
+  });
+});
+
+describe('vehicle release', () => {
+  it('walks locatie-afgifte from list through photo upload, submit and cleanup', async () => {
+    const { container, backend, clock } = setup({ stored: storedSession() });
+    const afgifteDefinition = {
+      servicecode: SERVICE_TYPE.AFGIFTE,
+      servicename: [{ 'language-code': 1043, value: 'Afgifte' }],
+      definition: [
+        {
+          phase: 1,
+          'phase-name': [{ 'language-code': 1043, value: 'Afgifte' }],
+          photosMandatory: ['links-voor', 'rechts-voor', 'rechts-achter', 'links-achter'],
+          tabs: [
+            {
+              header: [{ 'language-code': 1043, value: 'Afgifte' }],
+              fields: [
+                {
+                  name: 'dn_remarks',
+                  type: 'string',
+                  label: [{ 'language-code': 1043, value: 'Opmerking' }],
+                  autoform: { optional: true },
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+    backend.on('GET', '/api/vehicle-releases/locations', () =>
+      jsonResponse([{ dn_locationId: 'loc-1', dn_name: 'Depot' }]),
+    );
+    backend.on('GET', '/api/vehicle-releases/loc-1/assignments', () =>
+      jsonResponse([
+        {
+          dn_serviceid: 'svc-r',
+          _dn_locationid_value: 'loc-1',
+          _dn_incidentid_value: 'inc-r',
+          statuscode: SERVICE_STATUS.OPSLAG,
+          statecode: 0,
+        },
+      ]),
+    );
+    backend.on('GET', '/api/client-sync/schema/1043', () =>
+      jsonResponse(['dn_servicedefinitions']),
+    );
+    backend.on('GET', '/api/client-sync/dn_servicedefinitions/1043', () =>
+      jsonResponse([{ dataDefinition: [afgifteDefinition] }]),
+    );
+    backend.on('POST', '/api/binary/upload', () => new Response(null, { status: 201 }));
+    backend.on('PUT', '/api/services/svc-r', () => new Response(null, { status: 204 }));
+
+    await container.start();
+    await flushPromises();
+
+    const vehicleReleases = await container.allocationsApi.listVehicleReleases();
+    const resolved = resolveProcessingService({
+      allocations: [],
+      vehicleReleases,
+      fetchedServices: undefined,
+      allocationId: '',
+      serviceId: 'svc-r',
+      locationId: 'loc-1',
+    });
+    expect(resolved).toMatchObject({
+      isReleaseItem: true,
+      scopeId: 'release:svc-r',
+      incidentId: 'inc-r',
+      service: {
+        dn_serviceid: 'svc-r',
+        dn_servicetypecode: SERVICE_TYPE.AFGIFTE,
+        statuscode: SERVICE_STATUS.OPSLAG,
+      },
+    });
+
+    const found = await container.serviceFormService.findDefinition(SERVICE_TYPE.AFGIFTE);
+    expect(found?.servicecode).toBe(SERVICE_TYPE.AFGIFTE);
+    expect(found?.definition?.[0]?.photosMandatory).toEqual([
+      'links-voor',
+      'rechts-voor',
+      'rechts-achter',
+      'links-achter',
+    ]);
+
+    await container.photoService.capture({
+      serviceId: 'svc-r',
+      incidentId: 'inc-r',
+      allocationId: 'release:svc-r',
+      phase: 'load',
+      position: { category: 'DASHBOARD' },
+      sourceUri: 'file:///camera/shot.jpg',
+    });
+    await container.photoService.submitBatch('svc-r', 'load');
+    expect((await container.photoService.listByService('svc-r'))[0]?.status).toBe('sent');
+    expect(backend.callsTo('POST', '/api/binary/upload')).toHaveLength(1);
+
+    const body = applyReleaseSubmitFields(
+      { statuscode: SERVICE_STATUS.OPSLAG, statecode: 0 },
+      { pickedUpAtIso: new Date(clock.now()).toISOString() },
+    );
+    const result = await container.serviceFormService.submit({
+      serviceId: 'svc-r',
+      statuscode: SERVICE_STATUS.OPSLAG,
+      isReleaseItem: true,
+      body,
+    });
+    expect(result).toEqual({ kind: 'submitted' });
+    const put = backend.callsTo('PUT', '/api/services/svc-r')[0];
+    expect(JSON.parse(put?.body ?? '{}')).toMatchObject({
+      dn_vehicle_taken_code: true,
+      dn_pickedupdate: new Date(clock.now()).toISOString(),
+      statecode: 0,
+      statuscode: SERVICE_STATUS.NACONTROLE,
+    });
+
+    const exit = resolveProcessingExit({
+      trigger: 'submit',
+      isReleaseItem: true,
+      locationId: 'loc-1',
+      currentStatuscode: SERVICE_STATUS.OPSLAG,
+      postedBody: body,
+    });
+    expect(exit.exitKind).toBe('terminal');
+
+    await container.photoService.clearForAllocation('release:svc-r');
+    expect(await container.photoService.listByService('svc-r')).toEqual([]);
+  });
+
+  it('blocks an OPSLAG submit that is not a release item', async () => {
+    const { container, backend } = setup({ stored: storedSession() });
+    backend.on('PUT', '/api/services/svc-r', () => new Response(null, { status: 204 }));
+
+    await container.start();
+    await flushPromises();
+
+    const result = await container.serviceFormService.submit({
+      serviceId: 'svc-r',
+      statuscode: SERVICE_STATUS.OPSLAG,
+      body: { statuscode: SERVICE_STATUS.NACONTROLE },
+    });
+    expect(result).toEqual({ kind: 'blocked' });
+    expect(backend.callsTo('PUT', '/api/services/svc-r')).toHaveLength(0);
   });
 });

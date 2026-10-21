@@ -1,4 +1,5 @@
 import { createStore } from 'zustand/vanilla';
+import { expandAccordionSection, toggleAccordionSection } from '../domain/section-accordion';
 import { cloneServiceFormAnswers } from '../domain/values';
 import type {
   ServiceFormAnswer,
@@ -169,17 +170,11 @@ export const createServiceFormStore = () =>
       }),
     setErrors: (errors) => set({ errors: { ...errors } }),
     toggleSection: (sectionId) =>
-      set((state) => {
-        const expandedSections = { ...state.expandedSections };
-        if (expandedSections[sectionId]) {
-          delete expandedSections[sectionId];
-        } else {
-          expandedSections[sectionId] = true;
-        }
-        return { expandedSections };
-      }),
+      set((state) => ({
+        expandedSections: toggleAccordionSection(state.expandedSections, sectionId),
+      })),
     expandSection: (sectionId) =>
-      set((state) => ({ expandedSections: { ...state.expandedSections, [sectionId]: true } })),
+      set(() => ({ expandedSections: expandAccordionSection(sectionId) })),
     setRecommendedFieldId: (recommendedFieldId) => set({ recommendedFieldId }),
     toggleHideSignature: (fieldKey) =>
       set((state) => {

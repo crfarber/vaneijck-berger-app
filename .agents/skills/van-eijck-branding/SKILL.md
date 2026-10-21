@@ -73,7 +73,7 @@ Rules: text on yellow is always `ink`. Never put light grey text on yellow. Yell
 - **Eenheid registreren**: voertuig → aanhanger (optioneel) → beschikbaarheid → einde dienst. Returning users get a prefilled overview ("Overgenomen van je vorige dienst") and register in one tap; new users get the step flow with "Stap x van 4".
 - Most-used option first: "Laatst gebruikt" vehicle pinned on top; "Geen aanhanger" as first button.
 - Availability: default "volledig beschikbaar"; show restrictions only when the user chooses "met beperkingen".
-- End time: quick picks (+8 / +10 / +12 uur) plus manual date/time; show remaining time ("nog 6 u 16 min").
+- End time: quick pick (+9 uur, incl. pauze) plus manual date/time; show remaining time ("nog 6 u 16 min").
 - Overview screens: every row is directly editable (tap → the right screen).
 
 ## Copy (Dutch)

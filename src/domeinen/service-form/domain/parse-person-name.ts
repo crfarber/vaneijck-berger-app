@@ -338,17 +338,10 @@ export function matchSalutationOption(
   return null;
 }
 
-/** Human-readable preview for the confirm dialog. */
-export function formatPersonNamePreview(
-  parsed: ParsedPersonName,
-  salutationLabel?: string | null,
-): string {
-  const parts = [
-    salutationLabel?.trim() || null,
-    parsed.initials,
-    parsed.firstName,
-    parsed.middleName,
-    parsed.lastName,
-  ].filter((part): part is string => Boolean(part && part.trim()));
+/** Human-readable preview for the confirm dialog (no salutation — gender-sensitive). */
+export function formatPersonNamePreview(parsed: ParsedPersonName): string {
+  const parts = [parsed.initials, parsed.firstName, parsed.middleName, parsed.lastName].filter(
+    (part): part is string => Boolean(part && part.trim()),
+  );
   return parts.join(' · ');
 }

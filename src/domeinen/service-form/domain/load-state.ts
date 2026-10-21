@@ -8,11 +8,17 @@ export function resolveServiceFormLoadState(input: {
   serviceFound: boolean;
   definitionStatus: 'loading' | 'ready' | 'missing' | 'failed';
   draftPending: boolean;
+  /** Locatie-afgifte: no allocation; service comes from vehicle_releases. */
+  isReleaseItem?: boolean;
 }): ServiceFormLoadState {
-  if (input.allocationsPending || (input.allocationFound && input.servicesPending)) {
+  const needsAllocation = input.isReleaseItem !== true;
+  if (
+    input.allocationsPending ||
+    (needsAllocation && input.allocationFound && input.servicesPending)
+  ) {
     return 'loading';
   }
-  if (!input.allocationFound || !input.serviceFound) {
+  if ((needsAllocation && !input.allocationFound) || !input.serviceFound) {
     return 'not-found';
   }
   if (input.definitionStatus === 'loading' || input.draftPending) {

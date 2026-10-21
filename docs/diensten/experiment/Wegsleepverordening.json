@@ -800,11 +800,11 @@
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Naam afleveradres"
+                    "value": "Naam"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Name Delivery adress"
+                    "value": "Name"
                   }
                 ],
                 "type": "string",
@@ -829,11 +829,11 @@
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Land afleveradres"
+                    "value": "Land"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Country Delivery address"
+                    "value": "Country"
                   }
                 ],
                 "type": "select",
@@ -850,54 +850,15 @@
                 }
               },
               {
-                "name": "dn_deliveryadressbar",
-                "label": [
-                  {
-                    "language-code": 1043,
-                    "value": "Adres afleveradres zoeken"
-                  },
-                  {
-                    "language-code": 1044,
-                    "value": "Search delivery location"
-                  }
-                ],
-                "type": "address",
-                "autoform": {
-                  "readonly": false,
-                  "optional": true,
-                  "value": "dn_deliveryadressbar",
-                  "validations": [
-                    {
-                      "validation_type": "max-len",
-                      "value": 100
-                    }
-                  ]
-                },
-                "requiredvisibility": {
-                  "property": "dn_towmoveexecutedcode",
-                  "value": 1
-                },
-                "address_components": {
-                  "name": "dn_deliveryname",
-                  "country": "_dn_deliverycountryid_value",
-                  "postalcode": "dn_deliverypostalcode",
-                  "houseno": "dn_deliveryhouseno",
-                  "housenoadd": "dn_deliveryhousenoaddition",
-                  "street": "dn_deliverystreet",
-                  "city": "dn_deliverycity",
-                  "province": ""
-                }
-              },
-              {
                 "name": "dn_deliverypostalcode",
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Postcode afleveradres"
+                    "value": "Postcode"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Postalcode Delivery address"
+                    "value": "Postcode"
                   }
                 ],
                 "type": "string",
@@ -941,7 +902,17 @@
                     "street": "dn_deliverystreet",
                     "city": "dn_deliverycity",
                     "country": "_dn_deliverycountryid_value",
-                    "name": "dn_deliveryname"
+                    "name": "dn_deliveryname",
+                    "label": [
+                      {
+                        "language-code": 1043,
+                        "value": "Naam"
+                      },
+                      {
+                        "language-code": 1044,
+                        "value": "Name"
+                      }
+                    ]
                   },
                   "flow": "nl_postal_lookup",
                   "confirmAddress": true,
@@ -954,11 +925,11 @@
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Huisnummer afleveradres"
+                    "value": "Huisnr"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Houseno Delivery address"
+                    "value": "House no."
                   }
                 ],
                 "type": "number",
@@ -983,11 +954,11 @@
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Huisnummer toevoeging afleveradres"
+                    "value": "Toev."
                   },
                   {
                     "language-code": 1044,
-                    "value": "Houseno ext. Delivery address"
+                    "value": "Add."
                   }
                 ],
                 "type": "string",
@@ -1012,11 +983,11 @@
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Plaats afleveradres"
+                    "value": "Plaats"
                   },
                   {
                     "language-code": 1044,
-                    "value": "City Delivery address"
+                    "value": "City"
                   }
                 ],
                 "type": "string",
@@ -1041,11 +1012,11 @@
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Straat afleveradres"
+                    "value": "Straat"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Street Delivery address"
+                    "value": "Street"
                   }
                 ],
                 "type": "string",
@@ -2058,11 +2029,11 @@
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Naam afleveradres"
+                    "value": "Naam"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Name Delivery adress"
+                    "value": "Name"
                   }
                 ],
                 "type": "string",
@@ -2087,11 +2058,11 @@
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Land afleveradres"
+                    "value": "Land"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Country Delivery address"
+                    "value": "Country"
                   }
                 ],
                 "type": "select",
@@ -2108,54 +2079,15 @@
                 }
               },
               {
-                "name": "dn_deliveryadressbar",
-                "label": [
-                  {
-                    "language-code": 1043,
-                    "value": "Adres afleveradres zoeken"
-                  },
-                  {
-                    "language-code": 1044,
-                    "value": "Search delivery location"
-                  }
-                ],
-                "type": "address",
-                "autoform": {
-                  "readonly": false,
-                  "optional": true,
-                  "value": "dn_deliveryadressbar",
-                  "validations": [
-                    {
-                      "validation_type": "max-len",
-                      "value": 100
-                    }
-                  ]
-                },
-                "requiredvisibility": {
-                  "property": "dn_towmoveexecutedcode",
-                  "value": 1
-                },
-                "address_components": {
-                  "name": "dn_deliveryname",
-                  "country": "_dn_deliverycountryid_value",
-                  "postalcode": "dn_deliverypostalcode",
-                  "houseno": "dn_deliveryhouseno",
-                  "housenoadd": "dn_deliveryhousenoaddition",
-                  "street": "dn_deliverystreet",
-                  "city": "dn_deliverycity",
-                  "province": ""
-                }
-              },
-              {
                 "name": "dn_deliverypostalcode",
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Postcode afleveradres"
+                    "value": "Postcode"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Postalcode Delivery address"
+                    "value": "Postcode"
                   }
                 ],
                 "type": "string",
@@ -2199,7 +2131,17 @@
                     "street": "dn_deliverystreet",
                     "city": "dn_deliverycity",
                     "country": "_dn_deliverycountryid_value",
-                    "name": "dn_deliveryname"
+                    "name": "dn_deliveryname",
+                    "label": [
+                      {
+                        "language-code": 1043,
+                        "value": "Naam"
+                      },
+                      {
+                        "language-code": 1044,
+                        "value": "Name"
+                      }
+                    ]
                   },
                   "flow": "nl_postal_lookup",
                   "confirmAddress": true,
@@ -2212,11 +2154,11 @@
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Huisnummer afleveradres"
+                    "value": "Huisnr"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Houseno Delivery address"
+                    "value": "House no."
                   }
                 ],
                 "type": "number",
@@ -2241,11 +2183,11 @@
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Huisnummer toevoeging afleveradres"
+                    "value": "Toev."
                   },
                   {
                     "language-code": 1044,
-                    "value": "Houseno ext. Delivery address"
+                    "value": "Add."
                   }
                 ],
                 "type": "string",
@@ -2270,11 +2212,11 @@
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Plaats afleveradres"
+                    "value": "Plaats"
                   },
                   {
                     "language-code": 1044,
-                    "value": "City Delivery address"
+                    "value": "City"
                   }
                 ],
                 "type": "string",
@@ -2299,11 +2241,11 @@
                 "label": [
                   {
                     "language-code": 1043,
-                    "value": "Straat afleveradres"
+                    "value": "Straat"
                   },
                   {
                     "language-code": 1044,
-                    "value": "Street Delivery address"
+                    "value": "Street"
                   }
                 ],
                 "type": "string",

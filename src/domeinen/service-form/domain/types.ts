@@ -88,6 +88,8 @@ export type ServiceFormAddressGroupFields = {
   /** Optional for postal-only blocks such as a taxi route. */
   city?: string;
   country?: string;
+  /** Optional display name for the destination (e.g. Afleveradres). */
+  name?: string;
 };
 
 export type ServiceFormAddressGroup = {

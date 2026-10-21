@@ -1,8 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Alert, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, AppState, StyleSheet, Text, View } from 'react-native';
 import { Button } from '@/shared/ui/button';
 import { Screen } from '@/shared/ui/screen';
 import { colors, spacing, type } from '@/shared/ui/theme';
@@ -12,6 +12,7 @@ import {
   nextPermissionStep,
   PERMISSION_KIND,
   PERMISSION_STEP,
+  shouldCompleteDisclosureStep,
   type DisclosureKind,
   type PermissionKind,
   type PermissionSnapshot,
@@ -64,6 +65,9 @@ export function PermissionDisclosureScreen() {
   const [kind, setKind] = useState<DisclosureKind | null>(null);
   const [busy, setBusy] = useState(false);
   const [ready, setReady] = useState(false);
+  const kindRef = useRef<DisclosureKind | null>(null);
+  const awaitingSettingsReturn = useRef(false);
+  const finishKindRef = useRef<(current: DisclosureKind) => Promise<void>>(async () => undefined);
 
   const resolveStep = useCallback(async (): Promise<DisclosureKind | null> => {
     const seen = await preference.readSeen();
@@ -90,22 +94,60 @@ export function PermissionDisclosureScreen() {
     };
   }, [resolveStep]);
 
-  const advance = async (): Promise<void> => {
+  const advance = useCallback(async (): Promise<void> => {
     const next = await resolveStep();
     if (next === null) {
       router.replace('/');
       return;
     }
     setKind(next);
-  };
+  }, [resolveStep]);
 
-  const finishKind = async (current: DisclosureKind): Promise<void> => {
-    await preference.markSeen(current);
-    if (current === PERMISSION_KIND.notifications) {
-      void pushRuntime.start();
-    }
-    await advance();
-  };
+  const finishKind = useCallback(
+    async (current: DisclosureKind): Promise<void> => {
+      await preference.markSeen(current);
+      if (current === PERMISSION_KIND.notifications) {
+        void pushRuntime.start();
+      }
+      await advance();
+    },
+    [advance, preference, pushRuntime],
+  );
+
+  useEffect(() => {
+    kindRef.current = kind;
+  }, [kind]);
+
+  useEffect(() => {
+    finishKindRef.current = finishKind;
+  }, [finishKind]);
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state !== 'active' || !awaitingSettingsReturn.current) {
+        return;
+      }
+      awaitingSettingsReturn.current = false;
+      const current = kindRef.current;
+      if (current === null) {
+        return;
+      }
+      void (async () => {
+        setBusy(true);
+        try {
+          const snapshot = await permissions.read(current);
+          if (shouldCompleteDisclosureStep(snapshot)) {
+            await finishKindRef.current(current);
+          }
+        } finally {
+          setBusy(false);
+        }
+      })();
+    });
+    return () => {
+      subscription.remove();
+    };
+  }, [permissions]);
 
   const onAccept = async (): Promise<void> => {
     if (kind === null || busy) {
@@ -115,26 +157,34 @@ export function PermissionDisclosureScreen() {
     try {
       const snapshot = await permissions.read(kind);
       const step = nextPermissionStep(snapshot);
-      if (step === PERMISSION_STEP.ask) {
-        await permissions.request(kind);
-      } else if (step === PERMISSION_STEP.openSettings) {
-        await new Promise<void>((resolve) => {
-          Alert.alert(
-            t('settings.disclosure.blockedTitle'),
-            t('settings.disclosure.blockedMessage'),
-            [
-              { text: t('common.close'), style: 'cancel', onPress: () => resolve() },
-              {
-                text: t('settings.openSystemSettings'),
-                onPress: () => {
-                  void permissions.openSystemSettings().finally(() => resolve());
-                },
-              },
-            ],
-          );
-        });
+      if (step === PERMISSION_STEP.ready) {
+        await finishKind(kind);
+        return;
       }
-      await finishKind(kind);
+      if (step === PERMISSION_STEP.ask) {
+        const afterRequest = await permissions.request(kind);
+        if (shouldCompleteDisclosureStep(afterRequest)) {
+          await finishKind(kind);
+        }
+        return;
+      }
+      await new Promise<'dismiss' | 'settings'>((resolve) => {
+        Alert.alert(
+          t('settings.disclosure.blockedTitle'),
+          t('settings.disclosure.blockedMessage'),
+          [
+            { text: t('common.close'), style: 'cancel', onPress: () => resolve('dismiss') },
+            {
+              text: t('settings.openSystemSettings'),
+              onPress: () => {
+                awaitingSettingsReturn.current = true;
+                void permissions.openSystemSettings().finally(() => resolve('settings'));
+              },
+            },
+          ],
+        );
+      });
+      // Do not markSeen here: Close keeps the step; settings return is handled via AppState.
     } finally {
       setBusy(false);
     }

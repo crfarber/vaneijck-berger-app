@@ -24,6 +24,15 @@ describe('createServiceFormStore', () => {
     });
   });
 
+  it('keeps at most one section open when toggling or expanding in the edit form', () => {
+    const store = createServiceFormStore();
+    store.getState().initialize({}, 'section-1');
+    store.getState().expandSection('section-2');
+    expect(store.getState().expandedSections).toEqual({ 'section-2': true });
+    store.getState().toggleSection('section-2');
+    expect(store.getState().expandedSections).toEqual({});
+  });
+
   it('updates nested state immutably and resets transient state', () => {
     const store = createServiceFormStore();
     store.getState().initialize({ dn_name: answer }, 'section-1');
@@ -34,7 +43,7 @@ describe('createServiceFormStore', () => {
 
     expect(store.getState().answers).not.toBe(previousAnswers);
     expect(previousAnswers.dn_name?.value).toBe('A');
-    expect(store.getState().expandedSections).toEqual({ 'section-1': true, 'section-2': true });
+    expect(store.getState().expandedSections).toEqual({ 'section-2': true });
 
     store.getState().reset();
     expect(store.getState().answers).toEqual({ dn_name: answer });

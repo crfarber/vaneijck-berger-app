@@ -131,7 +131,10 @@ Quick picks en "Meer opties…" delen één TanStack Query-cache (`serviceFormSe
 
 ### 6.1 Definitie
 
-Op het eerste veld van een persoonsblok:
+Op het eerste veld van een persoonsblok (meestal aanhef). In `docs/diensten/experiment` staan
+`person_group` en `address_group` op **bestuurder**, **kentekenhouder** en **verzekeringsnemer**,
+met vaste schermvolgorde: gate → status (alleen bestuurder) → bedrijf (indien aanwezig) →
+naamgroep → contact → adresmodule.
 
 ```json
 "person_group": {
@@ -157,6 +160,10 @@ Op het eerste veld van een persoonsblok:
   "copyFrom": null
 }
 ```
+
+Kentekenhouder (`id: registrationowner`, gate `dn_alternativeregistrationownercode`) en
+verzekeringsnemer (`id: insurer`, gate `dn_alternativeinsurercode`) gebruiken dezelfde structuur
+met hun eigen veldnamen. Groeptitels: Bestuurder / Kentekenhouder / Verzekeringsnemer.
 
 - `lastName` is de enige verplichte rol. De rest is optioneel, omdat de definities verschillen (voornaam of voorletters, wel of geen bedrijf).
 - `gate` is het selectveld dat de persoon aan- of uitzet. De kaart gebruikt dezelfde zichtbaarheidsregel als nu; ze voegt geen nieuwe regel toe.

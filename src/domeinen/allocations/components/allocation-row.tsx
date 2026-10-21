@@ -8,8 +8,9 @@ import { useWorker } from '@/domeinen/worker/ui';
 import { isAllocationFinished } from '../domain/finished';
 import type { AllocationListBucket } from '../domain/status';
 import { resolveIncidentCardModel } from '../domain/incident-card';
+import { allocationMapCoordinate } from '../domain/map-markers';
 import type { Allocation } from '../domain/types';
-import { AllocationActions } from './allocation-actions';
+import { AllocationActions, AllocationMapActions } from './allocation-actions';
 import { AllocationDeclineSheet } from './allocation-decline-sheet';
 import { AllocationReassignSheet } from './allocation-reassign-sheet';
 import { IncidentCard } from './incident-card';
@@ -17,7 +18,8 @@ import { IncidentCard } from './incident-card';
 /**
  * One allocation on the list. Card face: incident info, plus forward on a pending card when the
  * berger may hand it over (legacy `ForwardButton`). Accept/decline/finish stay under the card and
- * appear on a left swipe. Decline and forward each open a sheet over the list; both live outside
+ * appear on a left swipe; a right swipe shows "show on map" when the incident has a usable
+ * coordinate (opens the map zoomed in on it). Decline and forward each open a sheet over the list; both live outside
  * the swipeable so closing the swipe does not unmount them.
  */
 export function AllocationRow({
@@ -36,6 +38,7 @@ export function AllocationRow({
   const showForward = bucket === 'pending' && canForwardAllocations(worker ?? null);
   const [declineOpen, setDeclineOpen] = useState(false);
   const [reassignOpen, setReassignOpen] = useState(false);
+  const hasMapLocation = allocationMapCoordinate(allocation) !== null;
 
   return (
     <>
@@ -64,6 +67,25 @@ export function AllocationRow({
             />
           </View>
         )}
+        leftThreshold={0}
+        overshootLeft={false}
+        renderLeftActions={
+          hasMapLocation
+            ? (_progress, _translation, swipeableMethods) => (
+                <View style={styles.actions}>
+                  <AllocationMapActions
+                    onShowOnMap={() => {
+                      swipeableMethods.close();
+                      router.push({
+                        pathname: '/allocations-map',
+                        params: { allocationId: allocation.dn_allocationid },
+                      });
+                    }}
+                  />
+                </View>
+              )
+            : undefined
+        }
       >
         <IncidentCard
           model={model}

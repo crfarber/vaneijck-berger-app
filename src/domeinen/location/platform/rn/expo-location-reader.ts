@@ -1,6 +1,7 @@
 import * as Location from 'expo-location';
 import type { Clock, Scheduler } from '@/shared/platform/ports';
 import type { Logger } from '@/shared/logging/logger';
+import { resolveCoarseWatchReuse } from '../../domain/coarse-watch-reuse';
 import { ACCEPT_LOCATION_WAIT_TIMEOUT_MS, type LocationSample } from '../../domain/fresh-sample';
 import { LOCATION_ACCURACY, type LocationAccuracy } from '../../domain/location-accuracy';
 import type { CurrentLocation } from '../../domain/proximity';
@@ -19,10 +20,11 @@ export type ExpoLocationReaderDeps = {
 };
 
 /**
- * Foreground-only reads. One-shot `getCurrent` uses High/Low accuracy for photos and depot sort.
- * Accept passes `maxAgeMs` / `requiredAccuracyMeters` and reads from a Balanced watch that
- * `start` / `stop` keep alive while the services detail screen is focused — no background mode,
- * nothing posted to the backend. Asks the system dialog only while permission is undetermined.
+ * Foreground-only reads. One-shot `getCurrent` uses High/Low accuracy for photos and depot sort;
+ * coarse reads reuse a warm watch sample when one exists. Accept passes `maxAgeMs` /
+ * `requiredAccuracyMeters` and reads from a Balanced watch that `start` / `stop` keep alive while
+ * the services detail screen is focused — no background mode, nothing posted to the backend. Asks
+ * the system dialog only while permission is undetermined.
  */
 export function createExpoLocationReader(deps: ExpoLocationReaderDeps): LocationReader {
   const { clock, scheduler, logger } = deps;
@@ -135,6 +137,11 @@ export function createExpoLocationReader(deps: ExpoLocationReaderDeps): Location
             waitTimeoutMs: ACCEPT_LOCATION_WAIT_TIMEOUT_MS,
             options: { maxAgeMs, requiredAccuracyMeters },
           });
+        }
+
+        const reused = resolveCoarseWatchReuse(latest, options);
+        if (reused !== null) {
+          return reused;
         }
 
         const accuracy = options?.accuracy ?? LOCATION_ACCURACY.fine;

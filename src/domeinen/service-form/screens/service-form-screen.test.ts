@@ -17,3 +17,16 @@ describe('phase-one snapshot on submit', () => {
     expect(source).toContain('await drafts.savePhaseOneSnapshot(');
   });
 });
+
+describe('locatie-afgifte', () => {
+  it('resolves via useProcessingService, uses the clock port and clears photos after submit', () => {
+    expect(source).toContain('useProcessingService');
+    expect(source).toContain('useServiceFormClock');
+    expect(source).toContain('applyReleaseSubmitFields');
+    expect(source).toContain('clearForAllocation(exitContext.allocationId)');
+    expect(source).not.toContain('systemClock');
+    expect(source).not.toContain('findReleaseAssignment');
+    expect(source).toContain('isReleaseItem: exitContext.isReleaseItem');
+    expect(source).toContain('locationId: exitContext.locationId');
+  });
+});

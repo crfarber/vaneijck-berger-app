@@ -111,6 +111,17 @@ describe('submit trigger', () => {
     expect(submit({ isReleaseItem: false, locationId: 'loc-1' }).exitKind).toBe('continueIncident');
   });
 
+  it('allows terminal exit for locatie-afgifte submitted from OPSLAG', () => {
+    expect(
+      submit({
+        isReleaseItem: true,
+        locationId: 'loc-1',
+        currentStatuscode: SERVICE_STATUS.OPSLAG,
+        postedBody: { statuscode: SERVICE_STATUS.NACONTROLE },
+      }).exitKind,
+    ).toBe('terminal');
+  });
+
   it.each([1002, 1005])('flags LCMH for im action status %i', (code) => {
     const exit = submit({
       postedBody: { statuscode: SERVICE_STATUS.HULPVERLENING_AKKOORD, dn_imactionstatuscode: code },

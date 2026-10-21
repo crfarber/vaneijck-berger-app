@@ -27,11 +27,12 @@ import { canReturnToDispatch, type Service } from '@/domeinen/allocations';
 import {
   ACTION_FEEDBACK_MESSAGE,
   ServiceDeclineSheet,
-  useAllocations,
   useDeclineService,
   useProcessingExit,
-  useServices,
+  useProcessingService,
 } from '@/domeinen/allocations/ui';
+import { useDevUiToolsEnabled } from '@/domeinen/settings/ui';
+import { PreviewModePill, WorkerStatusPill } from '@/domeinen/worker/ui';
 import {
   PHOTO_PHASE,
   PHOTO_STATUS,
@@ -85,16 +86,22 @@ import {
 import type { ServiceFormFieldLayout } from '../domain/selectors';
 import { hasAnySignature } from '../domain/signature';
 import { buildUploadSignatureParams } from '../domain/signature-upload';
-import { buildSignaturePostData, buildServicePostBody } from '../domain/submission';
+import {
+  applyReleaseSubmitFields,
+  buildSignaturePostData,
+  buildServicePostBody,
+} from '../domain/submission';
 import { validateVisibleServiceForm } from '../domain/validation';
 import type { NormalizedServiceForm, ServiceFormField, ServiceFormSection } from '../domain/types';
 import {
   useFetchRdwInfo,
+  useServiceFormClock,
   useServiceFormDrafts,
   useServiceFormLogger,
   useServiceFormService,
   useSignaturesApi,
 } from '../hooks/service-form-context';
+import { usePrefetchServiceFormSelectOptions } from '../hooks/use-prefetch-service-form-select-options';
 import { useServiceDefinition } from '../hooks/use-service-definition';
 import { useServiceForm } from '../hooks/use-service-form';
 import type { ServiceFormDraft } from '../service/draft-storage';
@@ -115,6 +122,8 @@ type ExitContext = {
   incidentId: string;
   allocationTypeCode?: number;
   services: readonly Service[];
+  isReleaseItem?: boolean;
+  locationId?: string;
 };
 
 type DraftGate = { status: 'loading' } | { status: 'ready'; draft: ServiceFormDraft | null };
@@ -132,25 +141,33 @@ export function ServiceFormScreen({
   allocationId,
   serviceId,
   preview = false,
+  isReleaseItem = false,
+  locationId,
 }: {
   allocationId: string;
   serviceId: string;
   preview?: boolean;
+  isReleaseItem?: boolean;
+  locationId?: string;
 }) {
   const { t, i18n } = useTranslation();
   const feedback = useFeedback();
   const router = useRouter();
+  const uiToolsEnabled = useDevUiToolsEnabled();
   const definitionReloadInFlight = useRef(false);
   const drafts = useServiceFormDrafts();
-  const { sections, isPending: allocationsPending } = useAllocations();
-  const [active, pending] = sections;
-  const allocation = [...active.data, ...pending.data].find(
-    (item) => item.dn_allocationid === allocationId,
-  );
-  const incidentId = allocation?.incident.dn_incidentid ?? '';
-  const servicesQuery = useServices(incidentId, allocation?.services ?? null);
-  const services = servicesQuery.data ?? allocation?.services ?? [];
-  const service = services.find((item) => item.dn_serviceid === serviceId);
+  const processing = useProcessingService({
+    allocationId,
+    serviceId,
+    locationId: isReleaseItem ? locationId : undefined,
+  });
+  const draftAllocationId = processing.scopeId;
+  const allocation = processing.allocation;
+  const services = processing.services;
+  const service = processing.service;
+  const incidentId = processing.incidentId;
+  const allocationsPending = processing.allocationsPending;
+  const servicesPending = processing.servicesPending;
   const { state, retry, reloadBundledDefinition } = useServiceDefinition(
     service?.dn_servicetypecode ?? undefined,
   );
@@ -185,10 +202,11 @@ export function ServiceFormScreen({
   const loadState = resolveServiceFormLoadState({
     allocationsPending,
     allocationFound: allocation !== undefined,
-    servicesPending: servicesQuery.isPending,
+    servicesPending,
     serviceFound: service !== undefined,
     definitionStatus: state.status,
     draftPending: draftGate.status === 'loading',
+    isReleaseItem,
   });
 
   const model = useMemo(
@@ -210,7 +228,7 @@ export function ServiceFormScreen({
     }
     let cancelled = false;
     void (async () => {
-      const loaded = await drafts.load(allocationId, serviceId);
+      const loaded = await drafts.load(draftAllocationId, serviceId);
       if (cancelled) {
         return;
       }
@@ -223,7 +241,7 @@ export function ServiceFormScreen({
     return () => {
       cancelled = true;
     };
-  }, [allocationId, drafts, preview, serviceId]);
+  }, [draftAllocationId, drafts, preview, serviceId]);
 
   if (loadState === 'loading') {
     return (
@@ -243,7 +261,13 @@ export function ServiceFormScreen({
     );
   }
 
-  if (loadState !== 'ready' || !model || !allocation || !service) {
+  const readyForForm =
+    loadState === 'ready' &&
+    model !== null &&
+    service !== undefined &&
+    (isReleaseItem || allocation !== undefined);
+
+  if (!readyForForm || !model || !service) {
     return (
       <View style={styles.center}>
         <Text style={styles.message}>
@@ -275,13 +299,15 @@ export function ServiceFormScreen({
         pleaseSelectLabel={pleaseSelectLabel}
         preview={preview}
         exitContext={{
-          allocationId,
+          allocationId: draftAllocationId,
           serviceId,
           incidentId,
-          allocationTypeCode: allocation.type,
+          allocationTypeCode: allocation?.type,
           services,
+          isReleaseItem,
+          locationId,
         }}
-        onReloadDefinitions={__DEV__ ? reloadDefinitions : undefined}
+        onReloadDefinitions={uiToolsEnabled ? reloadDefinitions : undefined}
       />
     </ServiceFormStoreProvider>
   );
@@ -307,14 +333,25 @@ function ServiceFormBody({
   const { t } = useTranslation();
   const router = useRouter();
   const navigation = useNavigation();
+  const uiToolsEnabled = useDevUiToolsEnabled();
   const serviceFormService = useServiceFormService();
   const logger = useServiceFormLogger();
+  const clock = useServiceFormClock();
   const signaturesApi = useSignaturesApi();
   const drafts = useServiceFormDrafts();
   const photoService = usePhotoService();
   const storeApi = useServiceFormStoreApi();
   const { exit } = useProcessingExit();
   const statusOverlay = useStatusOverlay();
+  const photosParams = {
+    id: exitContext.allocationId,
+    serviceId: exitContext.serviceId,
+    incidentId: exitContext.incidentId,
+    statuscode: String(service.statuscode),
+    ...(exitContext.locationId !== undefined && exitContext.locationId !== ''
+      ? { locationId: exitContext.locationId }
+      : {}),
+  };
   const decline = useDeclineService({
     ...exitContext,
     serviceStatuscode: service.statuscode,
@@ -334,6 +371,7 @@ function ServiceFormBody({
     blurField,
     validateForm,
   } = useServiceForm(form, pleaseSelectLabel);
+  usePrefetchServiceFormSelectOptions(form);
   const fetchRdwInfo = useFetchRdwInfo();
   const initialAnswers = useServiceFormStore((state) => state.initialAnswers);
   const expandedSections = useServiceFormStore((state) => state.expandedSections);
@@ -630,12 +668,14 @@ function ServiceFormBody({
   );
 
   useEffect(() => {
+    const showPreviewHeader = preview || overviewActive;
     navigation.setOptions({
+      headerTitle: () => (showPreviewHeader ? <PreviewModePill /> : <WorkerStatusPill />),
       headerRight: preview
         ? () => null
         : () => <ResetFormHeaderButton onPress={() => setResetSheetVisible(true)} />,
     });
-  }, [navigation, preview]);
+  }, [navigation, overviewActive, preview]);
 
   const scrollToField = (fieldId: string): void => {
     const node = fieldRefs.current.get(fieldId);
@@ -756,7 +796,7 @@ function ServiceFormBody({
       );
       router.push({
         pathname: '/allocations/[id]/services/[serviceId]/photos',
-        params: { id: exitContext.allocationId, serviceId: exitContext.serviceId },
+        params: photosParams,
       });
       return;
     }
@@ -765,17 +805,22 @@ function ServiceFormBody({
       Alert.alert(t('serviceForm.photos.missingTitle'), t('serviceForm.photos.missingMessage'));
       router.push({
         pathname: '/allocations/[id]/services/[serviceId]/photos',
-        params: { id: exitContext.allocationId, serviceId: exitContext.serviceId },
+        params: photosParams,
       });
       return;
     }
 
-    const body = buildServicePostBody(fields, visibility.visibleFieldIds, answers, form.phase, {
+    let body = buildServicePostBody(fields, visibility.visibleFieldIds, answers, form.phase, {
       pleaseSelectLabel,
       hideSignature,
       noEmailConfirmation,
       phaseNumbers,
     });
+    if (exitContext.isReleaseItem === true) {
+      body = applyReleaseSubmitFields(body, {
+        pickedUpAtIso: new Date(clock.now()).toISOString(),
+      });
+    }
     setSubmitting(true);
     let shouldExit = false;
     let wasBlocked = false;
@@ -820,6 +865,8 @@ function ServiceFormBody({
             serviceId: exitContext.serviceId,
             statuscode: service.statuscode,
             body,
+            isReleaseItem: exitContext.isReleaseItem,
+            serviceTypeCode: service.dn_servicetypecode ?? undefined,
           });
           if (result.kind === 'blocked') {
             wasBlocked = true;
@@ -845,6 +892,13 @@ function ServiceFormBody({
           submitStage = 'draft-clear';
           logger.info('serviceForm', 'Service update succeeded; clearing draft');
           await clearDraftAndLeave();
+          if (exitContext.isReleaseItem === true) {
+            try {
+              await photoService.clearForAllocation(exitContext.allocationId);
+            } catch (error) {
+              logger.warn('serviceForm', 'Release photo cleanup failed', { error });
+            }
+          }
           shouldExit = true;
           logger.info('serviceForm', 'Service form submit flow completed');
           return {
@@ -874,6 +928,8 @@ function ServiceFormBody({
           trigger: 'submit',
           currentStatuscode: service.statuscode,
           postedBody: body,
+          isReleaseItem: exitContext.isReleaseItem,
+          locationId: exitContext.locationId,
         });
       }
     } finally {
@@ -1008,36 +1064,27 @@ function ServiceFormBody({
       />
       <ServiceFormToolbar
         visible={toolbarScroll.visible}
-        actions={
-          preview
-            ? undefined
-            : {
-                onToggleQuickView: () => {
-                  setOverviewActive(false);
-                  setQuickViewActive((active) => !active);
-                },
-                onOpenPhotos: () =>
-                  router.push({
-                    pathname: '/allocations/[id]/services/[serviceId]/photos',
-                    params: {
-                      id: exitContext.allocationId,
-                      serviceId: exitContext.serviceId,
-                    },
-                  }),
-                onToggleOverview: () => {
-                  setQuickViewActive(false);
-                  setOverviewActive((active) => !active);
-                },
-                onOpenTerms: () =>
-                  void Linking.openURL(TERMS_URL).catch(() =>
-                    Alert.alert(t('common.somethingWrong')),
-                  ),
-                onOpenDecline: decline.open,
-                quickViewActive,
-                photosComplete,
-                overviewActive,
-              }
-        }
+        actions={{
+          onToggleQuickView: () => {
+            setOverviewActive(false);
+            setQuickViewActive((active) => !active);
+          },
+          onOpenPhotos: () =>
+            router.push({
+              pathname: '/allocations/[id]/services/[serviceId]/photos',
+              params: photosParams,
+            }),
+          onToggleOverview: () => {
+            setQuickViewActive(false);
+            setOverviewActive((active) => !active);
+          },
+          onOpenTerms: () =>
+            void Linking.openURL(TERMS_URL).catch(() => Alert.alert(t('common.somethingWrong'))),
+          onOpenDecline: decline.open,
+          quickViewActive,
+          photosComplete,
+          overviewActive,
+        }}
       />
       <ScrollView
         ref={scrollRef}
@@ -1064,7 +1111,7 @@ function ServiceFormBody({
           onLayout={(event) => setFooterHeight(event.nativeEvent.layout.height)}
         >
           <ScreenFooter backgroundColor="rgba(255, 255, 255, 0.15)">
-            {__DEV__ ? (
+            {uiToolsEnabled ? (
               <Button
                 label={t('serviceForm.actions.exportScenario')}
                 variant="secondary"

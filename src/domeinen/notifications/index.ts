@@ -2,7 +2,11 @@ export { createPushRegistrationApi } from './api/push-registration-api';
 export type { PushRegistrationApi } from './api/push-registration-api';
 export { remoteFromBackgroundPayload } from './domain/background-payload';
 export { bannerText, isLocalBanner, LOCAL_BANNER_KEY } from './domain/banner';
-export { createNotificationDeduplicator } from './domain/dedup';
+export {
+  createNotificationDeduplicator,
+  logicalNotificationKey,
+  notificationDedupKeys,
+} from './domain/dedup';
 export { decideIncoming } from './domain/incoming';
 export type { IncomingDecision } from './domain/incoming';
 export { parseNotification } from './domain/parse';

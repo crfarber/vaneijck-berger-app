@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -5,9 +6,8 @@ import { colors, radius, spacing } from '@/shared/ui/theme';
 import type { VehicleReleaseAssignment, VehicleReleaseLocation } from '../domain/types';
 
 /**
- * One release location, collapsed to a count until tapped open — ported from `VehicleReleases`'s
- * per-location toggle. Tapping a vehicle itself is not built: it opens the processing flow the
- * team is rebuilding on its own (`docs/legacy.md`), not this app.
+ * One release location, collapsed to a count until tapped open. Tapping a vehicle opens the
+ * Afgifte form directly (legacy `ReleaseCard` → `ProcessingService` with `isReleaseItem`).
  */
 export function VehicleReleaseRow({ location }: { location: VehicleReleaseLocation }) {
   const { t } = useTranslation();
@@ -36,9 +36,28 @@ export function VehicleReleaseRow({ location }: { location: VehicleReleaseLocati
 }
 
 function ReleaseAssignmentRow({ release }: { release: VehicleReleaseAssignment }) {
+  const router = useRouter();
   const color = release.dn_vwe_vehicleinformationid?.vwe_rdw_kleur1;
+  const serviceId = release.dn_serviceid;
+  const locationId = release._dn_locationid_value;
+
+  const openForm = (): void => {
+    if (!serviceId || !locationId) {
+      return;
+    }
+    router.push({
+      pathname: '/vehicle-releases/[locationId]/services/[serviceId]/form',
+      params: { locationId, serviceId },
+    });
+  };
+
   return (
-    <View style={styles.assignment}>
+    <Pressable
+      onPress={openForm}
+      style={styles.assignment}
+      accessibilityRole="button"
+      disabled={!serviceId || !locationId}
+    >
       <View style={styles.assignmentLeft}>
         {release.dn_vehiclebrand ? (
           <Text style={styles.assignmentText}>{release.dn_vehiclebrand.toUpperCase()}</Text>
@@ -51,7 +70,7 @@ function ReleaseAssignmentRow({ release }: { release: VehicleReleaseAssignment }
         {release.dn_concatlicenseplate?.toUpperCase()}
         {color ? `\n${color.toUpperCase()}` : ''}
       </Text>
-    </View>
+    </Pressable>
   );
 }
 

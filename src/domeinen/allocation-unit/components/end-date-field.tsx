@@ -161,7 +161,7 @@ export function EndDateField({
       </View>
 
       <Button
-        label={t('unit.quickSetPlus8')}
+        label={t('unit.quickSetPlus9')}
         variant="action"
         onPress={() => applyCandidate(getDefaultEndDate(now()))}
       />

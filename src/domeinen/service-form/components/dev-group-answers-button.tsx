@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
+import { useDevUiToolsEnabled } from '@/domeinen/settings/ui';
 import { Button } from '@/shared/ui/button';
 import { spacing } from '@/shared/ui/theme';
 import {
@@ -16,13 +17,13 @@ type DevGroupAnswersButtonProps = {
 };
 
 /**
- * __DEV__-only toggle that shows the CRM answers for one compact group as a
- * read-only label/value list, so a berger/dev can verify the group wrote the
- * expected fields.
+ * Metro-only toggle (off until enabled on the debug screen) that shows the CRM
+ * answers for one compact group as a read-only label/value list.
  */
 export function DevGroupAnswersButton({ answers, fields }: DevGroupAnswersButtonProps) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
+  const uiToolsEnabled = useDevUiToolsEnabled();
 
   const debugFields = useMemo(() => fieldsForGroupAnswersDebug(fields), [fields]);
   const debugAnswers = useMemo(
@@ -34,7 +35,7 @@ export function DevGroupAnswersButton({ answers, fields }: DevGroupAnswersButton
     [answers, debugFields],
   );
 
-  if (typeof __DEV__ !== 'boolean' || !__DEV__) {
+  if (!uiToolsEnabled) {
     return null;
   }
 

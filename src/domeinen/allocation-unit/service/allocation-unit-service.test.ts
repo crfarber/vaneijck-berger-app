@@ -387,8 +387,40 @@ describe('cancelCurrentUnit', () => {
 });
 
 describe('getFleet', () => {
-  it('returns an empty list when reference-data has not synced it yet', async () => {
-    const { service } = setup({}, { getEntity: vi.fn(async () => null) });
+  it('refreshes the fleet when reference-data has not synced it yet', async () => {
+    const rows = [
+      {
+        dn_fleetid: 'a',
+        dn_name: 'VE-01',
+        dn_vehiclenumber: '82-LTF-P',
+        dn_vehicletypecode: 1001,
+      },
+    ];
+    const { service, referenceDataService } = setup(
+      {},
+      {
+        getEntity: vi
+          .fn<ReferenceDataService['getEntity']>()
+          .mockResolvedValueOnce(null)
+          .mockResolvedValueOnce(rows),
+      },
+    );
+
+    expect(await service.getFleet()).toEqual([
+      { id: 'a', name: 'VE-01', vehicleNumber: '82-LTF-P', typeCode: 1001 },
+    ]);
+    expect(referenceDataService.refreshEntity).toHaveBeenCalledWith('dn_fleets');
+  });
+
+  it('returns an empty list when refreshing a missing fleet fails', async () => {
+    const { service } = setup(
+      {},
+      {
+        refreshEntity: vi.fn(async () => {
+          throw new Error('offline');
+        }),
+      },
+    );
 
     expect(await service.getFleet()).toEqual([]);
   });

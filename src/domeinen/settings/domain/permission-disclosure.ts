@@ -62,3 +62,12 @@ export function parseDisclosureSeenList(values: readonly string[]): ReadonlySet<
   }
   return next;
 }
+
+/**
+ * After the OS dialog or a return from system settings, complete the disclosure step only when
+ * granted. A refusal stays on the step until the berger taps "Later" — so opening settings and
+ * coming back without changing rights does not silently dismiss the wizard.
+ */
+export function shouldCompleteDisclosureStep(snapshot: PermissionSnapshot): boolean {
+  return snapshot.status === PERMISSION_STATUS.granted;
+}

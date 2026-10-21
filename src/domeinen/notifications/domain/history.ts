@@ -1,3 +1,4 @@
+import { logicalNotificationKey } from './dedup';
 import type { NotificationToken, ParsedNotification } from './types';
 import { NOTIFICATION_TOKENS } from './types';
 
@@ -59,9 +60,12 @@ const TAB_TYPES: Readonly<
   status: STATUS_TYPES,
 };
 
-/** Same id sources as `getNotificationId` / the old `getRemoteNotificationId` (without inventing one). */
+/**
+ * Durable history id: prefers the logical type+allocation/incident key so two FCM messageIds
+ * for the same NewIncident count as one row; falls back to the FCM message id.
+ */
 export function historyId(notification: ParsedNotification): string | null {
-  return notification.id;
+  return logicalNotificationKey(notification) ?? notification.id;
 }
 
 /** Builds a history row, or null when the message has no durable id (cannot dedupe). */

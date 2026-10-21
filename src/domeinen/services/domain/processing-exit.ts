@@ -62,7 +62,10 @@ export function resolveProcessingExit(input: ProcessingExitInput): ProcessingExi
     case 'submit': {
       const { currentStatuscode, postedBody, serviceTypeCode, isReleaseItem, locationId } = input;
 
-      if (currentStatuscode !== undefined && !isSubmitAllowed(currentStatuscode)) {
+      if (
+        currentStatuscode !== undefined &&
+        !isSubmitAllowed(currentStatuscode, { isReleaseItem, serviceTypeCode })
+      ) {
         return result('blocked');
       }
 

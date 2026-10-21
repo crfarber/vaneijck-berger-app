@@ -46,13 +46,28 @@ function stored(overrides: Partial<StoredNotification> = {}): StoredNotification
 }
 
 describe('historyId / entryFromParsed', () => {
-  it('uses the message id and refuses to invent one when missing', () => {
-    expect(historyId(parsed())).toBe('msg-1');
-    expect(entryFromParsed(parsed({ id: null }), NOW)).toBeNull();
+  it('prefers the logical type+allocation key so two FCM ids become one history row', () => {
+    expect(historyId(parsed())).toBe('NewIncident:a:alloc-1');
+    expect(historyId(parsed({ id: 'other', allocationId: 'alloc-1' }))).toBe(
+      'NewIncident:a:alloc-1',
+    );
+    expect(historyId(parsed({ id: null, allocationId: undefined, incidentId: 'inc-9' }))).toBe(
+      'NewIncident:i:inc-9',
+    );
+    expect(
+      historyId(parsed({ id: null, allocationId: undefined, incidentId: undefined })),
+    ).toBeNull();
+    expect(
+      entryFromParsed(parsed({ id: null, allocationId: undefined, incidentId: undefined }), NOW),
+    ).toBeNull();
   });
 
   it('builds an unread row from a parsed message', () => {
-    expect(entryFromParsed(parsed(), NOW)).toEqual(stored());
+    expect(entryFromParsed(parsed(), NOW)).toEqual(stored({ id: 'NewIncident:a:alloc-1' }));
+  });
+
+  it('falls back to the message id when there is no allocation or incident', () => {
+    expect(historyId(parsed({ allocationId: undefined, incidentId: undefined }))).toBe('msg-1');
   });
 });
 

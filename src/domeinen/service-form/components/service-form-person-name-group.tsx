@@ -1,26 +1,27 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useQuery } from '@tanstack/react-query';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View, type TextInput } from 'react-native';
+import { Button } from '@/shared/ui/button';
 import { confirm } from '@/shared/ui/confirm';
 import { TextField } from '@/shared/ui/text-field';
 import { colors, radius, spacing, type as typography } from '@/shared/ui/theme';
 import {
   buildClearedPersonNameAnswers,
   buildPersonNameAnswers,
+  hasAppliedPersonNameAnswers,
   previewPersonNameParse,
+  resolvePersonNameSummaryDisplay,
+  shouldOfferPersonNameManualEntry,
+  shouldShowPersonNameDetailFields,
   type PersonNameEntryGroup,
 } from '../domain/person-name-entry';
-import { serviceFormSelectOptionsQueryKey } from '../domain/select-options-query-key';
-import type { SelectOption } from '../domain/select-options';
 import type {
   ServiceFormAnswer,
   ServiceFormAnswers,
   ServiceFormError,
   ServiceFormField,
 } from '../domain/types';
-import { useServiceFormService } from '../hooks/service-form-context';
 import { DevGroupAnswersButton } from './dev-group-answers-button';
 import { ReadonlyFieldSummary } from './readonly-field-summary';
 import { ServiceFieldRenderer } from './service-field-renderer';
@@ -41,8 +42,8 @@ export type ServiceFormPersonNameGroupProps = {
 };
 
 /**
- * Compact free-text name entry. A square action beside the field splits the name (confirm, then
- * fill CRM roles) and afterwards clears those roles while keeping the typed text.
+ * Compact free-text name entry: aanhef dropdown above full name (not parsed from free text);
+ * other roles behind Handmatig invullen; after apply a green summary with edit / Opnieuw.
  */
 export function ServiceFormPersonNameGroup({
   group,
@@ -59,38 +60,39 @@ export function ServiceFormPersonNameGroup({
   onFieldLayout,
 }: ServiceFormPersonNameGroupProps) {
   const { t, i18n } = useTranslation();
-  const service = useServiceFormService();
   const mapping = group.mapping;
-  const salutationField = group.orderedFields.find((field) => field.key === mapping.salutation);
+  const salutationField = group.salutationField;
   const [freeText, setFreeText] = useState('');
   const [appliedFreeText, setAppliedFreeText] = useState<string | null>(null);
-  const splitApplied = appliedFreeText !== null;
+  const [manualEntryActive, setManualEntryActive] = useState(false);
 
-  const salutationQuery = useQuery({
-    queryKey: salutationField
-      ? serviceFormSelectOptionsQueryKey(salutationField, undefined)
-      : ['service-form', 'person-name', 'no-salutation'],
-    queryFn: () =>
-      service.loadSelectOptions({
-        table: salutationField?.table,
-        sortOptions: salutationField?.sortOptions,
-        dependencyValue: undefined,
-      }),
-    enabled: Boolean(salutationField?.table),
+  const hasAppliedAnswers = hasAppliedPersonNameAnswers(mapping, answers, pleaseSelectLabel);
+  const summaryText = resolvePersonNameSummaryDisplay(mapping, answers, pleaseSelectLabel, {
+    manualEntryActive,
   });
-
-  const salutationOptions: readonly SelectOption[] =
-    salutationQuery.data?.kind === 'options' ? salutationQuery.data.options : [];
+  const showDetailFields = shouldShowPersonNameDetailFields({ manualEntryActive });
+  const offerManualEntry = shouldOfferPersonNameManualEntry({
+    hasAppliedAnswers,
+    manualEntryActive,
+  });
+  const showSummary = Boolean(summaryText) && hasAppliedAnswers && !manualEntryActive;
 
   const title =
     (i18n.language.toLowerCase().startsWith('en')
       ? group.config.label.en
       : group.config.label.nl) ?? t('serviceForm.personName.title');
 
-  const debugFields = useMemo(() => group.orderedFields, [group.orderedFields]);
+  const debugFields = useMemo(() => {
+    const fields = [...group.orderedFields];
+    if (salutationField) {
+      fields.unshift(salutationField);
+    }
+    return fields;
+  }, [group.orderedFields, salutationField]);
 
   const clearDerived = (): void => {
     setAppliedFreeText(null);
+    setManualEntryActive(false);
     updateAnswers(buildClearedPersonNameAnswers(mapping, pleaseSelectLabel));
   };
 
@@ -99,7 +101,7 @@ export function ServiceFormPersonNameGroup({
     if (!trimmed) {
       return;
     }
-    const { parsed, preview } = previewPersonNameParse(trimmed, salutationOptions);
+    const { parsed, preview } = previewPersonNameParse(trimmed);
     if (!parsed.lastName && !parsed.firstName && !parsed.initials && !parsed.middleName) {
       return;
     }
@@ -112,16 +114,16 @@ export function ServiceFormPersonNameGroup({
         cancelLabel: t('serviceForm.personName.confirmReject'),
       }));
     if (!accepted) {
+      setManualEntryActive(true);
       return;
     }
     updateAnswers(
       buildPersonNameAnswers(mapping, parsed, {
-        salutationOptions,
-        salutationTable: salutationField?.table,
         pleaseSelectLabel,
       }),
     );
     setAppliedFreeText(trimmed);
+    setManualEntryActive(false);
   };
 
   const onFreeTextChange = (next: string): void => {
@@ -132,12 +134,45 @@ export function ServiceFormPersonNameGroup({
     }
   };
 
+  const renderSalutation = (): ReactNode => {
+    if (!salutationField) {
+      return null;
+    }
+    return (
+      <View
+        collapsable={false}
+        ref={(node) => registerFieldRef?.(salutationField.id, node)}
+        onLayout={() => onFieldLayout?.(salutationField.id)}
+      >
+        <ServiceFieldRenderer
+          field={salutationField}
+          answer={answers[salutationField.key]}
+          error={errors[salutationField.key]}
+          dependencyAnswer={
+            salutationField.dependencies?.required
+              ? answers[salutationField.dependencies.required]
+              : undefined
+          }
+          pleaseSelectLabel={pleaseSelectLabel}
+          onChange={updateAnswer}
+          onAnswersChange={updateAnswers}
+          registerInputRef={registerInputRef}
+          onFocus={onFocus}
+          onBlur={onBlur}
+        />
+      </View>
+    );
+  };
+
   const debugButton = <DevGroupAnswersButton answers={answers} fields={debugFields} />;
 
   if (readOnly) {
+    const summaryFields = salutationField
+      ? [salutationField, ...group.orderedFields]
+      : group.orderedFields;
     return (
       <View style={styles.container}>
-        <ReadonlyFieldSummary fields={group.orderedFields} answers={answers} />
+        <ReadonlyFieldSummary fields={summaryFields} answers={answers} />
         {debugButton}
       </View>
     );
@@ -146,63 +181,99 @@ export function ServiceFormPersonNameGroup({
   return (
     <View style={styles.container}>
       <Text style={styles.title}>{title}</Text>
-      <View style={styles.inputRow}>
-        <TextField
-          containerStyle={styles.grow}
-          label={t('serviceForm.personName.freeTextLabel')}
-          value={freeText}
-          onChangeText={onFreeTextChange}
-          placeholder={t('serviceForm.personName.freeTextPlaceholder')}
-          autoCapitalize="words"
-          accessibilityLabel={t('serviceForm.personName.freeTextLabel')}
-        />
-        {freeText.trim() ? (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={
-              splitApplied ? t('serviceForm.personName.reset') : t('serviceForm.personName.apply')
-            }
-            onPress={() => {
-              if (splitApplied) {
-                clearDerived();
-                return;
-              }
-              void applyFreeText();
-            }}
-            style={({ pressed }) => [styles.actionButton, pressed && styles.pressed]}
-          >
-            <Ionicons
-              name={splitApplied ? 'refresh' : 'cut-outline'}
-              size={20}
-              color={colors.brandText}
+      {renderSalutation()}
+      {showSummary ? (
+        <>
+          <Text style={styles.summary} accessibilityLiveRegion="polite" numberOfLines={0}>
+            {summaryText}
+          </Text>
+          <View style={styles.modeLink}>
+            <Button
+              label={t('serviceForm.personName.manualEntry')}
+              variant="text"
+              onPress={() => setManualEntryActive(true)}
             />
-          </Pressable>
-        ) : null}
-      </View>
-      <Text style={styles.manualHint}>{t('serviceForm.personName.manualHint')}</Text>
-      {group.orderedFields.map((field) => (
-        <View
-          key={field.id}
-          collapsable={false}
-          ref={(node) => registerFieldRef?.(field.id, node)}
-          onLayout={() => onFieldLayout?.(field.id)}
-        >
-          <ServiceFieldRenderer
-            field={field}
-            answer={answers[field.key]}
-            error={errors[field.key]}
-            dependencyAnswer={
-              field.dependencies?.required ? answers[field.dependencies.required] : undefined
-            }
-            pleaseSelectLabel={pleaseSelectLabel}
-            onChange={updateAnswer}
-            onAnswersChange={updateAnswers}
-            registerInputRef={registerInputRef}
-            onFocus={onFocus}
-            onBlur={onBlur}
-          />
-        </View>
-      ))}
+            <Button
+              label={t('serviceForm.personName.reset')}
+              variant="text"
+              onPress={clearDerived}
+            />
+          </View>
+        </>
+      ) : (
+        <>
+          <View style={styles.inputRow}>
+            <TextField
+              containerStyle={styles.grow}
+              label={t('serviceForm.personName.freeTextLabel')}
+              value={freeText}
+              onChangeText={onFreeTextChange}
+              placeholder={t('serviceForm.personName.freeTextPlaceholder')}
+              autoCapitalize="words"
+              accessibilityLabel={t('serviceForm.personName.freeTextLabel')}
+            />
+            {freeText.trim() ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={t('serviceForm.personName.apply')}
+                onPress={() => {
+                  void applyFreeText();
+                }}
+                style={({ pressed }) => [styles.actionButton, pressed && styles.pressed]}
+              >
+                <Ionicons name="cut-outline" size={20} color={colors.brandText} />
+              </Pressable>
+            ) : null}
+          </View>
+          {offerManualEntry ? (
+            <View style={styles.modeLink}>
+              <Button
+                label={t('serviceForm.personName.manualEntry')}
+                variant="text"
+                onPress={() => setManualEntryActive(true)}
+              />
+            </View>
+          ) : null}
+          {manualEntryActive ? (
+            <View style={styles.modeLink}>
+              <Button
+                label={
+                  hasAppliedAnswers
+                    ? t('serviceForm.personName.useSummary')
+                    : t('serviceForm.personName.useQuickEntry')
+                }
+                variant="text"
+                onPress={() => setManualEntryActive(false)}
+              />
+            </View>
+          ) : null}
+        </>
+      )}
+      {showDetailFields
+        ? group.orderedFields.map((field) => (
+            <View
+              key={field.id}
+              collapsable={false}
+              ref={(node) => registerFieldRef?.(field.id, node)}
+              onLayout={() => onFieldLayout?.(field.id)}
+            >
+              <ServiceFieldRenderer
+                field={field}
+                answer={answers[field.key]}
+                error={errors[field.key]}
+                dependencyAnswer={
+                  field.dependencies?.required ? answers[field.dependencies.required] : undefined
+                }
+                pleaseSelectLabel={pleaseSelectLabel}
+                onChange={updateAnswer}
+                onAnswersChange={updateAnswers}
+                registerInputRef={registerInputRef}
+                onFocus={onFocus}
+                onBlur={onBlur}
+              />
+            </View>
+          ))
+        : null}
       {debugButton}
     </View>
   );
@@ -228,8 +299,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   pressed: { opacity: 0.6 },
-  manualHint: {
+  summary: {
     ...typography.small,
-    color: colors.textMuted,
+    textAlign: 'center',
+    textTransform: 'capitalize',
+    fontWeight: 'bold',
+    color: colors.brandLight,
+    backgroundColor: colors.success,
+    padding: spacing.sm,
+    borderRadius: radius.sm,
+    flexShrink: 1,
+    flexWrap: 'wrap',
+    alignSelf: 'stretch',
+    width: '100%',
   },
+  modeLink: { flexDirection: 'row', justifyContent: 'space-between' },
 });

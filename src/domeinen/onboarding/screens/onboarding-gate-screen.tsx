@@ -50,9 +50,11 @@ export function OnboardingGateScreen() {
   const step = gate.status === 'ready' ? gate.step : null;
   const notice = gate.status === 'ready' ? gate.notice : 'none';
 
+  // Do not gate on `notice`: while the JA/Nee alert is open, allocations refetch can briefly force
+  // notice to `'none'` and would otherwise make JA a no-op. Fresh active-work is checked via refetch.
   const openRegistration = useCallback(
     async (reuseLast: boolean): Promise<void> => {
-      if (activeWork || notice !== 'register-unit') {
+      if (activeWork) {
         return;
       }
       const [allocations] = await refetch();
@@ -68,7 +70,7 @@ export function OnboardingGateScreen() {
       setReuseSnapshot(null);
       router.push(reuseLast ? '/unit?mode=onboarding&reuse=last' : '/unit?mode=onboarding');
     },
-    [activeWork, notice, refetch, t],
+    [activeWork, refetch, t],
   );
 
   useScreenTitle(
@@ -134,10 +136,10 @@ export function OnboardingGateScreen() {
           setReuseSnapshot(matched);
           return;
         }
+        // JA must still work after this effect re-runs (cleanup sets cancelled). Only skip
+        // *showing* a late prompt / snapshot; confirm always calls openRegistration.
         showRegisterUnitAlert(registerUnitAlertTexts(t), () => {
-          if (!cancelled) {
-            void openRegistration(false);
-          }
+          void openRegistration(false);
         });
       })().catch(() => undefined);
       return () => {
@@ -180,14 +182,7 @@ export function OnboardingGateScreen() {
     case 'allocations':
       return (
         <>
-          <AllocationsScreen
-            toolbar={
-              <AllocationsToolbar
-                hasActiveAllocations={activeWork}
-                canReportIssue={userType === 'internal'}
-              />
-            }
-          />
+          <AllocationsScreen toolbar={<AllocationsToolbar hasActiveAllocations={activeWork} />} />
           {reuseSnapshot !== null && notice === 'register-unit' && !activeWork ? (
             <RegisterUnitPromptSheet
               visible

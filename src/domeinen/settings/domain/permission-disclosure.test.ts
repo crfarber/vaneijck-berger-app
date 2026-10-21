@@ -4,6 +4,7 @@ import {
   markDisclosureSeen,
   nextDisclosureStep,
   parseDisclosureSeenList,
+  shouldCompleteDisclosureStep,
 } from './permission-disclosure';
 import { PERMISSION_KIND, PERMISSION_STATUS, type PermissionSnapshot } from './permission-step';
 
@@ -135,5 +136,13 @@ describe('parseDisclosureSeenList', () => {
 
   it('returns an empty set for an empty list', () => {
     expect(parseDisclosureSeenList([]).size).toBe(0);
+  });
+});
+
+describe('shouldCompleteDisclosureStep', () => {
+  it('completes only when the OS reports granted', () => {
+    expect(shouldCompleteDisclosureStep(granted)).toBe(true);
+    expect(shouldCompleteDisclosureStep(denied)).toBe(false);
+    expect(shouldCompleteDisclosureStep(undetermined)).toBe(false);
   });
 });

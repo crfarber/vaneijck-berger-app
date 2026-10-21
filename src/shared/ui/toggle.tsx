@@ -6,6 +6,7 @@ type ToggleProps = {
   value: boolean;
   onValueChange: (next: boolean) => void;
   label?: string;
+  labelAction?: React.ReactNode;
   accessibilityLabel?: string;
   disabled?: boolean;
   /** Marks the control as invalid (red label) without requiring error copy. */
@@ -17,6 +18,7 @@ export function Toggle({
   value,
   onValueChange,
   label,
+  labelAction,
   accessibilityLabel,
   disabled = false,
   invalid = false,
@@ -37,7 +39,10 @@ export function Toggle({
       ]}
     >
       {label ? (
-        <Text style={[type.label, styles.label, invalid && styles.labelError]}>{label}</Text>
+        <View style={styles.labelContainer}>
+          <Text style={[type.label, styles.label, invalid && styles.labelError]}>{label}</Text>
+          {labelAction ? labelAction : null}
+        </View>
       ) : null}
       <View style={[styles.track, value && styles.trackOn, invalid && styles.trackError]}>
         <View style={[styles.thumb, value && styles.thumbOn]} />
@@ -46,10 +51,10 @@ export function Toggle({
   );
 }
 
-const TRACK_W = 40;
-const TRACK_H = 24;
-const THUMB = 18;
-const PAD = 3;
+const TRACK_W = 48;
+const TRACK_H = 28;
+const THUMB = 22;
+const PAD = 4;
 
 const styles = StyleSheet.create({
   row: {
@@ -58,7 +63,12 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     minHeight: 44,
   },
-  label: { flex: 1, color: colors.text },
+  labelContainer: {
+    flexDirection: 'column',
+    justifyContent: 'flex-start',
+    flex: 1,
+  },
+  label: { color: colors.text },
   labelError: { color: colors.danger },
   track: {
     width: TRACK_W,

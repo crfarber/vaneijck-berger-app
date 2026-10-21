@@ -15,6 +15,7 @@ export {
   markDisclosureSeen,
   nextDisclosureStep,
   parseDisclosureSeenList,
+  shouldCompleteDisclosureStep,
 } from './domain/permission-disclosure';
 export type { DisclosureKind } from './domain/permission-disclosure';
 export type { DevicePermissions } from './service/device-permissions';
@@ -25,6 +26,9 @@ export {
   PERMISSION_DISCLOSURE_SEEN_KEY,
 } from './service/permission-disclosure-preference';
 export type { PermissionDisclosurePreference } from './service/permission-disclosure-preference';
+export { createDevUiToolsPreference, DEV_UI_TOOLS_KEY } from './service/dev-ui-tools-preference';
+export type { DevUiToolsPreference } from './service/dev-ui-tools-preference';
+export { parseDevUiToolsEnabled, serializeDevUiToolsEnabled } from './domain/dev-ui-tools';
 export { createSignOutGuard } from './service/sign-out-guard';
 export type { SignOutFailure, SignOutGuard } from './service/sign-out-guard';
 export { createAllocationUnitManagement } from './service/allocation-unit-management';

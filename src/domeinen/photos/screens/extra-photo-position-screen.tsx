@@ -7,7 +7,7 @@ import { Screen } from '@/shared/ui/screen';
 import { colors, spacing } from '@/shared/ui/theme';
 import { photoPositionToRouteParam, type PhotoPosition } from '../index';
 import { PhotoPositionPicker } from '../components/photo-position-picker';
-import type { PhotoFlowContext } from './photo-flow';
+import { photoRouteParams, type PhotoFlowContext } from './photo-flow';
 
 export function ExtraPhotoPositionScreen({
   allocationId,
@@ -15,18 +15,18 @@ export function ExtraPhotoPositionScreen({
   incidentId,
   serviceStatuscode,
   phaseNumbers,
+  locationId,
 }: PhotoFlowContext) {
   const { t } = useTranslation();
   const [position, setPosition] = useState<PhotoPosition | null>(null);
-  const routeParams = {
-    id: allocationId,
+  const routeParams = photoRouteParams({
+    allocationId,
     serviceId,
     incidentId,
-    statuscode: String(serviceStatuscode),
-    ...(phaseNumbers !== undefined && phaseNumbers.length > 0
-      ? { phaseNumbers: phaseNumbers.join(',') }
-      : {}),
-  };
+    serviceStatuscode,
+    phaseNumbers,
+    locationId,
+  });
 
   return (
     <Screen

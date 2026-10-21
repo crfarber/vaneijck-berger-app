@@ -4,7 +4,7 @@ import { decideIncoming } from '../domain/incoming';
 import { parseNotification } from '../domain/parse';
 import { getDisplayMode, isDisabled } from '../domain/plan';
 import { planRegistration, type PushPermissionState } from '../domain/registration';
-import type { NotificationDeduplicator } from '../domain/dedup';
+import { notificationDedupKeys, type NotificationDeduplicator } from '../domain/dedup';
 import type { NotificationSource, ParsedNotification, RemoteMessage } from '../domain/types';
 import type { NotificationHandler } from './notification-handler';
 
@@ -92,7 +92,8 @@ export function createPushRuntime(deps: PushRuntimeDeps): PushRuntime {
     if (!isDisabled(getDisplayMode(notification.token))) {
       deps.history?.add(notification);
     }
-    const duplicate = notification.id !== null && !deduplicator.shouldProcess(notification.id);
+    const keys = notificationDedupKeys(notification);
+    const duplicate = keys.length > 0 && !deduplicator.shouldProcess(keys);
     const decision = decideIncoming({ notification, source, duplicate });
     if (!decision.process && !decision.showBanner && !decision.navigate) {
       return;

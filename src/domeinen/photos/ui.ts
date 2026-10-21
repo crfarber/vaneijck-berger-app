@@ -7,4 +7,5 @@ export { PhotoCaptureScreen } from './screens/photo-capture-screen';
 export { ExtraPhotoPositionScreen } from './screens/extra-photo-position-screen';
 export { PhotoSentConfirmationScreen } from './screens/photo-sent-confirmation-screen';
 export { MandatoryPhotoHelpPopup } from './components/mandatory-photo-help-popup';
+export { photoRouteParams } from './screens/photo-flow';
 export type { PhotoCaptureMode, PhotoFlowContext } from './screens/photo-flow';

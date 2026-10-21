@@ -1,9 +1,10 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { isSubmitAllowed, SERVICE_STATUS } from '@/domeinen/services';
+import { resolveOpenServiceRoute } from '@/domeinen/services';
 import type { StatusOutcome } from '@/shared/feedback/status-overlay';
 import { useStatusOverlay } from '@/shared/ui/status-overlay-host';
+import { resolvePreviewService } from '../domain/preview-service';
 import type { Service } from '../domain/types';
 import { useAllocationsApi, useRdwApi } from './allocations-context';
 import { useProcessingExit } from './use-processing-exit';
@@ -15,7 +16,8 @@ import { createServicesQueryOptions, serviceKeys } from './use-services';
  * mutations; otherwise reuses what the list or an earlier open already loaded. Leave immediately
  * when it may no longer be submitted, and open the closing screen when it is already at
  * HULPVERLENING_AFGEROND. Anything in between opens the processing form (`service-form`).
- * Preview skips the submit-allowed gate (old `CheckStatus === 1` / swipe Preview on a pending service).
+ * Preview skips the submit-allowed gate; when the list row still lacks `dn_serviceid`, preview
+ * hydrates first (same overlay) and then opens read-only.
  */
 export function useOpenService({
   allocationId,
@@ -48,7 +50,8 @@ export function useOpenService({
   };
 
   const routeAfterStatus = (fresh: Service, serviceId: string): void => {
-    if (!isSubmitAllowed(fresh.statuscode)) {
+    const route = resolveOpenServiceRoute(fresh.statuscode);
+    if (route === 'blocked') {
       exit({
         trigger: 'blocked',
         allocationId,
@@ -61,7 +64,7 @@ export function useOpenService({
       return;
     }
 
-    if (fresh.statuscode === SERVICE_STATUS.HULPVERLENING_AFGEROND) {
+    if (route === 'finish') {
       router.push({
         pathname: '/allocations/[id]/services/[serviceId]',
         params: { id: allocationId, serviceId },
@@ -106,12 +109,23 @@ export function useOpenService({
     });
   };
 
-  const openPreview = (service: Service): void => {
+  const openPreview = async (service: Service): Promise<void> => {
     const serviceId = service.dn_serviceid;
-    if (!serviceId) {
+    if (serviceId) {
+      openForm(serviceId, true);
       return;
     }
-    openForm(serviceId, true);
+
+    await statusOverlay.run(t('feedback.processing.openService'), async () => {
+      const cached = await queryClient
+        .fetchQuery(createServicesQueryOptions(api, rdwApi, incidentId, services))
+        .catch(() => null);
+      const resolved = resolvePreviewService(service, cached ?? [], services);
+      if (resolved?.dn_serviceid) {
+        openForm(resolved.dn_serviceid, true);
+      }
+      return { tone: 'none' } satisfies StatusOutcome;
+    });
   };
 
   return { open, openPreview };

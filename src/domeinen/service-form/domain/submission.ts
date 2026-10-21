@@ -150,6 +150,23 @@ export function resolveStatusFields(
   };
 }
 
+/**
+ * Locatie-afgifte submit flags from legacy `ProcessingService` when `isReleaseItem`:
+ * mark the vehicle taken, set pickup time, and close into NACONTROLE.
+ */
+export function applyReleaseSubmitFields(
+  body: Record<string, unknown>,
+  input: { pickedUpAtIso: string },
+): Record<string, unknown> {
+  return {
+    ...body,
+    dn_vehicle_taken_code: true,
+    dn_pickedupdate: input.pickedUpAtIso,
+    statecode: 0,
+    statuscode: SERVICE_STATUS.NACONTROLE,
+  };
+}
+
 export type ServiceFormSubmissionOptions = {
   /** Localized "please select" placeholder, used to detect unanswered select fields. */
   pleaseSelectLabel: string;

@@ -2,6 +2,7 @@ import { createContext, useContext, type ReactNode } from 'react';
 import type { StructuredAddress } from '@/domeinen/places';
 import type { RdwInfo } from '@/domeinen/rdw';
 import type { SignaturesApi } from '@/domeinen/signatures';
+import type { Clock } from '@/shared/platform/ports';
 import type { PostalAddressLookupInput } from '../domain/types';
 import type { Logger } from '@/shared/logging/logger';
 import type { ServiceFormDraftStore } from '../service/draft-storage';
@@ -16,6 +17,7 @@ export type ServiceFormContextValue = {
   service: ServiceFormService;
   drafts: ServiceFormDraftStore;
   logger: Logger;
+  clock: Clock;
   /** Injected from the `rdw` domain so the form (and later other screens) share one client. */
   fetchRdwInfo?: FetchRdwInfo;
   lookupPostalAddress?: LookupPostalAddress;
@@ -80,4 +82,12 @@ export function useSignaturesApi(): SignaturesApi {
     throw new Error('ServiceFormProvider is missing');
   }
   return value.signaturesApi;
+}
+
+export function useServiceFormClock(): Clock {
+  const value = useContext(ServiceFormContext);
+  if (value === null) {
+    throw new Error('ServiceFormProvider is missing');
+  }
+  return value.clock;
 }

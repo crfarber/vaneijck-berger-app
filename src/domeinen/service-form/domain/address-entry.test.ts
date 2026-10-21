@@ -102,6 +102,39 @@ describe('address entry configuration', () => {
       allowForeignManual: true,
     });
   });
+
+  it('reads the localized group label for the heading above the fields', () => {
+    expect(
+      readAddressEntryConfig({
+        address_group: {
+          id: 'dn_deliverypostalcode',
+          label: [
+            { 'language-code': 1043, value: 'Afleveradres' },
+            { 'language-code': 1044, value: 'Delivery address' },
+          ],
+          fields: {
+            postalCode: 'dn_deliverypostalcode',
+            houseNumber: 'dn_deliveryhouseno',
+            name: 'dn_deliveryname',
+            street: 'dn_deliverystreet',
+            city: 'dn_deliverycity',
+          },
+          confirmAddress: true,
+          allowManual: true,
+          allowForeignManual: true,
+        },
+      }),
+    ).toEqual({
+      version: 1,
+      label: { nl: 'Afleveradres', en: 'Delivery address' },
+      postcodeHouseNumberLookup: true,
+      addressSearch: false,
+      manualEntry: true,
+      hideResolvedFieldsInitially: true,
+      confirmAddress: true,
+      allowForeignManual: true,
+    });
+  });
 });
 
 describe('address entry grouping', () => {

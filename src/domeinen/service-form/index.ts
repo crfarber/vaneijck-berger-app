@@ -26,9 +26,14 @@ export type {
 } from './domain/license-plate-entry';
 export {
   buildPersonNameRenderItems,
+  buildPersonNameSummary,
   findPersonNameGroupInFields,
+  hasAppliedPersonNameAnswers,
   partitionFieldsAroundPersonNameGroups,
   readPersonNameGroup,
+  resolvePersonNameSummaryDisplay,
+  shouldOfferPersonNameManualEntry,
+  shouldShowPersonNameDetailFields,
 } from './domain/person-name-entry';
 export type {
   PersonNameEntryGroup,
@@ -79,6 +84,10 @@ export {
   selectedOptionAnswer,
 } from './domain/select-options';
 export { serviceFormSelectOptionsQueryKey } from './domain/select-options-query-key';
+export {
+  isPrefetchableSelectField,
+  selectPrefetchableSelectFields,
+} from './domain/prefetch-select-fields';
 export type { OptionRow, SelectOption, SelectOptionsResult } from './domain/select-options';
 export type { ServiceFormVisibility } from './domain/conditions';
 export {
@@ -118,6 +127,7 @@ export { needsPhotoConfirmation } from './domain/photos-confirm';
 export { hasAnySignature, isSignatureKey, SIGNATURE_KEYS } from './domain/signature';
 export type { SignatureDataInput, SignatureKey } from './domain/signature';
 export {
+  applyReleaseSubmitFields,
   buildServicePostBody,
   buildSignaturePostData,
   coerceBooleanSelectSubmissionValue,

@@ -66,4 +66,30 @@ describe('resolveServiceFormLoadState', () => {
     expect(resolveServiceFormLoadState({ ...input, draftPending: true })).toBe('loading');
     expect(resolveServiceFormLoadState({ ...input, draftPending: false })).toBe('ready');
   });
+
+  it('for release items does not require an allocation, only the release service', () => {
+    expect(
+      resolveServiceFormLoadState({
+        allocationsPending: false,
+        allocationFound: false,
+        servicesPending: true,
+        serviceFound: true,
+        definitionStatus: 'ready',
+        draftPending: false,
+        isReleaseItem: true,
+      }),
+    ).toBe('ready');
+
+    expect(
+      resolveServiceFormLoadState({
+        allocationsPending: false,
+        allocationFound: false,
+        servicesPending: false,
+        serviceFound: false,
+        definitionStatus: 'ready',
+        draftPending: false,
+        isReleaseItem: true,
+      }),
+    ).toBe('not-found');
+  });
 });

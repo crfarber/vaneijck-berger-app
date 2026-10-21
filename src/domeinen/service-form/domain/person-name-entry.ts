@@ -6,12 +6,9 @@
 import { z } from 'zod';
 import {
   formatPersonNamePreview,
-  matchSalutationOption,
   parsePersonName,
   type ParsedPersonName,
-  type PersonSalutationOption,
 } from './parse-person-name';
-import { selectedOptionAnswer, type SelectOption } from './select-options';
 import type { ServiceFormAnswer, ServiceFormAnswers, ServiceFormField } from './types';
 
 export const PERSON_NAME_FLOW = 'person_v1' as const;
@@ -49,19 +46,25 @@ export type PersonNameEntryGroup = {
   anchor: ServiceFormField;
   mapping: PersonNameFieldMapping;
   config: PersonNameGroupConfig;
+  /** Shown above free-text; not part of parse/summary. */
+  salutationField: ServiceFormField | null;
+  /** Manual name roles (no salutation). */
   orderedFields: ServiceFormField[];
 };
 
 export type PersonNameRenderItem =
   { kind: 'person-name'; group: PersonNameEntryGroup } | { kind: 'field'; field: ServiceFormField };
 
-const NAME_ROLE_ORDER: readonly PersonNameFieldRole[] = [
-  'salutation',
+/** Roles shown in manual entry and green summary (salutation is a separate dropdown above). */
+const VISIBLE_NAME_ROLE_ORDER: readonly PersonNameFieldRole[] = [
   'initials',
   'firstName',
   'middleName',
   'lastName',
 ];
+
+/** All mapped name roles including salutation (claimed so the field stays out of loose render). */
+const NAME_ROLE_ORDER: readonly PersonNameFieldRole[] = ['salutation', ...VISIBLE_NAME_ROLE_ORDER];
 
 const localizedLabelSchema = z.array(
   z.looseObject({
@@ -160,8 +163,11 @@ export function buildPersonNameGroup(
     return null;
   }
 
+  const salutationKey = mapping.salutation;
+  const salutationField = salutationKey ? (fieldByKey.get(salutationKey) ?? null) : null;
+
   const seen = new Set<string>();
-  const orderedFields = NAME_ROLE_ORDER.flatMap((role) => {
+  const orderedFields = VISIBLE_NAME_ROLE_ORDER.flatMap((role) => {
     const key = mapping[role];
     const field = key ? fieldByKey.get(key) : undefined;
     if (!field || seen.has(field.key)) {
@@ -171,7 +177,7 @@ export function buildPersonNameGroup(
     return [field];
   });
 
-  return { anchor, mapping, config, orderedFields };
+  return { anchor, mapping, config, salutationField, orderedFields };
 }
 
 /** Name roles consumed by the person-name group UI (hide from loose render). */
@@ -192,7 +198,10 @@ export function buildPersonNameRenderItems(fields: ServiceFormField[]): PersonNa
     if (!group) {
       continue;
     }
-    const groupFieldIds = group.orderedFields.map((item) => item.id);
+    const groupFieldIds = personNameConsumedKeys(group.mapping).flatMap((key) => {
+      const mapped = fieldByKey.get(key);
+      return mapped ? [mapped.id] : [];
+    });
     if (groupFieldIds.some((fieldId) => claimedFieldIds.has(fieldId))) {
       continue;
     }
@@ -261,18 +270,15 @@ export function partitionFieldsAroundPersonNameGroups(
 
 export function buildClearedPersonNameAnswers(
   mapping: PersonNameFieldMapping,
-  pleaseSelectLabel: string,
+  _pleaseSelectLabel: string,
 ): ServiceFormAnswers {
   const cleared: ServiceFormAnswers = {};
-  for (const role of NAME_ROLE_ORDER) {
+  for (const role of VISIBLE_NAME_ROLE_ORDER) {
     const key = mapping[role];
     if (!key) {
       continue;
     }
-    cleared[key] =
-      role === 'salutation'
-        ? { value: '', displayValue: pleaseSelectLabel }
-        : { value: '', displayValue: '' };
+    cleared[key] = { value: '', displayValue: '' };
   }
   return cleared;
 }
@@ -281,22 +287,10 @@ export function buildPersonNameAnswers(
   mapping: PersonNameFieldMapping,
   parsed: ParsedPersonName,
   options: {
-    salutationOptions: readonly SelectOption[];
-    salutationTable: string | undefined;
     pleaseSelectLabel: string;
   },
 ): ServiceFormAnswers {
   const updates = buildClearedPersonNameAnswers(mapping, options.pleaseSelectLabel);
-
-  if (mapping.salutation) {
-    const matched = matchSalutationOption(
-      parsed.salutationKey,
-      options.salutationOptions as readonly PersonSalutationOption[],
-    );
-    if (matched) {
-      updates[mapping.salutation] = selectedOptionAnswer(matched, options.salutationTable);
-    }
-  }
 
   if (mapping.initials && parsed.initials) {
     updates[mapping.initials] = textAnswer(parsed.initials);
@@ -314,20 +308,14 @@ export function buildPersonNameAnswers(
   return updates;
 }
 
-export function previewPersonNameParse(
-  freeText: string,
-  salutationOptions: readonly SelectOption[],
-): { parsed: ParsedPersonName; preview: string; salutationLabel: string | null } {
+export function previewPersonNameParse(freeText: string): {
+  parsed: ParsedPersonName;
+  preview: string;
+} {
   const parsed = parsePersonName(freeText);
-  const matched = matchSalutationOption(
-    parsed.salutationKey,
-    salutationOptions as readonly PersonSalutationOption[],
-  );
-  const salutationLabel = matched?.label ?? null;
   return {
     parsed,
-    preview: formatPersonNamePreview(parsed, salutationLabel),
-    salutationLabel,
+    preview: formatPersonNamePreview(parsed),
   };
 }
 
@@ -352,7 +340,7 @@ export function buildPersonNameSummary(
   answers: ServiceFormAnswers,
   pleaseSelectLabel: string,
 ): string | null {
-  const parts = NAME_ROLE_ORDER.flatMap((role) => {
+  const parts = VISIBLE_NAME_ROLE_ORDER.flatMap((role) => {
     const key = mapping[role];
     if (!key) {
       return [];
@@ -364,4 +352,30 @@ export function buildPersonNameSummary(
     return [text];
   });
   return parts.length > 0 ? parts.join(' · ') : null;
+}
+
+/** Role inputs stay hidden until the berger opens manual entry (address-group pattern). */
+export function shouldShowPersonNameDetailFields(state: { manualEntryActive: boolean }): boolean {
+  return state.manualEntryActive;
+}
+
+/** Offer "enter manually" while the compact free-text flow is still the primary path. */
+export function shouldOfferPersonNameManualEntry(state: {
+  hasAppliedAnswers: boolean;
+  manualEntryActive: boolean;
+}): boolean {
+  return !state.hasAppliedAnswers && !state.manualEntryActive;
+}
+
+/** Compact banner text; hidden while the berger is editing manually. */
+export function resolvePersonNameSummaryDisplay(
+  mapping: PersonNameFieldMapping,
+  answers: ServiceFormAnswers,
+  pleaseSelectLabel: string,
+  state: { manualEntryActive: boolean },
+): string | null {
+  if (state.manualEntryActive) {
+    return null;
+  }
+  return buildPersonNameSummary(mapping, answers, pleaseSelectLabel);
 }

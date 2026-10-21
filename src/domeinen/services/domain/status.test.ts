@@ -64,6 +64,14 @@ describe('isSubmitAllowed', () => {
     expect(isSubmitAllowed(999)).toBe(false);
     expect(isSubmitAllowed(undefined)).toBe(false);
   });
+
+  it('allows OPSLAG and UI-in-uitvoering for locatie-afgifte / Afgifte', () => {
+    expect(isSubmitAllowed(SERVICE_STATUS.OPSLAG, { isReleaseItem: true })).toBe(true);
+    expect(isSubmitAllowed(875920001, { isReleaseItem: true })).toBe(true);
+    expect(isSubmitAllowed(SERVICE_STATUS.OPSLAG, { serviceTypeCode: 9000 })).toBe(true);
+    expect(isSubmitAllowed(SERVICE_STATUS.OPSLAG)).toBe(false);
+    expect(isSubmitAllowed(SERVICE_STATUS.NACONTROLE, { isReleaseItem: true })).toBe(false);
+  });
 });
 
 describe('getServiceBucket', () => {

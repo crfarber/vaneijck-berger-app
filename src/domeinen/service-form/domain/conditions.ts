@@ -33,6 +33,17 @@ const normalizeComparable = (value: unknown): unknown => {
   return value;
 };
 
+/** Ja/nee in definitions mix `true`/`false` with `1`/`0`; treat them as the same flag. */
+const asYesNoFlag = (value: unknown): boolean | null => {
+  if (value === true || value === 1) {
+    return true;
+  }
+  if (value === false || value === 0) {
+    return false;
+  }
+  return null;
+};
+
 const expectedValues = (condition: ServiceFormCondition, answer: ServiceFormAnswer): unknown[] => {
   const values = Array.isArray(condition.value) ? condition.value : [condition.value];
 
@@ -49,6 +60,15 @@ const expectedValues = (condition: ServiceFormCondition, answer: ServiceFormAnsw
   });
 };
 
+const valuesMatch = (actualValue: unknown, expectedValue: unknown): boolean => {
+  if (actualValue === expectedValue) {
+    return true;
+  }
+  const actualFlag = asYesNoFlag(actualValue);
+  const expectedFlag = asYesNoFlag(expectedValue);
+  return actualFlag !== null && expectedFlag !== null && actualFlag === expectedFlag;
+};
+
 export function isServiceFormConditionMet(
   condition: ServiceFormCondition,
   answers: ServiceFormAnswers,
@@ -59,7 +79,9 @@ export function isServiceFormConditionMet(
   }
 
   const actualValue = normalizeComparable(answer.value);
-  return expectedValues(condition, answer).some((expectedValue) => actualValue === expectedValue);
+  return expectedValues(condition, answer).some((expectedValue) =>
+    valuesMatch(actualValue, expectedValue),
+  );
 }
 
 export function evaluateServiceFormVisibility(

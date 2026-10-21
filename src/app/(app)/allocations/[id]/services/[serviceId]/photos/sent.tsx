@@ -3,14 +3,16 @@ import { parsePhaseNumbersParam } from '@/domeinen/photos';
 import { PhotoSentConfirmationScreen } from '@/domeinen/photos/ui';
 
 export default function PhotoSentConfirmationRoute() {
-  const { id, serviceId, incidentId, statuscode, photoId, phaseNumbers } = useLocalSearchParams<{
-    id: string;
-    serviceId: string;
-    incidentId: string;
-    statuscode: string;
-    photoId: string;
-    phaseNumbers?: string;
-  }>();
+  const { id, serviceId, incidentId, statuscode, photoId, phaseNumbers, locationId } =
+    useLocalSearchParams<{
+      id: string;
+      serviceId: string;
+      incidentId: string;
+      statuscode: string;
+      photoId: string;
+      phaseNumbers?: string;
+      locationId?: string;
+    }>();
 
   return (
     <PhotoSentConfirmationScreen
@@ -19,6 +21,7 @@ export default function PhotoSentConfirmationRoute() {
       incidentId={incidentId}
       serviceStatuscode={Number(statuscode) || 0}
       phaseNumbers={parsePhaseNumbersParam(phaseNumbers)}
+      locationId={locationId}
       photoId={photoId}
     />
   );
